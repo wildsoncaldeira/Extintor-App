@@ -77,3 +77,13 @@ export interface DashboardStats {
   totalClientes: number;
   totalProdutos: number;
 }
+
+export interface Usuario {
+  id: string;
+  nome: string;
+  email: string;
+  cargo?: string;
+  ativo: boolean;
+  ultimo_login?: string | null;
+  created_at?: string;
+}

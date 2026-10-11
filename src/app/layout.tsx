@@ -13,12 +13,40 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "App Recarga de Extintores",
-  description: "Sistema de Ordens de Serviço, Recargas de Extintores e AVCB",
+  title: {
+    default: "Recarga de Extintores & AVCB | Mário Luiz Gomes da Silva",
+    template: "%s | Recarga de Extintores",
+  },
+  applicationName: "Recarga de Extintores & AVCB",
+  description: "Sistema de Gestão de Ordens de Serviço, Recargas de Extintores e Execução de Projetos AVCB em Conselheiro Lafaiete e Região.",
+  keywords: [
+    "recarga de extintores",
+    "extintores lafaiete",
+    "avcb lafaiete",
+    "proteção contra incêndio",
+    "mário luiz gomes da silva",
+    "manutenção de extintores",
+    "conselheiro lafaiete",
+    "projetos avcb mg"
+  ],
+  authors: [{ name: "Mário Luiz Gomes da Silva" }, { name: "Wildson Silva Caldeira" }],
+  creator: "Mário Luiz Gomes da Silva",
+  icons: {
+    icon: "/icon.svg",
+    apple: "/icon.svg",
+  },
+  openGraph: {
+    title: "Recarga de Extintores & AVCB | Mário Luiz Gomes da Silva",
+    description: "Sistema de Ordens de Serviço, Recargas de Extintores e AVCB - Conselheiro Lafaiete e Região.",
+    url: "https://extintor-app.vercel.app",
+    siteName: "Recarga de Extintores & AVCB",
+    locale: "pt_BR",
+    type: "website",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Extintores",
+    title: "Extintores App",
   },
 };
 

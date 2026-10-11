@@ -1,7 +1,8 @@
 'use server';
 
+import crypto from 'crypto';
 import { sql } from './db';
-import { Cliente, ProdutoServico, CategoriaProduto, Pedido, ItemPedido, StatusPedido, DashboardStats } from './types';
+import { Cliente, ProdutoServico, CategoriaProduto, Pedido, ItemPedido, StatusPedido, DashboardStats, Usuario } from './types';
 import { revalidatePath } from 'next/cache';
 
 // ==========================================
@@ -575,5 +576,125 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       totalClientes: 0,
       totalProdutos: 0,
     };
+  }
+}
+
+// ==========================================
+// AUTENTICAÇÃO E USUÁRIOS
+// ==========================================
+
+function hashSenha(senha: string): string {
+  return crypto.createHash('sha256').update(senha + '_extintores_secret_salt_2026').digest('hex');
+}
+
+export async function loginUsuario(
+  email: string,
+  senha: string
+): Promise<{ success: boolean; usuario?: Usuario; error?: string }> {
+  try {
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanSenha = senha.trim();
+
+    if (!cleanEmail || !cleanSenha) {
+      return { success: false, error: 'Informe o e-mail e a senha de acesso.' };
+    }
+
+    const rows = (await sql.query(
+      `SELECT id, nome, email, senha_hash, cargo, ativo, ultimo_login::text as ultimo_login, created_at::text as created_at
+       FROM public.usuarios
+       WHERE LOWER(email) = LOWER($1)`,
+      [cleanEmail]
+    )) as any[];
+
+    if (!rows || rows.length === 0) {
+      return { success: false, error: 'Usuário não encontrado ou não autorizado.' };
+    }
+
+    const u = rows[0];
+
+    if (!u.ativo) {
+      return { success: false, error: 'Este usuário está desativado no sistema.' };
+    }
+
+    const hashCalculado = hashSenha(cleanSenha);
+    if (u.senha_hash !== hashCalculado) {
+      return { success: false, error: 'Senha incorreta. Verifique e tente novamente.' };
+    }
+
+    // Atualiza data do último login
+    await sql.query(
+      `UPDATE public.usuarios SET ultimo_login = NOW() WHERE id = $1`,
+      [u.id]
+    );
+
+    const usuario: Usuario = {
+      id: u.id,
+      nome: u.nome,
+      email: u.email,
+      cargo: u.cargo || 'Administrador',
+      ativo: u.ativo,
+      ultimo_login: new Date().toISOString(),
+      created_at: u.created_at,
+    };
+
+    return { success: true, usuario };
+  } catch (error) {
+    console.error('Erro ao efetuar login:', error);
+    return { success: false, error: 'Erro interno ao validar credenciais.' };
+  }
+}
+
+export async function getUsuariosAutorizados(): Promise<Array<{ nome: string; email: string; cargo: string }>> {
+  try {
+    const rows = (await sql.query(
+      `SELECT nome, email, cargo FROM public.usuarios WHERE ativo = true ORDER BY nome ASC`
+    )) as any[];
+    return rows.map((r) => ({
+      nome: r.nome,
+      email: r.email,
+      cargo: r.cargo || 'Administrador',
+    }));
+  } catch (error) {
+    console.error('Erro ao listar usuários:', error);
+    return [];
+  }
+}
+
+export async function trocarSenhaUsuario(
+  email: string,
+  senhaAtual: string,
+  novaSenha: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const cleanEmail = email.trim().toLowerCase();
+    const rows = (await sql.query(
+      `SELECT id, senha_hash FROM public.usuarios WHERE LOWER(email) = LOWER($1) AND ativo = true`,
+      [cleanEmail]
+    )) as any[];
+
+    if (!rows || rows.length === 0) {
+      return { success: false, error: 'Usuário não encontrado.' };
+    }
+
+    const u = rows[0];
+    const hashAtual = hashSenha(senhaAtual.trim());
+    if (u.senha_hash !== hashAtual) {
+      return { success: false, error: 'A senha atual está incorreta.' };
+    }
+
+    if (novaSenha.trim().length < 6) {
+      return { success: false, error: 'A nova senha deve ter no mínimo 6 caracteres.' };
+    }
+
+    const novoHash = hashSenha(novaSenha.trim());
+    await sql.query(
+      `UPDATE public.usuarios SET senha_hash = $1, updated_at = NOW() WHERE id = $2`,
+      [novoHash, u.id]
+    );
+
+    return { success: true };
+  } catch (error) {
+    console.error('Erro ao trocar senha:', error);
+    return { success: false, error: 'Erro ao atualizar a senha no banco de dados.' };
   }
 }

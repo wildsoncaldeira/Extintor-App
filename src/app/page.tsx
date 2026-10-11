@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Pedido, Cliente, ProdutoServico, CategoriaProduto, DashboardStats } from '@/lib/types';
+import { Pedido, Cliente, ProdutoServico, CategoriaProduto, DashboardStats, Usuario } from '@/lib/types';
 import { getPedidos, getClientes, getProdutos, getCategorias, getDashboardStats, getPedidoDetalhes } from '@/lib/actions';
 import { PedidosView } from '@/components/PedidosView';
 import { ClientesView } from '@/components/ClientesView';
 import { ProdutosView } from '@/components/ProdutosView';
 import { DashboardView } from '@/components/DashboardView';
+import { LoginView } from '@/components/LoginView';
 import { PedidoModal } from '@/components/PedidoModal';
 import { ClienteModal } from '@/components/ClienteModal';
 import { ClienteDetalhesModal } from '@/components/ClienteDetalhesModal';
@@ -23,13 +24,39 @@ import {
   LayoutDashboard, 
   Plus, 
   RefreshCw,
+  LogOut,
 } from 'lucide-react';
 
 type AbaAtiva = 'pedidos' | 'clientes' | 'produtos' | 'dashboard';
 
 export default function Home() {
+  const [usuarioLogado, setUsuarioLogado] = useState<Usuario | null>(null);
+  const [checandoAuth, setChecandoAuth] = useState(true);
+
   const [abaAtiva, setAbaAtiva] = useState<AbaAtiva>('pedidos');
   const [loading, setLoading] = useState(true);
+
+  // Checa se há usuário autenticado no navegador
+  useEffect(() => {
+    try {
+      const salvo = localStorage.getItem('usuario_extintores') || sessionStorage.getItem('usuario_extintores');
+      if (salvo) {
+        setUsuarioLogado(JSON.parse(salvo));
+      }
+    } catch (e) {
+      console.error('Erro ao ler usuário salvo:', e);
+    } finally {
+      setChecandoAuth(false);
+    }
+  }, []);
+
+  const handleLogout = () => {
+    if (confirm('Deseja realmente sair do sistema?')) {
+      localStorage.removeItem('usuario_extintores');
+      sessionStorage.removeItem('usuario_extintores');
+      setUsuarioLogado(null);
+    }
+  };
 
   // Dados
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
@@ -95,8 +122,10 @@ export default function Home() {
   };
 
   useEffect(() => {
-    carregarDados();
-  }, []);
+    if (usuarioLogado) {
+      carregarDados();
+    }
+  }, [usuarioLogado]);
 
   // Tecla ESC fecha o pop-up que estiver no topo da pilha
   useEffect(() => {
@@ -168,6 +197,21 @@ export default function Home() {
     clienteDetalhesAberto,
     ultimoModalAberto,
   ]);
+
+  if (checandoAuth) {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center text-white gap-4">
+        <div className="w-14 h-14 rounded-2xl bg-red-600 flex items-center justify-center shadow-lg shadow-red-900/50 animate-pulse">
+          <Flame className="w-8 h-8 text-white" />
+        </div>
+        <p className="text-xs text-zinc-400 font-semibold tracking-wider uppercase">Iniciando sistema...</p>
+      </div>
+    );
+  }
+
+  if (!usuarioLogado) {
+    return <LoginView onLoginSucesso={(u) => setUsuarioLogado(u)} />;
+  }
 
   return (
     <div className="min-h-screen bg-zinc-100 flex flex-col md:flex-row text-zinc-900">
@@ -249,8 +293,33 @@ export default function Home() {
           </button>
         </nav>
 
+        {/* Card do Usuário Logado & Botão Sair */}
+        <div className="p-3 border-t border-zinc-200 bg-zinc-50 flex items-center justify-between gap-2 select-none">
+          <div className="flex items-center gap-2.5 overflow-hidden">
+            <div className="w-8 h-8 rounded-full bg-red-600 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-2xs">
+              {usuarioLogado.nome.slice(0, 2).toUpperCase()}
+            </div>
+            <div className="overflow-hidden">
+              <p className="text-xs font-bold text-zinc-900 truncate" title={usuarioLogado.nome}>
+                {usuarioLogado.nome}
+              </p>
+              <p className="text-[10px] text-zinc-500 truncate" title={usuarioLogado.email}>
+                {usuarioLogado.email}
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={handleLogout}
+            title="Sair do sistema (Logout)"
+            className="p-1.5 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition shrink-0 cursor-pointer"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
+        </div>
+
         {/* Rodapé da Sidebar */}
-        <div className="p-4 border-t border-zinc-200 bg-zinc-50 text-xs text-zinc-500 flex items-center justify-between">
+        <div className="p-3 border-t border-zinc-200 bg-white text-[11px] text-zinc-500 flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
             <span>Neon Postgres Conectado</span>
@@ -258,7 +327,7 @@ export default function Home() {
           <button
             onClick={carregarDados}
             title="Atualizar dados"
-            className="p-1 text-zinc-400 hover:text-zinc-700 transition"
+            className="p-1 text-zinc-400 hover:text-zinc-700 transition cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
           </button>
@@ -266,17 +335,30 @@ export default function Home() {
       </aside>
 
       {/* HEADER MOBILE */}
-      <header className="md:hidden bg-white border-b border-zinc-200 p-3.5 flex items-center justify-between sticky top-0 z-40">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-red-600 text-white flex items-center justify-center shadow-2xs">
+      <header className="md:hidden bg-white border-b border-zinc-200 p-3 flex items-center justify-between sticky top-0 z-40">
+        <div className="flex items-center gap-2.5 overflow-hidden">
+          <div className="w-8 h-8 rounded-lg bg-red-600 text-white flex items-center justify-center shadow-2xs shrink-0">
             <Flame className="w-5 h-5" />
           </div>
-          <span className="font-black text-sm text-zinc-900">
-            Recarga de Extintores
-          </span>
+          <div className="overflow-hidden">
+            <span className="font-black text-xs text-zinc-900 block truncate">
+              Recarga de Extintores
+            </span>
+            <span className="text-[10px] text-zinc-500 font-semibold block truncate">
+              {usuarioLogado.nome.split(' ')[0]} ({usuarioLogado.cargo || 'Admin'})
+            </span>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            onClick={handleLogout}
+            title="Sair do sistema"
+            className="p-1.5 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition cursor-pointer"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
+
           <button
             onClick={() => {
               if (abaAtiva === 'clientes') {
@@ -290,7 +372,7 @@ export default function Home() {
                 setPedidoModalAberto(true);
               }
             }}
-            className="p-1.5 bg-red-600 text-white rounded-lg shadow-2xs hover:bg-red-700 transition"
+            className="p-1.5 bg-red-600 text-white rounded-lg shadow-2xs hover:bg-red-700 transition cursor-pointer"
           >
             <Plus className="w-5 h-5" />
           </button>
@@ -310,7 +392,7 @@ export default function Home() {
               {abaAtiva === 'dashboard' && 'Painel de Desempenho & Faturamento'}
             </h2>
             <p className="text-xs text-zinc-500 mt-0.5">
-              Mário Luiz Gomes da Silva • Execução de Projetos AVCB
+              Mário Luiz Gomes da Silva • Execução de Projetos AVCB • Conectado como <strong className="text-zinc-700 font-semibold">{usuarioLogado.nome}</strong>
             </p>
           </div>
 
