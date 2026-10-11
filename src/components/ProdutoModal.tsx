@@ -75,17 +75,17 @@ export function ProdutoModal({
       onClick={onClose}
     >
       <div 
-        className="relative w-full max-w-md bg-white text-zinc-900 rounded-xl shadow-2xl overflow-hidden flex flex-col animate-modal-content"
+        className="relative w-full max-w-md bg-white dark:bg-zinc-900 dark:border dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-xl shadow-2xl overflow-hidden flex flex-col animate-modal-content"
         onClick={(e) => e.stopPropagation()}
       >
         
-        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 bg-zinc-50">
-          <h2 className="text-lg font-bold text-zinc-900">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950">
+          <h2 className="text-lg font-bold text-zinc-900 dark:text-white">
             {produtoParaEditar ? 'Editar Produto / Serviço' : 'Novo Produto / Serviço'}
           </h2>
           <button
             onClick={onClose}
-            className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-200 rounded-lg transition"
+            className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-200 dark:hover:text-zinc-200 dark:hover:bg-zinc-800 rounded-lg transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -93,7 +93,7 @@ export function ProdutoModal({
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4 text-sm">
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs flex items-center gap-2">
+            <div className="p-3 bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-800/80 rounded-lg text-red-700 dark:text-red-300 text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{error}</span>
             </div>
@@ -102,14 +102,14 @@ export function ProdutoModal({
           {/* Categoria do Produto */}
           <div>
             <div className="flex justify-between items-center mb-1">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-700">
-                Categoria do Produto <span className="text-red-600">*</span>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
+                Categoria do Produto <span className="text-red-600 dark:text-red-400">*</span>
               </label>
               {onOpenGerenciarCategorias && (
                 <button
                   type="button"
                   onClick={onOpenGerenciarCategorias}
-                  className="text-xs text-red-600 hover:text-red-800 font-semibold"
+                  className="text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 font-semibold cursor-pointer"
                 >
                   + Gerenciar
                 </button>
@@ -125,10 +125,10 @@ export function ProdutoModal({
                   setDescricao(sel.nome);
                 }
               }}
-              className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm bg-white"
+              className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm bg-white dark:bg-zinc-950 dark:text-white"
             >
               {categorias.map((c) => (
-                <option key={c.id} value={c.id}>
+                <option key={c.id} value={c.id} className="dark:bg-zinc-900">
                   {c.nome}
                 </option>
               ))}
@@ -137,7 +137,7 @@ export function ProdutoModal({
 
           {/* Descrição opcional ou personalizada */}
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 mb-1">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1">
               Descrição do Item (ou repete a categoria)
             </label>
             <input
@@ -145,13 +145,13 @@ export function ProdutoModal({
               placeholder="Ex: EXTINTOR NOVO ABC, RECARGA CO2..."
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
-              className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm"
+              className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500"
             />
           </div>
 
           {/* Produto (Tipo/Kg) */}
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 mb-1">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1">
               Produto (Tipo / KG)
             </label>
             <input
@@ -159,13 +159,13 @@ export function ProdutoModal({
               placeholder="Ex: 4 KG, 6 KG, 8 KG, 12 KG, UNIDADE..."
               value={tipoKg}
               onChange={(e) => setTipoKg(e.target.value)}
-              className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm font-mono"
+              className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm font-mono dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500"
             />
           </div>
 
           {/* Valor Unitário Padrão */}
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 mb-1">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1">
               Valor Unitário Padrão (R$)
             </label>
             <input
@@ -174,23 +174,23 @@ export function ProdutoModal({
               min="0"
               value={valor}
               onChange={(e) => setValor(parseFloat(e.target.value) || 0)}
-              className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm font-semibold"
+              className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm font-semibold dark:bg-zinc-950 dark:text-white"
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-4 border-t border-zinc-200">
+          <div className="flex justify-end gap-2 pt-4 border-t border-zinc-200 dark:border-zinc-800">
             <button
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 rounded-lg transition"
+              className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition cursor-pointer"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-2 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg shadow-sm transition disabled:opacity-50"
+              className="px-6 py-2 text-sm font-bold text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 rounded-lg shadow-lg shadow-red-900/30 transition disabled:opacity-50 cursor-pointer"
             >
               {loading ? 'Salvando...' : 'Salvar'}
             </button>

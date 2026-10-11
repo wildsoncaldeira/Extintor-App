@@ -148,41 +148,41 @@ export function PedidosView({
   const getStatusBadgeStyle = (status: StatusPedido) => {
     switch (status) {
       case 'Orçamento':
-        return 'bg-red-50 text-red-700 border-red-300 hover:bg-red-100';
+        return 'bg-red-50 text-red-700 border-red-300 hover:bg-red-100 dark:bg-red-950/60 dark:text-red-300 dark:border-red-800/80 dark:hover:bg-red-900/50';
       case 'Aprovado':
-        return 'bg-blue-50 text-blue-700 border-blue-300 hover:bg-blue-100';
+        return 'bg-blue-50 text-blue-700 border-blue-300 hover:bg-blue-100 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800/80 dark:hover:bg-blue-900/50';
       case 'Pago':
-        return 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100';
+        return 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800/80 dark:hover:bg-emerald-900/50';
     }
   };
 
   return (
     <div className="space-y-4">
       {/* Barra de Busca e Botão Filtros */}
-      <div className="bg-white p-4 rounded-xl border border-zinc-200 shadow-2xs space-y-3">
+      <div className="bg-white dark:bg-zinc-900/90 dark:border-zinc-800 dark:shadow-2xl p-4 rounded-xl border border-zinc-200 shadow-2xs space-y-3">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           <div className="relative flex-1">
-            <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-3" />
+            <Search className="w-4 h-4 text-zinc-400 dark:text-zinc-500 absolute left-3 top-3" />
             <input
               type="text"
               placeholder="Search - Pedidos (número ou cliente)..."
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 border border-zinc-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 outline-none"
+              className="w-full pl-9 pr-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg text-sm focus:ring-2 focus:ring-red-500 outline-none dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500"
             />
           </div>
 
           <div className="flex items-center gap-2">
             {/* Filtros de status rápido */}
-            <div className="flex bg-zinc-100 p-1 rounded-lg text-xs font-semibold">
+            <div className="flex bg-zinc-100 dark:bg-zinc-950 dark:border dark:border-zinc-800 p-1 rounded-lg text-xs font-semibold">
               {(['Todos', 'Orçamento', 'Aprovado', 'Pago'] as const).map((st) => (
                 <button
                   key={st}
                   onClick={() => setFiltros((prev) => ({ ...prev, status: st }))}
                   className={`px-3 py-1.5 rounded-md transition cursor-pointer ${
                     filtros.status === st
-                      ? 'bg-white text-zinc-900 shadow-2xs'
-                      : 'text-zinc-600 hover:text-zinc-900'
+                      ? 'bg-white text-zinc-900 shadow-2xs dark:bg-zinc-800 dark:text-white dark:shadow-none'
+                      : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200'
                   }`}
                 >
                   {st === 'Orçamento' ? '🔴 Orçamento' : st === 'Aprovado' ? '🔵 Aprovado' : st === 'Pago' ? '🟢 Pago' : 'Todos'}
@@ -195,8 +195,8 @@ export function PedidosView({
               onClick={() => setFiltrosModalAberto(true)}
               className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-lg font-bold text-sm transition shrink-0 border cursor-pointer ${
                 filtrosAtivosCount > 0
-                  ? 'bg-red-50 text-red-700 border-red-300 shadow-2xs hover:bg-red-100'
-                  : 'bg-zinc-50 hover:bg-zinc-100 text-zinc-700 border-zinc-300'
+                  ? 'bg-red-50 text-red-700 border-red-300 shadow-2xs hover:bg-red-100 dark:bg-red-950/60 dark:text-red-300 dark:border-red-800/80'
+                  : 'bg-zinc-50 hover:bg-zinc-100 text-zinc-700 border-zinc-300 dark:bg-zinc-950 dark:hover:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700'
               }`}
               title="Abrir opções de filtro"
             >
@@ -213,31 +213,31 @@ export function PedidosView({
 
         {/* Badges de filtros ativos */}
         {filtrosAtivosCount > 0 && (
-          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-zinc-100 text-xs">
-            <span className="text-zinc-400 font-medium">Filtros ativos:</span>
+          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-zinc-100 dark:border-zinc-800 text-xs">
+            <span className="text-zinc-400 dark:text-zinc-500 font-medium">Filtros ativos:</span>
             {filtros.status !== 'Todos' && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-red-50 text-red-700 border border-red-200 rounded-md font-semibold">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/60 dark:text-red-300 dark:border-red-800/80 rounded-md font-semibold">
                 Status: {filtros.status}
               </span>
             )}
             {filtros.periodo !== 'todos' && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-zinc-100 text-zinc-700 rounded-md font-semibold">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-zinc-100 text-zinc-700 dark:bg-zinc-950 dark:text-zinc-300 dark:border dark:border-zinc-800 rounded-md font-semibold">
                 Período: {filtros.periodo === 'hoje' ? 'Hoje' : filtros.periodo === '7dias' ? 'Últimos 7 dias' : filtros.periodo === 'mes_atual' ? 'Mês atual' : filtros.periodo === 'mes_anterior' ? 'Mês anterior' : 'Este ano'}
               </span>
             )}
             {filtros.faixaValor !== 'todos' && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-zinc-100 text-zinc-700 rounded-md font-semibold">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-zinc-100 text-zinc-700 dark:bg-zinc-950 dark:text-zinc-300 dark:border dark:border-zinc-800 rounded-md font-semibold">
                 Valor: {filtros.faixaValor === 'ate_200' ? 'Até R$ 200' : filtros.faixaValor === '200_500' ? 'R$ 200 - R$ 500' : filtros.faixaValor === '500_1000' ? 'R$ 500 - R$ 1.000' : 'Acima de R$ 1.000'}
               </span>
             )}
             {filtros.ordenacao !== 'numero_desc' && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-zinc-100 text-zinc-700 rounded-md font-semibold">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-zinc-100 text-zinc-700 dark:bg-zinc-950 dark:text-zinc-300 dark:border dark:border-zinc-800 rounded-md font-semibold">
                 Ordem: {filtros.ordenacao === 'data_desc' ? 'Data mais recente' : filtros.ordenacao === 'data_asc' ? 'Data mais antiga' : filtros.ordenacao === 'valor_desc' ? 'Maior valor' : 'Menor valor'}
               </span>
             )}
             <button
               onClick={() => setFiltros(FILTROS_PEDIDOS_PADRAO)}
-              className="text-red-600 hover:text-red-700 font-bold ml-auto text-xs underline cursor-pointer"
+              className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-bold ml-auto text-xs underline cursor-pointer"
             >
               Limpar filtros
             </button>
@@ -246,9 +246,9 @@ export function PedidosView({
       </div>
 
       {/* Lista de Pedidos */}
-      <div className="bg-white rounded-xl border border-zinc-200 shadow-2xs overflow-hidden divide-y divide-zinc-100">
+      <div className="bg-white dark:bg-zinc-900/90 dark:border-zinc-800 dark:shadow-2xl rounded-xl border border-zinc-200 shadow-2xs overflow-hidden divide-y divide-zinc-100 dark:divide-zinc-800">
         {pedidosFiltrados.length === 0 ? (
-          <div className="p-8 text-center text-zinc-500 text-sm">
+          <div className="p-8 text-center text-zinc-500 dark:text-zinc-400 text-sm">
             Nenhum pedido encontrado.
           </div>
         ) : (
@@ -256,23 +256,23 @@ export function PedidosView({
             <div
               key={pedido.id}
               onClick={() => handleAbrirDetalhes(pedido)}
-              className="p-4 hover:bg-zinc-50/80 transition flex items-start sm:items-center justify-between gap-4 cursor-pointer group"
+              className="p-4 hover:bg-zinc-50/80 dark:hover:bg-zinc-800/60 transition flex items-start sm:items-center justify-between gap-4 cursor-pointer group"
             >
               {/* Esquerda: Número, Data e Cliente (SEM observações na listagem) */}
               <div className="space-y-1 flex-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-base font-black text-zinc-900 group-hover:text-red-700 transition">
+                  <span className="text-base font-black text-zinc-900 dark:text-white group-hover:text-red-700 dark:group-hover:text-red-400 transition">
                     #{pedido.numero_pedido}
                   </span>
-                  <span className="text-xs font-semibold text-zinc-400">
+                  <span className="text-xs font-semibold text-zinc-400 dark:text-zinc-500">
                     {pedido.data_pedido ? pedido.data_pedido.split('-').reverse().join('/') : ''}
                   </span>
                 </div>
-                <p className="text-sm font-semibold text-zinc-800 leading-snug">
+                <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 leading-snug">
                   {pedido.nome_empresa}
                 </p>
                 {pedido.nome_contato && (
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
                     Contato: {pedido.nome_contato}
                   </p>
                 )}
@@ -283,7 +283,7 @@ export function PedidosView({
                 
                 {/* LINHA 1: PREÇO */}
                 <div className="text-right">
-                  <span className="text-base sm:text-lg font-black text-zinc-900">
+                  <span className="text-base sm:text-lg font-black text-zinc-900 dark:text-white">
                     R$ {Number(pedido.valor_total).toFixed(2).replace('.', ',')}
                   </span>
                 </div>
@@ -312,9 +312,9 @@ export function PedidosView({
                       target="_blank"
                       rel="noopener noreferrer"
                       title="Enviar WhatsApp dinâmico"
-                      className="p-1.5 border border-emerald-500 text-emerald-600 hover:bg-emerald-50 rounded-lg transition flex items-center justify-center bg-white"
+                      className="p-1.5 border border-emerald-500 text-emerald-600 hover:bg-emerald-50 dark:bg-zinc-950 dark:border-emerald-500/80 dark:hover:bg-emerald-950/40 rounded-lg transition flex items-center justify-center bg-white"
                     >
-                      <WhatsAppIcon className="w-3.5 h-3.5 text-emerald-600" />
+                      <WhatsAppIcon className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                     </a>
                   )}
 
@@ -323,12 +323,12 @@ export function PedidosView({
                     onClick={(e) => handlePdfClique(pedido, e)}
                     disabled={baixandoPdfId === pedido.id}
                     title={`Baixar PDF (pedido_${String(pedido.numero_pedido).padStart(8, '0')}.pdf)`}
-                    className="p-1.5 border border-red-200 text-red-600 hover:bg-red-50 rounded-lg transition flex items-center justify-center bg-white disabled:opacity-50"
+                    className="p-1.5 border border-red-200 text-red-600 hover:bg-red-50 dark:bg-zinc-950 dark:border-red-900/60 dark:text-red-400 dark:hover:bg-red-950/40 rounded-lg transition flex items-center justify-center bg-white disabled:opacity-50"
                   >
                     {baixandoPdfId === pedido.id ? (
-                      <Loader2 className="w-3.5 h-3.5 text-red-600 animate-spin" />
+                      <Loader2 className="w-3.5 h-3.5 text-red-600 dark:text-red-400 animate-spin" />
                     ) : (
-                      <PdfIcon className="w-3.5 h-3.5 text-red-600" />
+                      <PdfIcon className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
                     )}
                   </button>
 
@@ -340,7 +340,7 @@ export function PedidosView({
                       onEditarPedido(detalhado || pedido);
                     }}
                     title="Editar pedido"
-                    className="p-1.5 border border-zinc-200 text-zinc-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                    className="p-1.5 border border-zinc-200 text-zinc-600 hover:text-blue-600 hover:bg-blue-50 dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-400 dark:hover:text-blue-400 dark:hover:bg-zinc-800 rounded-lg transition"
                   >
                     <Edit className="w-3.5 h-3.5" />
                   </button>
@@ -349,7 +349,7 @@ export function PedidosView({
                   <button
                     onClick={(e) => handleExcluir(pedido, e)}
                     title="Excluir pedido"
-                    className="p-1.5 border border-zinc-200 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                    className="p-1.5 border border-zinc-200 text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:bg-zinc-950 dark:border-zinc-800 dark:hover:text-red-400 dark:hover:bg-zinc-800 rounded-lg transition"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>

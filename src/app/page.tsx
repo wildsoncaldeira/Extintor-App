@@ -25,6 +25,8 @@ import {
   Plus, 
   RefreshCw,
   LogOut,
+  Sun,
+  Moon,
 } from 'lucide-react';
 
 type AbaAtiva = 'pedidos' | 'clientes' | 'produtos' | 'dashboard';
@@ -32,23 +34,50 @@ type AbaAtiva = 'pedidos' | 'clientes' | 'produtos' | 'dashboard';
 export default function Home() {
   const [usuarioLogado, setUsuarioLogado] = useState<Usuario | null>(null);
   const [checandoAuth, setChecandoAuth] = useState(true);
+  const [temaEscuro, setTemaEscuro] = useState(false);
 
   const [abaAtiva, setAbaAtiva] = useState<AbaAtiva>('pedidos');
   const [loading, setLoading] = useState(true);
 
-  // Checa se há usuário autenticado no navegador
+  // Checa se há usuário autenticado no navegador e tema salvo
   useEffect(() => {
     try {
       const salvo = localStorage.getItem('usuario_extintores') || sessionStorage.getItem('usuario_extintores');
       if (salvo) {
         setUsuarioLogado(JSON.parse(salvo));
       }
+
+      const temaSalvo = localStorage.getItem('tema_extintores');
+      if (temaSalvo === 'dark' || (!temaSalvo && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        setTemaEscuro(true);
+        document.documentElement.classList.add('dark');
+      } else {
+        setTemaEscuro(false);
+        document.documentElement.classList.remove('dark');
+      }
     } catch (e) {
-      console.error('Erro ao ler usuário salvo:', e);
+      console.error('Erro ao ler usuário salvo ou tema:', e);
     } finally {
       setChecandoAuth(false);
     }
   }, []);
+
+  const alternarTema = () => {
+    setTemaEscuro((prev) => {
+      const novo = !prev;
+      try {
+        localStorage.setItem('tema_extintores', novo ? 'dark' : 'light');
+        if (novo) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      } catch (e) {
+        console.error('Erro ao salvar tema:', e);
+      }
+      return novo;
+    });
+  };
 
   const handleLogout = () => {
     if (confirm('Deseja realmente sair do sistema?')) {
@@ -214,151 +243,248 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-100 flex flex-col md:flex-row text-zinc-900">
+    <div className={`min-h-screen flex flex-col md:flex-row transition-colors duration-200 ${
+      temaEscuro
+        ? 'bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950 text-zinc-100'
+        : 'bg-zinc-100 text-zinc-900'
+    }`}>
       
       {/* SIDEBAR DESKTOP */}
-      <aside className="hidden md:flex flex-col w-64 bg-white border-r border-zinc-200 shrink-0 select-none">
+      <aside className={`hidden md:flex flex-col w-64 border-r shrink-0 select-none transition-colors duration-200 ${
+        temaEscuro
+          ? 'bg-zinc-900/90 border-zinc-800 backdrop-blur-md text-zinc-100 shadow-2xl'
+          : 'bg-white border-zinc-200 text-zinc-900'
+      }`}>
         {/* Logo / Header */}
-        <div className="p-5 border-b border-zinc-200 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-red-600 text-white flex items-center justify-center shadow-md">
+        <div className={`p-5 border-b flex items-center gap-3 ${
+          temaEscuro ? 'border-zinc-800' : 'border-zinc-200'
+        }`}>
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-red-600 to-red-500 text-white flex items-center justify-center shadow-lg shadow-red-900/40 border border-red-400/30">
             <Flame className="w-6 h-6 animate-pulse" />
           </div>
           <div>
-            <h1 className="text-sm font-black tracking-tight text-zinc-900 leading-tight">
+            <h1 className="text-sm font-black tracking-tight text-zinc-900 dark:text-white leading-tight">
               Recarga de Extintores
             </h1>
-            <p className="text-[11px] text-zinc-400 font-medium">
+            <p className="text-[11px] text-red-500 dark:text-red-400 font-semibold uppercase tracking-wider">
               AVCB • Lafaiete e Região
             </p>
           </div>
         </div>
 
         {/* Links de Navegação */}
-        <nav className="p-3 space-y-1 flex-1">
+        <nav className="p-3 space-y-1.5 flex-1">
           <button
             onClick={() => setAbaAtiva('pedidos')}
-            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-bold transition ${
+            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer ${
               abaAtiva === 'pedidos'
-                ? 'bg-red-50 text-red-700 shadow-2xs'
-                : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900'
+                ? temaEscuro
+                  ? 'bg-red-950/60 text-red-300 border border-red-800/80 shadow-md shadow-red-950/40'
+                  : 'bg-red-50 text-red-700 shadow-2xs border border-red-200'
+                : temaEscuro
+                ? 'text-zinc-400 hover:bg-zinc-800/80 hover:text-white border border-transparent'
+                : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 border border-transparent'
             }`}
           >
-            <FileEdit className="w-4 h-4 text-red-600" />
+            <FileEdit className={`w-4 h-4 ${abaAtiva === 'pedidos' ? 'text-red-500' : 'text-zinc-400'}`} />
             <span>Pedidos</span>
-            <span className="ml-auto text-xs font-semibold px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600">
+            <span className={`ml-auto text-xs font-semibold px-2 py-0.5 rounded-full ${
+              temaEscuro ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-100 text-zinc-600'
+            }`}>
               {pedidos.length}
             </span>
           </button>
 
           <button
             onClick={() => setAbaAtiva('clientes')}
-            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-bold transition ${
+            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer ${
               abaAtiva === 'clientes'
-                ? 'bg-red-50 text-red-700 shadow-2xs'
-                : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900'
+                ? temaEscuro
+                  ? 'bg-red-950/60 text-red-300 border border-red-800/80 shadow-md shadow-red-950/40'
+                  : 'bg-red-50 text-red-700 shadow-2xs border border-red-200'
+                : temaEscuro
+                ? 'text-zinc-400 hover:bg-zinc-800/80 hover:text-white border border-transparent'
+                : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 border border-transparent'
             }`}
           >
-            <Users className="w-4 h-4 text-zinc-500" />
+            <Users className={`w-4 h-4 ${abaAtiva === 'clientes' ? 'text-red-500' : 'text-zinc-400'}`} />
             <span>Clientes</span>
-            <span className="ml-auto text-xs font-semibold px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600">
+            <span className={`ml-auto text-xs font-semibold px-2 py-0.5 rounded-full ${
+              temaEscuro ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-100 text-zinc-600'
+            }`}>
               {clientes.length}
             </span>
           </button>
 
           <button
             onClick={() => setAbaAtiva('produtos')}
-            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-bold transition ${
+            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer ${
               abaAtiva === 'produtos'
-                ? 'bg-red-50 text-red-700 shadow-2xs'
-                : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900'
+                ? temaEscuro
+                  ? 'bg-red-950/60 text-red-300 border border-red-800/80 shadow-md shadow-red-950/40'
+                  : 'bg-red-50 text-red-700 shadow-2xs border border-red-200'
+                : temaEscuro
+                ? 'text-zinc-400 hover:bg-zinc-800/80 hover:text-white border border-transparent'
+                : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 border border-transparent'
             }`}
           >
-            <Package className="w-4 h-4 text-zinc-500" />
+            <Package className={`w-4 h-4 ${abaAtiva === 'produtos' ? 'text-red-500' : 'text-zinc-400'}`} />
             <span>Produtos & Serviços</span>
-            <span className="ml-auto text-xs font-semibold px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600">
+            <span className={`ml-auto text-xs font-semibold px-2 py-0.5 rounded-full ${
+              temaEscuro ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-100 text-zinc-600'
+            }`}>
               {produtos.length}
             </span>
           </button>
 
           <button
             onClick={() => setAbaAtiva('dashboard')}
-            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-bold transition ${
+            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer ${
               abaAtiva === 'dashboard'
-                ? 'bg-red-50 text-red-700 shadow-2xs'
-                : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900'
+                ? temaEscuro
+                  ? 'bg-red-950/60 text-red-300 border border-red-800/80 shadow-md shadow-red-950/40'
+                  : 'bg-red-50 text-red-700 shadow-2xs border border-red-200'
+                : temaEscuro
+                ? 'text-zinc-400 hover:bg-zinc-800/80 hover:text-white border border-transparent'
+                : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 border border-transparent'
             }`}
           >
-            <LayoutDashboard className="w-4 h-4 text-zinc-500" />
+            <LayoutDashboard className={`w-4 h-4 ${abaAtiva === 'dashboard' ? 'text-red-500' : 'text-zinc-400'}`} />
             <span>Dashboard</span>
           </button>
         </nav>
 
-        {/* Card do Usuário Logado & Botão Sair */}
-        <div className="p-3 border-t border-zinc-200 bg-zinc-50 flex items-center justify-between gap-2 select-none">
-          <div className="flex items-center gap-2.5 overflow-hidden">
-            <div className="w-8 h-8 rounded-full bg-red-600 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-2xs">
+        {/* ÁREA INFERIOR DA SIDEBAR */}
+        <div className={`p-3 space-y-2.5 border-t ${temaEscuro ? 'border-zinc-800 bg-zinc-950/40' : 'border-zinc-200 bg-zinc-50'}`}>
+          
+          {/* 1. SELETOR DE MODO DARK / LIGHT NO MENU */}
+          <button
+            onClick={alternarTema}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+              temaEscuro
+                ? 'bg-zinc-950/90 text-amber-400 border border-zinc-700 hover:border-zinc-600 hover:bg-zinc-900'
+                : 'bg-white text-zinc-700 border border-zinc-200 hover:bg-zinc-100'
+            }`}
+            title={temaEscuro ? 'Ativar Modo Claro' : 'Ativar Modo Escuro'}
+          >
+            <div className="flex items-center gap-2">
+              {temaEscuro ? (
+                <Moon className="w-4 h-4 text-amber-400 fill-amber-400/20" />
+              ) : (
+                <Sun className="w-4 h-4 text-amber-500 fill-amber-500/20" />
+              )}
+              <span>{temaEscuro ? 'Modo Escuro' : 'Modo Claro'}</span>
+            </div>
+            <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
+              temaEscuro ? 'bg-amber-400/10 text-amber-400 border border-amber-400/30' : 'bg-zinc-200 text-zinc-700'
+            }`}>
+              {temaEscuro ? 'DARK' : 'LIGHT'}
+            </span>
+          </button>
+
+          {/* 2. CARD DO USUÁRIO LOGADO */}
+          <div className={`p-2.5 rounded-xl border flex items-center gap-2.5 overflow-hidden select-none ${
+            temaEscuro
+              ? 'bg-zinc-950/70 border-zinc-800 text-zinc-100'
+              : 'bg-white border-zinc-200 text-zinc-900'
+          }`}>
+            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-red-600 to-red-500 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-sm border border-red-400/30">
               {usuarioLogado.nome.slice(0, 2).toUpperCase()}
             </div>
-            <div className="overflow-hidden">
-              <p className="text-xs font-bold text-zinc-900 truncate" title={usuarioLogado.nome}>
+            <div className="overflow-hidden flex-1">
+              <p className="text-xs font-bold truncate leading-tight" title={usuarioLogado.nome}>
                 {usuarioLogado.nome}
               </p>
-              <p className="text-[10px] text-zinc-500 truncate" title={usuarioLogado.email}>
+              <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate" title={usuarioLogado.email}>
                 {usuarioLogado.email}
               </p>
             </div>
           </div>
 
+          {/* 3. BOTÃO DE LOGOUT DEDICADO NO FIM DO MENU LATERAL */}
           <button
             onClick={handleLogout}
-            title="Sair do sistema (Logout)"
-            className="p-1.5 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition shrink-0 cursor-pointer"
+            className={`w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer shadow-sm ${
+              temaEscuro
+                ? 'bg-red-950/50 text-red-400 hover:bg-red-900/60 border border-red-800/60 hover:text-white'
+                : 'bg-red-50 text-red-700 hover:bg-red-600 hover:text-white border border-red-200'
+            }`}
+            title="Sair da Conta (Logout)"
           >
             <LogOut className="w-4 h-4" />
+            <span>Sair do Sistema (Logout)</span>
           </button>
-        </div>
 
-        {/* Rodapé da Sidebar */}
-        <div className="p-3 border-t border-zinc-200 bg-white text-[11px] text-zinc-500 flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-            <span>Neon Postgres Conectado</span>
+          {/* Conexão Neon Postgres */}
+          <div className="flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400 pt-0.5 px-1">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>Neon Postgres</span>
+            </div>
+            <button
+              onClick={carregarDados}
+              title="Atualizar dados"
+              className="p-1 text-zinc-400 hover:text-zinc-200 transition cursor-pointer"
+            >
+              <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
+            </button>
           </div>
-          <button
-            onClick={carregarDados}
-            title="Atualizar dados"
-            className="p-1 text-zinc-400 hover:text-zinc-700 transition cursor-pointer"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-          </button>
+
         </div>
       </aside>
 
       {/* HEADER MOBILE */}
-      <header className="md:hidden bg-white border-b border-zinc-200 p-3 flex items-center justify-between sticky top-0 z-40">
+      <header className={`md:hidden p-3 flex items-center justify-between sticky top-0 z-40 border-b transition-colors duration-200 ${
+        temaEscuro
+          ? 'bg-zinc-900/95 border-zinc-800 text-white backdrop-blur-md'
+          : 'bg-white border-zinc-200 text-zinc-900'
+      }`}>
         <div className="flex items-center gap-2.5 overflow-hidden">
-          <div className="w-8 h-8 rounded-lg bg-red-600 text-white flex items-center justify-center shadow-2xs shrink-0">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-red-600 to-red-500 text-white flex items-center justify-center shadow-md border border-red-400/30 shrink-0">
             <Flame className="w-5 h-5" />
           </div>
           <div className="overflow-hidden">
-            <span className="font-black text-xs text-zinc-900 block truncate">
+            <span className="font-black text-xs block truncate text-zinc-900 dark:text-white">
               Recarga de Extintores
             </span>
-            <span className="text-[10px] text-zinc-500 font-semibold block truncate">
+            <span className="text-[10px] text-red-500 dark:text-red-400 font-semibold block truncate">
               {usuarioLogado.nome.split(' ')[0]} ({usuarioLogado.cargo || 'Admin'})
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0">
+          {/* Seletor Dark/Light Mobile */}
+          <button
+            onClick={alternarTema}
+            title={temaEscuro ? 'Mudar para Modo Claro' : 'Mudar para Modo Escuro'}
+            className={`p-2 rounded-lg transition border cursor-pointer ${
+              temaEscuro
+                ? 'bg-zinc-950 text-amber-400 border-zinc-700'
+                : 'bg-zinc-100 text-zinc-700 border-zinc-200'
+            }`}
+          >
+            {temaEscuro ? (
+              <Moon className="w-4 h-4 text-amber-400 fill-amber-400/20" />
+            ) : (
+              <Sun className="w-4 h-4 text-amber-500" />
+            )}
+          </button>
+
+          {/* Botão de Logout Mobile */}
           <button
             onClick={handleLogout}
-            title="Sair do sistema"
-            className="p-1.5 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition cursor-pointer"
+            title="Sair do sistema (Logout)"
+            className={`p-2 rounded-lg transition border cursor-pointer ${
+              temaEscuro
+                ? 'bg-red-950/50 text-red-400 border-red-800/60 hover:bg-red-900/60'
+                : 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100'
+            }`}
           >
             <LogOut className="w-4 h-4" />
           </button>
 
+          {/* Botão Novo Pedido Mobile */}
           <button
             onClick={() => {
               if (abaAtiva === 'clientes') {
@@ -372,9 +498,9 @@ export default function Home() {
                 setPedidoModalAberto(true);
               }
             }}
-            className="p-1.5 bg-red-600 text-white rounded-lg shadow-2xs hover:bg-red-700 transition cursor-pointer"
+            className="p-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white rounded-lg shadow-md transition cursor-pointer"
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-4 h-4" />
           </button>
         </div>
       </header>
@@ -385,21 +511,25 @@ export default function Home() {
         {/* Barra de Título Superior */}
         <div className="hidden md:flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-black text-zinc-900 tracking-tight capitalize">
+            <h2 className="text-2xl font-black tracking-tight capitalize text-zinc-900 dark:text-white">
               {abaAtiva === 'pedidos' && 'Ordens de Serviço / Pedidos'}
               {abaAtiva === 'clientes' && 'Gestão de Clientes'}
               {abaAtiva === 'produtos' && 'Catálogo de Produtos & Serviços'}
               {abaAtiva === 'dashboard' && 'Painel de Desempenho & Faturamento'}
             </h2>
-            <p className="text-xs text-zinc-500 mt-0.5">
-              Mário Luiz Gomes da Silva • Execução de Projetos AVCB • Conectado como <strong className="text-zinc-700 font-semibold">{usuarioLogado.nome}</strong>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+              Mário Luiz Gomes da Silva • Execução de Projetos AVCB • Conectado como <strong className="text-zinc-700 dark:text-zinc-200 font-semibold">{usuarioLogado.nome}</strong>
             </p>
           </div>
 
           <div className="flex items-center gap-2">
             <button
               onClick={carregarDados}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-zinc-600 bg-white hover:bg-zinc-50 border border-zinc-200 rounded-lg shadow-2xs transition"
+              className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg transition shadow-2xs cursor-pointer ${
+                temaEscuro
+                  ? 'bg-zinc-900 text-zinc-300 hover:bg-zinc-800 border border-zinc-700'
+                  : 'bg-white text-zinc-600 hover:bg-zinc-50 border border-zinc-200'
+              }`}
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
               <span>Sincronizar</span>

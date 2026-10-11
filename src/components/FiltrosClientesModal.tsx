@@ -74,20 +74,20 @@ export function FiltrosClientesModal({
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-lg bg-white text-zinc-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-modal-content"
+        className="relative w-full max-w-lg bg-white dark:bg-zinc-900 dark:border dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-modal-content"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Cabeçalho */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 bg-zinc-50">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-red-100 text-red-700 rounded-lg">
+            <div className="p-2 bg-red-100 dark:bg-red-950/60 dark:border dark:border-red-800/80 text-red-700 dark:text-red-400 rounded-lg">
               <Filter className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-zinc-900">
+              <h3 className="text-base font-bold text-zinc-900 dark:text-white">
                 Filtrar Clientes
               </h3>
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
                 Selecione os critérios para refinar seus contatos
               </p>
             </div>
@@ -95,7 +95,7 @@ export function FiltrosClientesModal({
 
           <button
             onClick={onClose}
-            className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-200 rounded-lg transition"
+            className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-200 dark:hover:text-zinc-200 dark:hover:bg-zinc-800 rounded-lg transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -106,18 +106,18 @@ export function FiltrosClientesModal({
           
           {/* 1. Cidade do Cliente */}
           <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-zinc-600 mb-2 flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-zinc-500" />
+            <label className="text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-2 flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
               Filtrar por Cidade
             </label>
-            <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-1 bg-zinc-50 rounded-xl border border-zinc-200">
+            <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-1 bg-zinc-50 dark:bg-zinc-950 rounded-xl border border-zinc-200 dark:border-zinc-800">
               <button
                 type="button"
                 onClick={() => setFiltros({ ...filtros, cidade: 'Todas' })}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition ${
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition cursor-pointer ${
                   filtros.cidade === 'Todas'
-                    ? 'bg-zinc-900 text-white border-zinc-900 shadow-2xs'
-                    : 'bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-100'
+                    ? 'bg-zinc-900 dark:bg-red-600 text-white border-zinc-900 dark:border-red-600 shadow-2xs'
+                    : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800'
                 }`}
               >
                 Todas ({cidadesDisponiveis.length} cidades)
@@ -127,10 +127,10 @@ export function FiltrosClientesModal({
                   key={cid}
                   type="button"
                   onClick={() => setFiltros({ ...filtros, cidade: cid })}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition ${
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition cursor-pointer ${
                     filtros.cidade === cid
                       ? 'bg-red-600 text-white border-red-600 font-bold shadow-2xs'
-                      : 'bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-100'
+                      : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800'
                   }`}
                 >
                   {cid}
@@ -141,23 +141,23 @@ export function FiltrosClientesModal({
 
           {/* 2. Dados de Contato e Documentação */}
           <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-zinc-600 mb-2 flex items-center gap-1.5">
-              <Phone className="w-3.5 h-3.5 text-zinc-500" />
+            <label className="text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-2 flex items-center gap-1.5">
+              <Phone className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
               Documento e WhatsApp
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => setFiltros({ ...filtros, apenasComWhatsapp: !filtros.apenasComWhatsapp })}
-                className={`px-3.5 py-2.5 text-xs font-semibold rounded-xl border flex items-center justify-between transition ${
+                className={`px-3.5 py-2.5 text-xs font-semibold rounded-xl border flex items-center justify-between transition cursor-pointer ${
                   filtros.apenasComWhatsapp
-                    ? 'bg-emerald-50 border-emerald-500 text-emerald-800 font-bold'
-                    : 'bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-50'
+                    ? 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-500 text-emerald-800 dark:text-emerald-300 font-bold'
+                    : 'bg-white dark:bg-zinc-950 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800'
                 }`}
               >
                 <span>Apenas com WhatsApp</span>
                 <span className={`w-4 h-4 rounded border flex items-center justify-center text-[10px] ${
-                  filtros.apenasComWhatsapp ? 'bg-emerald-600 text-white border-emerald-600' : 'border-zinc-300'
+                  filtros.apenasComWhatsapp ? 'bg-emerald-600 text-white border-emerald-600' : 'border-zinc-300 dark:border-zinc-700'
                 }`}>
                   {filtros.apenasComWhatsapp && <Check className="w-3 h-3" />}
                 </span>
@@ -166,15 +166,15 @@ export function FiltrosClientesModal({
               <button
                 type="button"
                 onClick={() => setFiltros({ ...filtros, apenasComCnpj: !filtros.apenasComCnpj })}
-                className={`px-3.5 py-2.5 text-xs font-semibold rounded-xl border flex items-center justify-between transition ${
+                className={`px-3.5 py-2.5 text-xs font-semibold rounded-xl border flex items-center justify-between transition cursor-pointer ${
                   filtros.apenasComCnpj
-                    ? 'bg-blue-50 border-blue-500 text-blue-800 font-bold'
-                    : 'bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-50'
+                    ? 'bg-blue-50 dark:bg-blue-950/50 border-blue-500 text-blue-800 dark:text-blue-300 font-bold'
+                    : 'bg-white dark:bg-zinc-950 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800'
                 }`}
               >
                 <span>Apenas com CNPJ</span>
                 <span className={`w-4 h-4 rounded border flex items-center justify-center text-[10px] ${
-                  filtros.apenasComCnpj ? 'bg-blue-600 text-white border-blue-600' : 'border-zinc-300'
+                  filtros.apenasComCnpj ? 'bg-blue-600 text-white border-blue-600' : 'border-zinc-300 dark:border-zinc-700'
                 }`}>
                   {filtros.apenasComCnpj && <Check className="w-3 h-3" />}
                 </span>
@@ -184,8 +184,8 @@ export function FiltrosClientesModal({
 
           {/* 3. Histórico de Pedidos */}
           <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-zinc-600 mb-2 flex items-center gap-1.5">
-              <Receipt className="w-3.5 h-3.5 text-zinc-500" />
+            <label className="text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-2 flex items-center gap-1.5">
+              <Receipt className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
               Histórico de Pedidos
             </label>
             <div className="grid grid-cols-3 gap-2">
@@ -198,10 +198,10 @@ export function FiltrosClientesModal({
                   key={item.id}
                   type="button"
                   onClick={() => setFiltros({ ...filtros, temPedidos: item.id as any })}
-                  className={`px-3 py-2 text-xs font-semibold rounded-lg border text-center transition ${
+                  className={`px-3 py-2 text-xs font-semibold rounded-lg border text-center transition cursor-pointer ${
                     filtros.temPedidos === item.id
-                      ? 'bg-zinc-900 text-white border-zinc-900 font-bold shadow-2xs'
-                      : 'bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-50'
+                      ? 'bg-zinc-900 dark:bg-red-600 text-white border-zinc-900 dark:border-red-600 font-bold shadow-2xs'
+                      : 'bg-white dark:bg-zinc-950 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800'
                   }`}
                 >
                   {item.label}
@@ -212,8 +212,8 @@ export function FiltrosClientesModal({
 
           {/* 4. Ordenação */}
           <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-zinc-600 mb-2 flex items-center gap-1.5">
-              <ArrowUpDown className="w-3.5 h-3.5 text-zinc-500" />
+            <label className="text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-2 flex items-center gap-1.5">
+              <ArrowUpDown className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
               Ordenar Clientes Por
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -226,10 +226,10 @@ export function FiltrosClientesModal({
                   key={item.id}
                   type="button"
                   onClick={() => setFiltros({ ...filtros, ordenacao: item.id as any })}
-                  className={`px-3 py-2 text-xs font-semibold rounded-lg border text-center transition flex items-center justify-between ${
+                  className={`px-3 py-2 text-xs font-semibold rounded-lg border text-center transition flex items-center justify-between cursor-pointer ${
                     filtros.ordenacao === item.id
-                      ? 'bg-zinc-900 text-white border-zinc-900 font-bold shadow-2xs'
-                      : 'bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-50'
+                      ? 'bg-zinc-900 dark:bg-red-600 text-white border-zinc-900 dark:border-red-600 font-bold shadow-2xs'
+                      : 'bg-white dark:bg-zinc-950 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800'
                   }`}
                 >
                   <span>{item.label}</span>
@@ -242,11 +242,11 @@ export function FiltrosClientesModal({
         </div>
 
         {/* Rodapé */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-zinc-200 bg-zinc-50">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950">
           <button
             type="button"
             onClick={handleReset}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-zinc-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-zinc-600 hover:text-red-600 hover:bg-red-50 dark:text-zinc-400 dark:hover:text-red-400 dark:hover:bg-zinc-900 rounded-lg transition cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             <span>Limpar Filtros</span>
@@ -256,14 +256,14 @@ export function FiltrosClientesModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-bold text-zinc-600 hover:bg-zinc-200 rounded-lg transition"
+              className="px-4 py-2 text-xs font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-lg transition cursor-pointer"
             >
               Cancelar
             </button>
             <button
               type="button"
               onClick={handleSalvar}
-              className="px-5 py-2 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg shadow-sm transition"
+              className="px-5 py-2 text-xs font-bold text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 rounded-lg shadow-lg shadow-red-900/30 transition cursor-pointer"
             >
               Aplicar Filtros
             </button>

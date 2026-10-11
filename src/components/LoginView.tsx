@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Usuario } from '@/lib/types';
 import { loginUsuario } from '@/lib/actions';
-import { Flame, Mail, Lock, Eye, EyeOff, Loader2, ShieldCheck, AlertCircle, UserCheck } from 'lucide-react';
+import { Flame, Mail, Lock, Eye, EyeOff, Loader2, ShieldCheck, AlertCircle } from 'lucide-react';
 
 interface LoginViewProps {
   onLoginSucesso: (usuario: Usuario) => void;
@@ -16,19 +16,6 @@ export function LoginView({ onLoginSucesso }: LoginViewProps) {
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
-
-  const usuariosAutorizados = [
-    {
-      nome: 'Mário Luiz Gomes da Silva',
-      email: 'ml.gomesilva@gmail.com',
-      cargo: 'Responsável Técnico / Admin',
-    },
-    {
-      nome: 'Wildson Silva Caldeira',
-      email: 'wildsoncaldeira@gmail.com',
-      cargo: 'Desenvolvedor / Admin',
-    },
-  ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,12 +51,6 @@ export function LoginView({ onLoginSucesso }: LoginViewProps) {
     } finally {
       setCarregando(false);
     }
-  };
-
-  const handlePreencherUsuario = (userEmail: string) => {
-    setEmail(userEmail);
-    setSenha('extintores2026');
-    setErro(null);
   };
 
   return (
@@ -198,38 +179,6 @@ export function LoginView({ onLoginSucesso }: LoginViewProps) {
               )}
             </button>
           </form>
-
-          {/* Atalho de Preenchimento Rápido dos Usuários Cadastrados */}
-          <div className="pt-2 border-t border-zinc-800 space-y-2.5">
-            <p className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
-              Usuários com Acesso Liberado:
-            </p>
-            <div className="space-y-1.5">
-              {usuariosAutorizados.map((u) => (
-                <button
-                  key={u.email}
-                  type="button"
-                  onClick={() => handlePreencherUsuario(u.email)}
-                  className="w-full text-left p-2.5 rounded-lg bg-zinc-950/60 hover:bg-zinc-800/80 border border-zinc-800 hover:border-zinc-700 transition flex items-center justify-between group cursor-pointer"
-                  title="Clique para preencher e entrar"
-                >
-                  <div className="space-y-0.5">
-                    <div className="text-xs font-bold text-zinc-200 group-hover:text-red-400 transition flex items-center gap-1.5">
-                      <UserCheck className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>{u.nome}</span>
-                    </div>
-                    <div className="text-[11px] text-zinc-500">{u.email}</div>
-                  </div>
-                  <span className="text-[10px] font-semibold text-zinc-400 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800 group-hover:border-zinc-600">
-                    Preencher
-                  </span>
-                </button>
-              ))}
-            </div>
-            <p className="text-[10px] text-zinc-500 text-center italic">
-              Senha padrão inicial: <span className="font-mono text-zinc-400 font-bold">extintores2026</span>
-            </p>
-          </div>
 
         </div>
 

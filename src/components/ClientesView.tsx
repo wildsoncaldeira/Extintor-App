@@ -140,16 +140,16 @@ export function ClientesView({
   return (
     <div className="space-y-4">
       {/* Barra de Busca e Botão Filtros */}
-      <div className="bg-white p-4 rounded-xl border border-zinc-200 shadow-2xs space-y-3">
+      <div className="bg-white dark:bg-zinc-900/90 dark:border-zinc-800 dark:shadow-2xl p-4 rounded-xl border border-zinc-200 shadow-2xs space-y-3">
         <div className="flex items-center justify-between gap-3">
           <div className="relative flex-1">
-            <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-3" />
+            <Search className="w-4 h-4 text-zinc-400 dark:text-zinc-500 absolute left-3 top-3" />
             <input
               type="text"
               placeholder="Search Clientes (empresa, contato, cidade, cnpj)..."
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 border border-zinc-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 outline-none"
+              className="w-full pl-9 pr-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg text-sm focus:ring-2 focus:ring-red-500 outline-none dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500"
             />
           </div>
 
@@ -158,8 +158,8 @@ export function ClientesView({
             onClick={() => setFiltrosModalAberto(true)}
             className={`inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-lg font-bold text-sm transition shrink-0 border cursor-pointer ${
               filtrosAtivosCount > 0
-                ? 'bg-red-50 text-red-700 border-red-300 shadow-2xs hover:bg-red-100'
-                : 'bg-zinc-50 hover:bg-zinc-100 text-zinc-700 border-zinc-300'
+                ? 'bg-red-50 text-red-700 border-red-300 shadow-2xs hover:bg-red-100 dark:bg-red-950/60 dark:text-red-300 dark:border-red-800/80'
+                : 'bg-zinc-50 hover:bg-zinc-100 text-zinc-700 border-zinc-300 dark:bg-zinc-950 dark:hover:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700'
             }`}
             title="Abrir opções de filtro"
           >
@@ -175,36 +175,36 @@ export function ClientesView({
 
         {/* Badges de filtros ativos */}
         {filtrosAtivosCount > 0 && (
-          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-zinc-100 text-xs">
-            <span className="text-zinc-400 font-medium">Filtros ativos:</span>
+          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-zinc-100 dark:border-zinc-800 text-xs">
+            <span className="text-zinc-400 dark:text-zinc-500 font-medium">Filtros ativos:</span>
             {filtros.cidade !== 'Todas' && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-red-50 text-red-700 border border-red-200 rounded-md font-semibold">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/60 dark:text-red-300 dark:border-red-800/80 rounded-md font-semibold">
                 Cidade: {filtros.cidade}
               </span>
             )}
             {filtros.apenasComWhatsapp && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-zinc-100 text-zinc-700 rounded-md font-semibold">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-zinc-100 text-zinc-700 dark:bg-zinc-950 dark:text-zinc-300 dark:border dark:border-zinc-800 rounded-md font-semibold">
                 Com WhatsApp
               </span>
             )}
             {filtros.apenasComCnpj && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-zinc-100 text-zinc-700 rounded-md font-semibold">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-zinc-100 text-zinc-700 dark:bg-zinc-950 dark:text-zinc-300 dark:border dark:border-zinc-800 rounded-md font-semibold">
                 Com CNPJ
               </span>
             )}
             {filtros.temPedidos !== 'todos' && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-zinc-100 text-zinc-700 rounded-md font-semibold">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-zinc-100 text-zinc-700 dark:bg-zinc-950 dark:text-zinc-300 dark:border dark:border-zinc-800 rounded-md font-semibold">
                 {filtros.temPedidos === 'com_pedidos' ? 'Com pedidos feitos' : 'Sem pedidos'}
               </span>
             )}
             {filtros.ordenacao !== 'nome_asc' && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-zinc-100 text-zinc-700 rounded-md font-semibold">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-zinc-100 text-zinc-700 dark:bg-zinc-950 dark:text-zinc-300 dark:border dark:border-zinc-800 rounded-md font-semibold">
                 Ordem: {filtros.ordenacao === 'nome_desc' ? 'Nome (Z - A)' : 'Por Cidade'}
               </span>
             )}
             <button
               onClick={() => setFiltros(FILTROS_CLIENTES_PADRAO)}
-              className="text-red-600 hover:text-red-700 font-bold ml-auto text-xs underline cursor-pointer"
+              className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-bold ml-auto text-xs underline cursor-pointer"
             >
               Limpar filtros
             </button>
@@ -213,9 +213,9 @@ export function ClientesView({
       </div>
 
       {/* Lista de Clientes */}
-      <div className="bg-white rounded-xl border border-zinc-200 shadow-2xs divide-y divide-zinc-100 overflow-hidden">
+      <div className="bg-white dark:bg-zinc-900/90 dark:border-zinc-800 dark:shadow-2xl rounded-xl border border-zinc-200 shadow-2xs divide-y divide-zinc-100 dark:divide-zinc-800 overflow-hidden">
         {clientesFiltrados.length === 0 ? (
-          <div className="p-8 text-center text-zinc-500 text-sm">
+          <div className="p-8 text-center text-zinc-500 dark:text-zinc-400 text-sm">
             Nenhum cliente encontrado.
           </div>
         ) : (
@@ -223,27 +223,27 @@ export function ClientesView({
             <div
               key={cliente.id}
               onClick={() => onVerCliente(cliente)}
-              className="p-4 hover:bg-zinc-50/80 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer group"
+              className="p-4 hover:bg-zinc-50/80 dark:hover:bg-zinc-800/60 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer group"
             >
               {/* Informações do Cliente */}
               <div className="space-y-1 flex-1">
                 <div className="flex items-center justify-between sm:justify-start gap-2">
-                  <h3 className="text-sm font-bold text-zinc-900 group-hover:text-red-700 transition">
+                  <h3 className="text-sm font-bold text-zinc-900 dark:text-white group-hover:text-red-700 dark:group-hover:text-red-400 transition">
                     {cliente.nome_empresa}
                   </h3>
-                  <span className="text-[11px] font-semibold text-zinc-500 uppercase sm:hidden">
+                  <span className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase sm:hidden">
                     {cliente.cidade || 'Conselheiro Lafaiete'}
                   </span>
                 </div>
 
                 {cliente.nome_contato && (
-                  <p className="text-xs text-zinc-600">
+                  <p className="text-xs text-zinc-600 dark:text-zinc-300">
                     {cliente.nome_contato}
                   </p>
                 )}
 
                 {cliente.endereco && (
-                  <p className="text-xs text-zinc-400 line-clamp-1">
+                  <p className="text-xs text-zinc-400 dark:text-zinc-500 line-clamp-1">
                     {cliente.endereco}
                   </p>
                 )}
@@ -251,7 +251,7 @@ export function ClientesView({
 
               {/* Cidade no Desktop e Barra de Ações com Ícones */}
               <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0">
-                <span className="text-xs font-semibold text-zinc-500 uppercase hidden sm:block mr-2">
+                <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase hidden sm:block mr-2">
                   {cliente.cidade || 'Conselheiro Lafaiete'}
                 </span>
 
@@ -262,7 +262,7 @@ export function ClientesView({
                       href={`tel:${cliente.telefone_whatsapp.replace(/\D/g, '')}`}
                       onClick={(e) => e.stopPropagation()}
                       title="Ligar para o cliente"
-                      className="p-2 text-zinc-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                      className="p-2 text-zinc-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:text-blue-400 dark:hover:bg-zinc-800 rounded-lg transition"
                     >
                       <Phone className="w-4 h-4" />
                     </a>
@@ -276,9 +276,9 @@ export function ClientesView({
                       target="_blank"
                       rel="noopener noreferrer"
                       title="Conversar no WhatsApp"
-                      className="p-1.5 border-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50 rounded-xl transition flex items-center justify-center bg-white shadow-2xs"
+                      className="p-1.5 border-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50 dark:bg-zinc-950 dark:border-emerald-500/80 dark:hover:bg-emerald-950/40 rounded-xl transition flex items-center justify-center bg-white shadow-2xs"
                     >
-                      <WhatsAppIcon className="w-4 h-4 text-emerald-600" />
+                      <WhatsAppIcon className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                     </a>
                   )}
 
@@ -289,7 +289,7 @@ export function ClientesView({
                     target="_blank"
                     rel="noopener noreferrer"
                     title="Ver no Google Maps"
-                    className="p-2 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                    className="p-2 text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-zinc-800 rounded-lg transition"
                   >
                     <MapPin className="w-4 h-4" />
                   </a>
@@ -301,7 +301,7 @@ export function ClientesView({
                       onEditarCliente(cliente);
                     }}
                     title="Editar cliente"
-                    className="p-2 text-zinc-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                    className="p-2 text-zinc-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:text-blue-400 dark:hover:bg-zinc-800 rounded-lg transition"
                   >
                     <Edit className="w-4 h-4" />
                   </button>
@@ -313,7 +313,7 @@ export function ClientesView({
                       handleExcluir(cliente);
                     }}
                     title="Excluir cliente"
-                    className="p-2 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                    className="p-2 text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-zinc-800 rounded-lg transition"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>

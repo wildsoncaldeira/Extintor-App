@@ -72,15 +72,15 @@ export function ProdutosView({
   return (
     <div className="space-y-4">
       {/* Barra de Busca e Botões Superiores */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-4 rounded-xl border border-zinc-200 shadow-2xs">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-zinc-900/90 dark:border-zinc-800 dark:shadow-2xl p-4 rounded-xl border border-zinc-200 shadow-2xs">
         <div className="relative flex-1">
-          <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-3" />
+          <Search className="w-4 h-4 text-zinc-400 dark:text-zinc-500 absolute left-3 top-3" />
           <input
             type="text"
             placeholder="Search Produtos & Serviços (descrição, categoria ou peso kg)..."
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 border border-zinc-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 outline-none"
+            className="w-full pl-9 pr-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg text-sm focus:ring-2 focus:ring-red-500 outline-none dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500"
           />
         </div>
 
@@ -89,16 +89,16 @@ export function ProdutosView({
           <button
             onClick={onOpenGerenciarCategorias}
             title="Adicionar, editar e excluir categorias"
-            className="inline-flex items-center gap-1.5 px-3 py-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 text-xs font-bold rounded-lg transition shrink-0"
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-800 dark:text-zinc-300 dark:border dark:border-zinc-700 text-xs font-bold rounded-lg transition shrink-0 cursor-pointer"
           >
-            <Layers className="w-4 h-4 text-zinc-600" />
+            <Layers className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
             <span>Categorias ({categorias.length})</span>
           </button>
 
           {/* Botão + Add Novo Produto */}
           <button
             onClick={onOpenNovoProduto}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold text-sm rounded-lg shadow-sm transition shrink-0"
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold text-sm rounded-lg shadow-lg shadow-red-900/30 transition shrink-0 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Add</span>
@@ -109,7 +109,7 @@ export function ProdutosView({
       {/* Lista Agrupada por Categoria */}
       <div className="space-y-3">
         {listaCategorias.length === 0 ? (
-          <div className="bg-white p-8 rounded-xl border border-zinc-200 text-center text-zinc-500 text-sm">
+          <div className="bg-white dark:bg-zinc-900/90 dark:border-zinc-800 dark:shadow-2xl p-8 rounded-xl border border-zinc-200 text-center text-zinc-500 dark:text-zinc-400 text-sm">
             Nenhum produto cadastrado com este critério de busca.
           </div>
         ) : (
@@ -120,50 +120,50 @@ export function ProdutosView({
             return (
               <div
                 key={catNome}
-                className="bg-white rounded-xl border border-zinc-200 shadow-2xs overflow-hidden transition"
+                className="bg-white dark:bg-zinc-900/90 dark:border-zinc-800 dark:shadow-2xl rounded-xl border border-zinc-200 shadow-2xs overflow-hidden transition"
               >
                 {/* Cabeçalho da Categoria */}
                 <div
                   onClick={() => toggleSecao(catNome)}
-                  className="px-4 py-3 bg-zinc-50 hover:bg-zinc-100/80 cursor-pointer flex items-center justify-between border-b border-zinc-200/80 select-none"
+                  className="px-4 py-3 bg-zinc-50 hover:bg-zinc-100/80 dark:bg-zinc-950 dark:hover:bg-zinc-800/80 cursor-pointer flex items-center justify-between border-b border-zinc-200/80 dark:border-zinc-800 select-none transition"
                 >
                   <div className="flex items-center gap-2.5">
                     {estaAberta ? (
-                      <ChevronDown className="w-4 h-4 text-zinc-500" />
+                      <ChevronDown className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
                     ) : (
-                      <ChevronRight className="w-4 h-4 text-zinc-500" />
+                      <ChevronRight className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
                     )}
-                    <h3 className="text-sm font-bold text-zinc-900 tracking-tight">
+                    <h3 className="text-sm font-bold text-zinc-900 dark:text-white tracking-tight">
                       {catNome}
                     </h3>
                   </div>
 
-                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-zinc-200/70 text-zinc-700 font-mono">
+                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-zinc-200/70 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:border dark:border-zinc-700 font-mono">
                     {itens.length} {itens.length === 1 ? 'item' : 'itens'}
                   </span>
                 </div>
 
                 {/* Itens da Categoria */}
                 {estaAberta && (
-                  <div className="divide-y divide-zinc-100">
+                  <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
                     {itens.map((produto) => (
                       <div
                         key={produto.id}
-                        className="px-4 py-3 hover:bg-zinc-50/50 transition flex items-center justify-between gap-3 text-sm"
+                        className="px-4 py-3 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/50 transition flex items-center justify-between gap-3 text-sm"
                       >
                         <div className="space-y-0.5 pl-6">
-                          <p className="font-semibold text-zinc-900">
+                          <p className="font-semibold text-zinc-900 dark:text-white">
                             {produto.tipo_kg ? produto.tipo_kg : produto.descricao}
                           </p>
                           {produto.tipo_kg && produto.descricao !== catNome && (
-                            <p className="text-xs text-zinc-500">
+                            <p className="text-xs text-zinc-500 dark:text-zinc-400">
                               {produto.descricao}
                             </p>
                           )}
                         </div>
 
                         <div className="flex items-center gap-4 shrink-0">
-                          <span className="text-sm font-bold text-zinc-900">
+                          <span className="text-sm font-bold text-zinc-900 dark:text-white">
                             R$ {Number(produto.valor_unitario_padrao).toFixed(2).replace('.', ',')}
                           </span>
 
@@ -171,7 +171,7 @@ export function ProdutosView({
                             <button
                               onClick={() => onEditarProduto(produto)}
                               title="Editar produto"
-                              className="p-1.5 text-zinc-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                              className="p-1.5 text-zinc-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:text-blue-400 dark:hover:bg-zinc-800 rounded-lg transition"
                             >
                               <Edit className="w-4 h-4" />
                             </button>
@@ -179,7 +179,7 @@ export function ProdutosView({
                             <button
                               onClick={() => handleExcluir(produto)}
                               title="Excluir produto"
-                              className="p-1.5 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                              className="p-1.5 text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-zinc-800 rounded-lg transition"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
