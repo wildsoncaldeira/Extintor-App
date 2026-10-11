@@ -1,0 +1,342 @@
+'use client';
+
+import React, { useEffect } from 'react';
+import { Pedido } from '@/lib/types';
+import { WhatsAppIcon } from './WhatsAppIcon';
+import { PdfIcon } from './PdfIcon';
+import { Edit, Plus, X, MapPin, Phone, Building2, User, Calendar, FileText, Eye } from 'lucide-react';
+import { downloadPedidoPdf, openPedidoPdf, getPdfFilename } from '@/lib/pdfGenerator';
+
+interface ReciboModalProps {
+  pedido: Pedido | null;
+  autoPrint?: boolean;
+  zIndexClass?: string;
+  onClose: () => void;
+  onEditarPedido?: (pedido: Pedido) => void;
+  onAdicionarItem?: (pedido: Pedido) => void;
+  onAlterarStatus?: (pedido: Pedido) => void;
+  onVerCliente?: (clienteId: string) => void;
+}
+
+export function ReciboModal({
+  pedido,
+  autoPrint = false,
+  zIndexClass = 'z-50',
+  onClose,
+  onEditarPedido,
+  onAdicionarItem,
+  onAlterarStatus,
+  onVerCliente,
+}: ReciboModalProps) {
+  useEffect(() => {
+    if (autoPrint && pedido) {
+      downloadPedidoPdf(pedido);
+    }
+  }, [autoPrint, pedido]);
+
+  if (!pedido) return null;
+
+  const handleBaixarPdf = () => {
+    if (pedido) {
+      downloadPedidoPdf(pedido);
+    }
+  };
+
+  const getWhatsAppUrl = () => {
+    if (!pedido.telefone_whatsapp) return '#';
+    const cleanPhone = pedido.telefone_whatsapp.replace(/\D/g, '');
+    const phone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
+    const contato = pedido.nome_contato || pedido.nome_empresa;
+
+    let text = '';
+    if (pedido.status === 'Orçamento') {
+      text = `Olá ${contato}, o seu orçamento já está pronto! Segue o recibo do seu pedido número ${pedido.numero_pedido}.`;
+    } else if (pedido.status === 'Aprovado') {
+      text = `Olá ${contato}, o seu serviço já está pronto! Segue a Chave Pix para pagamento: ml.gomesilva@gmail.com`;
+    } else {
+      text = `Olá ${contato}, confirmamos o pagamento do seu pedido número ${pedido.numero_pedido}! Segue o comprovante quitado. Muito obrigado pela confiança!`;
+    }
+
+    return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+  };
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    return dateStr;
+  };
+
+  const getStatusBadge = () => {
+    switch (pedido.status) {
+      case 'Orçamento':
+        return 'bg-red-100 text-red-700 border-red-300';
+      case 'Aprovado':
+        return 'bg-blue-100 text-blue-700 border-blue-300';
+      case 'Pago':
+        return 'bg-emerald-100 text-emerald-700 border-emerald-300';
+    }
+  };
+
+  return (
+    <div 
+      className={`fixed inset-0 ${zIndexClass} flex items-center justify-center bg-black/60 p-2 sm:p-4 overflow-y-auto animate-modal-backdrop`}
+      onClick={onClose}
+    >
+      <div 
+        className="relative w-full max-w-3xl bg-white text-zinc-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] animate-modal-content"
+        onClick={(e) => e.stopPropagation()}
+      >
+        
+        {/* Barra superior de controle */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 bg-zinc-50 print:hidden">
+          <div className="flex items-center gap-3">
+            <span className="font-bold text-lg text-zinc-900">
+              Pedido #{pedido.numero_pedido}
+            </span>
+            <button
+              onClick={() => onAlterarStatus && onAlterarStatus(pedido)}
+              title="Clique para alterar status"
+              className={`px-3 py-1 rounded-full text-xs font-bold border transition hover:opacity-80 ${getStatusBadge()}`}
+            >
+              {pedido.status === 'Orçamento' ? '🔴 Orçamento' : pedido.status === 'Aprovado' ? '🔵 Aprovado' : '🟢 Pago'}
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {/* Botão Editar Pedido */}
+            {onEditarPedido && (
+              <button
+                onClick={() => onEditarPedido(pedido)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-zinc-700 bg-white hover:bg-zinc-100 border border-zinc-300 rounded-lg shadow-2xs transition"
+              >
+                <Edit className="w-3.5 h-3.5 text-blue-600" />
+                <span>Editar</span>
+              </button>
+            )}
+
+            {/* Botão WhatsApp Contorno Verde Oficial */}
+            {pedido.telefone_whatsapp && (
+              <a
+                href={getWhatsAppUrl()}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Conversar no WhatsApp"
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 text-xs font-bold text-emerald-600 bg-white hover:bg-emerald-50 border-2 border-emerald-500 rounded-full shadow-2xs transition"
+              >
+                <WhatsAppIcon className="w-4 h-4 text-emerald-600" />
+                <span>WhatsApp</span>
+              </a>
+            )}
+
+            {/* Botão com Ícone de PDF */}
+            <button
+              onClick={handleBaixarPdf}
+              title={`Baixar ${getPdfFilename(pedido.numero_pedido)}`}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg shadow-2xs transition"
+            >
+              <PdfIcon className="w-4 h-4" />
+              <span>Baixar PDF</span>
+            </button>
+
+            <button
+              onClick={onClose}
+              className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-200 rounded-lg transition"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Conteúdo do Detalhamento do Pedido */}
+        <div className="p-6 sm:p-8 overflow-y-auto space-y-6 text-sm" id="recibo-print-area">
+          
+          {/* Card com Informações do Pedido e Cliente (Nova UX Limpa) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            {/* Bloco do Pedido */}
+            <div className="bg-zinc-50 p-4 rounded-xl border border-zinc-200 space-y-2">
+              <div className="flex items-center justify-between border-b border-zinc-200/80 pb-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">
+                  Dados da Ordem
+                </span>
+                <span className="text-xs text-zinc-500 flex items-center gap-1 font-medium">
+                  <Calendar className="w-3.5 h-3.5" /> {formatDate(pedido.data_pedido)}
+                </span>
+              </div>
+              
+              <div className="pt-1 flex items-baseline justify-between">
+                <div>
+                  <span className="text-xs text-zinc-500">Número do Pedido:</span>
+                  <p className="text-xl font-black text-red-700">#{pedido.numero_pedido}</p>
+                </div>
+                <div>
+                  <span className="text-xs text-zinc-500">Status:</span>
+                  <p className="text-sm font-bold text-zinc-800">{pedido.status}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Bloco do Cliente */}
+            <div className="bg-zinc-50 p-4 rounded-xl border border-zinc-200 space-y-2">
+              <div className="flex items-center justify-between border-b border-zinc-200/80 pb-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 flex items-center gap-1">
+                  <Building2 className="w-3.5 h-3.5" /> Cliente
+                </span>
+                {onVerCliente && pedido.cliente_id && (
+                  <button
+                    onClick={() => onVerCliente(pedido.cliente_id)}
+                    className="whitespace-nowrap inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold text-red-700 bg-white hover:bg-red-50 border border-red-200 rounded-lg shadow-2xs transition shrink-0"
+                    title="Ver cadastro completo do cliente"
+                  >
+                    <Eye className="w-3.5 h-3.5 text-red-600" />
+                    <span>Ver Cliente</span>
+                  </button>
+                )}
+              </div>
+
+              <div>
+                <h4 className="text-sm font-bold text-zinc-900">
+                  {pedido.nome_empresa}
+                </h4>
+                {pedido.cnpj && (
+                  <p className="text-xs font-mono text-zinc-500 mt-0.5">
+                    CNPJ: {pedido.cnpj}
+                  </p>
+                )}
+                {pedido.nome_contato && (
+                  <p className="text-xs text-zinc-600 flex items-center gap-1 mt-0.5">
+                    <User className="w-3 h-3 text-zinc-400" /> Contato: {pedido.nome_contato}
+                  </p>
+                )}
+                {pedido.telefone_whatsapp && (
+                  <p className="text-xs text-zinc-600 flex items-center gap-1 mt-0.5">
+                    <Phone className="w-3 h-3 text-zinc-400" /> WhatsApp: {pedido.telefone_whatsapp}
+                  </p>
+                )}
+                {pedido.endereco && (
+                  <p className="text-xs text-zinc-500 flex items-center gap-1 mt-0.5">
+                    <MapPin className="w-3 h-3 text-zinc-400 shrink-0" /> {pedido.endereco} • {pedido.cidade}/{pedido.uf}
+                  </p>
+                )}
+              </div>
+            </div>
+
+          </div>
+
+          {/* Seção e Tabela de Itens */}
+          <div className="border border-zinc-200 rounded-xl overflow-hidden shadow-2xs">
+            <div className="bg-zinc-100/80 px-4 py-3 flex items-center justify-between border-b border-zinc-200">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-800 flex items-center gap-1.5">
+                <FileText className="w-4 h-4 text-zinc-500" />
+                Itens e Serviços Faturados ({pedido.itens?.length || 0})
+              </h3>
+
+              {onAdicionarItem && (
+                <button
+                  onClick={() => onAdicionarItem(pedido)}
+                  className="print:hidden text-xs font-bold text-red-600 hover:text-red-700 flex items-center gap-1"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Adicionar mais itens
+                </button>
+              )}
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs sm:text-sm">
+                <thead>
+                  <tr className="border-b border-zinc-200 text-zinc-500 bg-zinc-50 text-[11px] uppercase font-semibold">
+                    <th className="py-2.5 px-4">Descrição do Produto / Serviço</th>
+                    <th className="py-2.5 px-4 text-center">Quantidade</th>
+                    <th className="py-2.5 px-4 text-right">Valor Unitário</th>
+                    <th className="py-2.5 px-4 text-right">Total do Item</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-100 bg-white">
+                  {pedido.itens && pedido.itens.length > 0 ? (
+                    pedido.itens.map((item, idx) => (
+                      <tr key={item.id || idx} className="hover:bg-zinc-50/50">
+                        <td className="py-2.5 px-4">
+                          <div className="font-semibold text-zinc-900">
+                            {item.descricao_item}
+                          </div>
+                          {item.tipo_kg && (
+                            <span className="inline-block mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-mono font-medium bg-zinc-100 text-zinc-600">
+                              {item.tipo_kg}
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-2.5 px-4 text-center font-bold text-zinc-800">
+                          {item.quantidade}
+                        </td>
+                        <td className="py-2.5 px-4 text-right text-zinc-600">
+                          R$ {Number(item.valor_unitario).toFixed(2).replace('.', ',')}
+                        </td>
+                        <td className="py-2.5 px-4 text-right font-bold text-zinc-900">
+                          R$ {Number(item.valor_total_item).toFixed(2).replace('.', ',')}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={4} className="py-6 text-center text-zinc-400">
+                        Nenhum item adicionado a este pedido.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Total do Pedido */}
+            <div className="bg-zinc-50 border-t border-zinc-200 px-6 py-4 flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-zinc-600">
+                Valor Total do Pedido:
+              </span>
+              <span className="text-2xl font-black text-red-700">
+                R$ {Number(pedido.valor_total).toFixed(2).replace('.', ',')}
+              </span>
+            </div>
+          </div>
+
+          {/* Observações */}
+          {pedido.observacoes && (
+            <div className="p-4 bg-amber-50/70 border border-amber-200/80 rounded-xl">
+              <strong className="text-xs uppercase tracking-wider text-amber-900 block mb-1">
+                Observações do Pedido:
+              </strong>
+              <p className="text-xs text-zinc-800 whitespace-pre-line leading-relaxed">
+                {pedido.observacoes}
+              </p>
+            </div>
+          )}
+
+        </div>
+
+        {/* Rodapé do Modal */}
+        <div className="px-6 py-3.5 bg-zinc-50 border-t border-zinc-200 flex items-center justify-between print:hidden">
+          <div className="flex items-center gap-2">
+            {onEditarPedido && (
+              <button
+                onClick={() => onEditarPedido(pedido)}
+                className="px-3.5 py-2 text-xs font-bold text-zinc-700 bg-white hover:bg-zinc-100 border border-zinc-300 rounded-lg transition"
+              >
+                Editar Pedido Completo
+              </button>
+            )}
+          </div>
+
+          <button
+            onClick={onClose}
+            className="px-5 py-2 text-xs font-bold text-white bg-zinc-900 hover:bg-zinc-800 rounded-lg transition"
+          >
+            Fechar
+          </button>
+        </div>
+
+      </div>
+    </div>
+  );
+}
