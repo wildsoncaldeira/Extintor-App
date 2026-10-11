@@ -87,3 +87,37 @@ export interface Usuario {
   ultimo_login?: string | null;
   created_at?: string;
 }
+
+export function normalizarCidade(cidade?: string | null): string {
+  if (!cidade) return 'Conselheiro Lafaiete';
+  const limpo = cidade.trim();
+  const upper = limpo.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  if (upper.includes('CONSEHEIRO') || upper.includes('CONSELHEIRO') || upper.includes('LAFAIETE')) {
+    return 'Conselheiro Lafaiete';
+  }
+  if (upper === 'CARANDAI') {
+    return 'Carandaí';
+  }
+  if (upper === 'CONGONHAS') {
+    return 'Congonhas';
+  }
+  if (upper === 'CRISTIANO OTONI') {
+    return 'Cristiano Otoni';
+  }
+  if (upper === 'BELO VALE') {
+    return 'Belo Vale';
+  }
+  if (upper === 'OURO BRANCO') {
+    return 'Ouro Branco';
+  }
+  if (upper === 'BARBACENA') {
+    return 'Barbacena';
+  }
+  if (upper === 'RIO ESPERA') {
+    return 'Rio Espera';
+  }
+
+  return limpo.toLowerCase().replace(/(?:^|\s)\S/g, (a) => a.toUpperCase());
+}
+

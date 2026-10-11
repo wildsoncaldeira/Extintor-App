@@ -2,7 +2,7 @@
 
 import crypto from 'crypto';
 import { sql } from './db';
-import { Cliente, ProdutoServico, CategoriaProduto, Pedido, ItemPedido, StatusPedido, DashboardStats, Usuario } from './types';
+import { Cliente, ProdutoServico, CategoriaProduto, Pedido, ItemPedido, StatusPedido, DashboardStats, Usuario, normalizarCidade } from './types';
 import { revalidatePath } from 'next/cache';
 
 // ==========================================
@@ -302,7 +302,7 @@ export async function createCliente(data: Omit<Cliente, 'id'>): Promise<{ succes
         data.nome_contato || null,
         data.telefone_whatsapp || null,
         data.endereco || null,
-        data.cidade || 'Conselheiro Lafaiete',
+        normalizarCidade(data.cidade),
         data.uf || 'MG',
         data.cnpj || null,
       ]
@@ -328,7 +328,7 @@ export async function updateCliente(id: string, data: Partial<Cliente>): Promise
         data.nome_contato || null,
         data.telefone_whatsapp || null,
         data.endereco || null,
-        data.cidade || 'Conselheiro Lafaiete',
+        normalizarCidade(data.cidade),
         data.uf || 'MG',
         data.cnpj || null,
         id,

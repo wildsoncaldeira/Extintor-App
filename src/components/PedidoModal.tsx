@@ -188,7 +188,7 @@ export function PedidoModal({
         </div>
 
         {/* Formulário */}
-        <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-5 text-sm">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 overflow-y-auto space-y-4 sm:space-y-5 text-sm">
           {error && (
             <div className="p-3 bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-800/80 rounded-lg text-red-700 dark:text-red-300 text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
@@ -276,8 +276,8 @@ export function PedidoModal({
           </div>
 
           {/* Linha com Data e Status */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 min-w-0">
+            <div className="min-w-0">
               <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1">
                 Data do Pedido
               </label>
@@ -285,11 +285,11 @@ export function PedidoModal({
                 type="date"
                 value={dataPedido}
                 onChange={(e) => setDataPedido(e.target.value)}
-                className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm dark:bg-zinc-950 dark:text-white"
+                className="w-full min-w-0 max-w-full box-border px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm dark:bg-zinc-950 dark:text-white"
               />
             </div>
 
-            <div>
+            <div className="min-w-0">
               <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1">
                 Status do Pedido
               </label>

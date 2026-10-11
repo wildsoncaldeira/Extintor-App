@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Cliente, Pedido } from '@/lib/types';
+import { Cliente, Pedido, normalizarCidade } from '@/lib/types';
 import { deleteCliente } from '@/lib/actions';
 import { WhatsAppIcon } from './WhatsAppIcon';
-import { Search, SlidersHorizontal, Phone, MapPin, Edit, Trash2 } from 'lucide-react';
+import { Search, SlidersHorizontal, Phone, MapPin, Edit, Trash2, Loader2 } from 'lucide-react';
 import { FiltrosClientesModal, FiltrosClientes, FILTROS_CLIENTES_PADRAO } from './FiltrosClientesModal';
 
 interface ClientesViewProps {
@@ -28,12 +28,18 @@ export function ClientesView({
   const [filtros, setFiltros] = useState<FiltrosClientes>(FILTROS_CLIENTES_PADRAO);
   const [filtrosModalAberto, setFiltrosModalAberto] = useState(false);
   const [loadingAcao, setLoadingAcao] = useState<string | null>(null);
+  const [limiteExibicao, setLimiteExibicao] = useState(10);
+  const sentinelRef = React.useRef<HTMLDivElement | null>(null);
+
+  React.useEffect(() => {
+    setLimiteExibicao(10);
+  }, [busca, filtros]);
 
   const cidadesDisponiveis = useMemo(() => {
     const set = new Set<string>();
     clientes.forEach((c) => {
       if (c.cidade && c.cidade.trim()) {
-        set.add(c.cidade.trim());
+        set.add(normalizarCidade(c.cidade));
       }
     });
     return Array.from(set).sort((a, b) => a.localeCompare(b));
@@ -67,9 +73,9 @@ export function ClientesView({
 
         if (!matchBusca) return false;
 
-        // Cidade
+        // Cidade (com normalização para garantir match perfeito)
         if (filtros.cidade !== 'Todas') {
-          const cidadeCliente = (c.cidade || '').trim().toLowerCase();
+          const cidadeCliente = normalizarCidade(c.cidade).toLowerCase();
           if (cidadeCliente !== filtros.cidade.toLowerCase()) {
             return false;
           }
@@ -111,6 +117,28 @@ export function ClientesView({
         return 0;
       });
   }, [clientes, busca, filtros, clienteIdsComPedidos]);
+
+  const clientesVisiveis = useMemo(() => {
+    return clientesFiltrados.slice(0, limiteExibicao);
+  }, [clientesFiltrados, limiteExibicao]);
+
+  const temMais = limiteExibicao < clientesFiltrados.length;
+
+  React.useEffect(() => {
+    if (!sentinelRef.current || !temMais) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setLimiteExibicao((prev) => Math.min(prev + 10, clientesFiltrados.length));
+        }
+      },
+      { threshold: 0.1, rootMargin: '200px' }
+    );
+
+    observer.observe(sentinelRef.current);
+    return () => observer.disconnect();
+  }, [temMais, clientesFiltrados.length]);
 
   const getWhatsAppUrl = (telefone?: string | null) => {
     if (!telefone) return '#';
@@ -219,7 +247,7 @@ export function ClientesView({
             Nenhum cliente encontrado.
           </div>
         ) : (
-          clientesFiltrados.map((cliente) => (
+          clientesVisiveis.map((cliente) => (
             <div
               key={cliente.id}
               onClick={() => onVerCliente(cliente)}
@@ -324,6 +352,19 @@ export function ClientesView({
           ))
         )}
       </div>
+
+      {/* Sentinela de Infinite Scroll (Carregamento de 10 em 10) */}
+      {temMais && (
+        <div ref={sentinelRef} className="py-4 flex flex-col items-center justify-center text-xs text-zinc-500 dark:text-zinc-400 gap-1.5">
+          <Loader2 className="w-5 h-5 text-red-600 animate-spin" />
+          <span>Carregando mais clientes ({clientesVisiveis.length} de {clientesFiltrados.length})...</span>
+        </div>
+      )}
+      {!temMais && clientesFiltrados.length > 10 && (
+        <div className="py-3 text-center text-xs text-zinc-400 dark:text-zinc-500">
+          Todos os {clientesFiltrados.length} clientes foram listados.
+        </div>
+      )}
 
       {/* Pop-up de Filtros de Clientes */}
       <FiltrosClientesModal

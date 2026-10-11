@@ -91,59 +91,59 @@ export function ReciboModal({
       >
         
         {/* Barra superior de controle */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 print:hidden">
-          <div className="flex items-center gap-3">
-            <span className="font-bold text-lg text-zinc-900 dark:text-white">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 print:hidden gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <span className="font-bold text-base sm:text-lg text-zinc-900 dark:text-white truncate">
               Pedido #{pedido.numero_pedido}
             </span>
             <button
               onClick={() => onAlterarStatus && onAlterarStatus(pedido)}
               title="Clique para alterar status"
-              className={`px-3 py-1 rounded-full text-xs font-bold border transition hover:opacity-80 cursor-pointer ${getStatusBadge()}`}
+              className={`px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold border transition hover:opacity-80 cursor-pointer shrink-0 ${getStatusBadge()}`}
             >
               {pedido.status === 'Orçamento' ? '🔴 Orçamento' : pedido.status === 'Aprovado' ? '🔵 Aprovado' : '🟢 Pago'}
             </button>
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* Botão Editar Pedido */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* Botão Editar Pedido (Apenas Ícone) */}
             {onEditarPedido && (
               <button
                 onClick={() => onEditarPedido(pedido)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-950 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg shadow-2xs transition cursor-pointer"
+                title="Editar pedido"
+                className="p-2 text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-950 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg shadow-2xs transition cursor-pointer flex items-center justify-center"
               >
-                <Edit className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-                <span>Editar</span>
+                <Edit className="w-4 h-4 text-blue-600 dark:text-blue-400" />
               </button>
             )}
 
-            {/* Botão WhatsApp Contorno Verde Oficial */}
+            {/* Botão WhatsApp (Apenas Ícone) */}
             {pedido.telefone_whatsapp && (
               <a
                 href={getWhatsAppUrl()}
                 target="_blank"
                 rel="noopener noreferrer"
                 title="Conversar no WhatsApp"
-                className="inline-flex items-center gap-2 px-3.5 py-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-white dark:bg-zinc-950 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border-2 border-emerald-500 rounded-full shadow-2xs transition cursor-pointer"
+                className="p-2 text-emerald-600 dark:text-emerald-400 bg-white dark:bg-zinc-950 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border border-emerald-500 rounded-lg shadow-2xs transition cursor-pointer flex items-center justify-center"
               >
                 <WhatsAppIcon className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                <span>WhatsApp</span>
               </a>
             )}
 
-            {/* Botão com Ícone de PDF */}
+            {/* Botão PDF (Apenas Ícone) */}
             <button
               onClick={handleBaixarPdf}
               title={`Baixar ${getPdfFilename(pedido.numero_pedido)}`}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-red-700 dark:text-red-400 bg-red-50 dark:bg-zinc-950 hover:bg-red-100 dark:hover:bg-red-950/40 border border-red-200 dark:border-red-900/60 rounded-lg shadow-2xs transition cursor-pointer"
+              className="p-2 text-red-700 dark:text-red-400 bg-red-50 dark:bg-zinc-950 hover:bg-red-100 dark:hover:bg-red-950/40 border border-red-200 dark:border-red-900/60 rounded-lg shadow-2xs transition cursor-pointer flex items-center justify-center"
             >
               <PdfIcon className="w-4 h-4" />
-              <span>Baixar PDF</span>
             </button>
 
+            {/* Fechar */}
             <button
               onClick={onClose}
-              className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-200 dark:hover:text-zinc-200 dark:hover:bg-zinc-800 rounded-lg transition cursor-pointer"
+              title="Fechar"
+              className="p-2 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-200 dark:hover:text-zinc-200 dark:hover:bg-zinc-800 rounded-lg transition cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -151,7 +151,7 @@ export function ReciboModal({
         </div>
 
         {/* Conteúdo do Detalhamento do Pedido */}
-        <div className="p-6 sm:p-8 overflow-y-auto space-y-6 text-sm" id="recibo-print-area">
+        <div className="p-3.5 sm:p-6 sm:p-8 overflow-y-auto space-y-4 sm:space-y-6 text-sm" id="recibo-print-area">
           
           {/* Card com Informações do Pedido e Cliente (Nova UX Limpa) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -228,7 +228,7 @@ export function ReciboModal({
 
           {/* Seção e Tabela de Itens */}
           <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-2xs">
-            <div className="bg-zinc-100/80 dark:bg-zinc-950 px-4 py-3 flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800">
+            <div className="bg-zinc-100/80 dark:bg-zinc-950 px-3.5 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800">
               <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-800 dark:text-zinc-200 flex items-center gap-1.5">
                 <FileText className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
                 Itens e Serviços Faturados ({pedido.itens?.length || 0})
@@ -239,42 +239,42 @@ export function ReciboModal({
                   onClick={() => onAdicionarItem(pedido)}
                   className="print:hidden text-xs font-bold text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 flex items-center gap-1 cursor-pointer"
                 >
-                  <Plus className="w-3.5 h-3.5" /> Adicionar mais itens
+                  <Plus className="w-3.5 h-3.5" /> Adicionar itens
                 </button>
               )}
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs sm:text-sm">
+            <div className="w-full">
+              <table className="w-full text-left border-collapse text-xs sm:text-sm table-fixed">
                 <thead>
-                  <tr className="border-b border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-950 text-[11px] uppercase font-semibold">
-                    <th className="py-2.5 px-4">Descrição do Produto / Serviço</th>
-                    <th className="py-2.5 px-4 text-center">Quantidade</th>
-                    <th className="py-2.5 px-4 text-right">Valor Unitário</th>
-                    <th className="py-2.5 px-4 text-right">Total do Item</th>
+                  <tr className="border-b border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-950 text-[10px] sm:text-[11px] uppercase font-semibold">
+                    <th className="py-2.5 px-2 sm:px-4 w-[46%] sm:w-auto">Item</th>
+                    <th className="py-2.5 px-1 sm:px-4 text-center w-[14%] sm:w-20 whitespace-nowrap">Qtd</th>
+                    <th className="py-2.5 px-1 sm:px-4 text-right w-[20%] sm:w-28 whitespace-nowrap">Unit.</th>
+                    <th className="py-2.5 px-2 sm:px-4 text-right w-[20%] sm:w-32 whitespace-nowrap">Total</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800 bg-white dark:bg-zinc-900">
                   {pedido.itens && pedido.itens.length > 0 ? (
                     pedido.itens.map((item, idx) => (
                       <tr key={item.id || idx} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/50">
-                        <td className="py-2.5 px-4">
-                          <div className="font-semibold text-zinc-900 dark:text-white">
+                        <td className="py-2 px-2 sm:px-4 break-words">
+                          <div className="font-semibold text-zinc-900 dark:text-white leading-tight">
                             {item.descricao_item}
                           </div>
                           {item.tipo_kg && (
-                            <span className="inline-block mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-mono font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">
+                            <span className="inline-block mt-0.5 px-1.5 py-0.2 rounded text-[9px] sm:text-[10px] font-mono font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">
                               {item.tipo_kg}
                             </span>
                           )}
                         </td>
-                        <td className="py-2.5 px-4 text-center font-bold text-zinc-800 dark:text-zinc-200">
+                        <td className="py-2 px-1 sm:px-4 text-center font-bold text-zinc-800 dark:text-zinc-200 whitespace-nowrap">
                           {item.quantidade}
                         </td>
-                        <td className="py-2.5 px-4 text-right text-zinc-600 dark:text-zinc-400">
+                        <td className="py-2 px-1 sm:px-4 text-right text-zinc-600 dark:text-zinc-400 whitespace-nowrap text-[11px] sm:text-xs">
                           R$ {Number(item.valor_unitario).toFixed(2).replace('.', ',')}
                         </td>
-                        <td className="py-2.5 px-4 text-right font-bold text-zinc-900 dark:text-white">
+                        <td className="py-2 px-2 sm:px-4 text-right font-bold text-zinc-900 dark:text-white whitespace-nowrap text-[11px] sm:text-xs">
                           R$ {Number(item.valor_total_item).toFixed(2).replace('.', ',')}
                         </td>
                       </tr>
@@ -291,11 +291,11 @@ export function ReciboModal({
             </div>
 
             {/* Total do Pedido */}
-            <div className="bg-zinc-50 dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800 px-6 py-4 flex items-center justify-between">
+            <div className="bg-zinc-50 dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800 px-3.5 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
                 Valor Total do Pedido:
               </span>
-              <span className="text-2xl font-black text-red-700 dark:text-red-400">
+              <span className="text-xl sm:text-2xl font-black text-red-700 dark:text-red-400">
                 R$ {Number(pedido.valor_total).toFixed(2).replace('.', ',')}
               </span>
             </div>

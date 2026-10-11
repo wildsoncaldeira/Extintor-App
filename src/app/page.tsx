@@ -249,31 +249,31 @@ export default function Home() {
         : 'bg-zinc-100 text-zinc-900'
     }`}>
       
-      {/* SIDEBAR DESKTOP */}
-      <aside className={`hidden md:flex flex-col w-64 border-r shrink-0 select-none transition-colors duration-200 ${
+      {/* SIDEBAR DESKTOP (Fixa no topo da tela, nunca rola para fora) */}
+      <aside className={`hidden md:flex flex-col w-72 h-screen sticky top-0 border-r shrink-0 select-none overflow-hidden transition-colors duration-200 z-30 ${
         temaEscuro
-          ? 'bg-zinc-900/90 border-zinc-800 backdrop-blur-md text-zinc-100 shadow-2xl'
-          : 'bg-white border-zinc-200 text-zinc-900'
+          ? 'bg-zinc-900/95 border-zinc-800 backdrop-blur-md text-zinc-100 shadow-2xl'
+          : 'bg-white border-zinc-200 text-zinc-900 shadow-sm'
       }`}>
         {/* Logo / Header */}
-        <div className={`p-5 border-b flex items-center gap-3 ${
+        <div className={`p-5 border-b flex items-center gap-3 shrink-0 ${
           temaEscuro ? 'border-zinc-800' : 'border-zinc-200'
         }`}>
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-red-600 to-red-500 text-white flex items-center justify-center shadow-lg shadow-red-900/40 border border-red-400/30">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-red-600 to-red-500 text-white flex items-center justify-center shadow-lg shadow-red-900/40 border border-red-400/30 shrink-0">
             <Flame className="w-6 h-6 animate-pulse" />
           </div>
-          <div>
-            <h1 className="text-sm font-black tracking-tight text-zinc-900 dark:text-white leading-tight">
+          <div className="min-w-0">
+            <h1 className="text-sm font-black tracking-tight text-zinc-900 dark:text-white leading-tight truncate">
               Recarga de Extintores
             </h1>
-            <p className="text-[11px] text-red-500 dark:text-red-400 font-semibold uppercase tracking-wider">
+            <p className="text-[11px] text-red-500 dark:text-red-400 font-semibold uppercase tracking-wider truncate">
               AVCB • Lafaiete e Região
             </p>
           </div>
         </div>
 
         {/* Links de Navegação */}
-        <nav className="p-3 space-y-1.5 flex-1">
+        <nav className="p-3 space-y-1.5 flex-1 overflow-y-auto">
           <button
             onClick={() => setAbaAtiva('pedidos')}
             className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer ${
@@ -286,9 +286,9 @@ export default function Home() {
                 : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 border border-transparent'
             }`}
           >
-            <FileEdit className={`w-4 h-4 ${abaAtiva === 'pedidos' ? 'text-red-500' : 'text-zinc-400'}`} />
-            <span>Pedidos</span>
-            <span className={`ml-auto text-xs font-semibold px-2 py-0.5 rounded-full ${
+            <FileEdit className={`w-4 h-4 shrink-0 ${abaAtiva === 'pedidos' ? 'text-red-500' : 'text-zinc-400'}`} />
+            <span className="whitespace-nowrap font-bold">Pedidos</span>
+            <span className={`ml-auto text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${
               temaEscuro ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-100 text-zinc-600'
             }`}>
               {pedidos.length}
@@ -307,9 +307,9 @@ export default function Home() {
                 : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 border border-transparent'
             }`}
           >
-            <Users className={`w-4 h-4 ${abaAtiva === 'clientes' ? 'text-red-500' : 'text-zinc-400'}`} />
-            <span>Clientes</span>
-            <span className={`ml-auto text-xs font-semibold px-2 py-0.5 rounded-full ${
+            <Users className={`w-4 h-4 shrink-0 ${abaAtiva === 'clientes' ? 'text-red-500' : 'text-zinc-400'}`} />
+            <span className="whitespace-nowrap font-bold">Clientes</span>
+            <span className={`ml-auto text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${
               temaEscuro ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-100 text-zinc-600'
             }`}>
               {clientes.length}
@@ -328,9 +328,9 @@ export default function Home() {
                 : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 border border-transparent'
             }`}
           >
-            <Package className={`w-4 h-4 ${abaAtiva === 'produtos' ? 'text-red-500' : 'text-zinc-400'}`} />
-            <span>Produtos & Serviços</span>
-            <span className={`ml-auto text-xs font-semibold px-2 py-0.5 rounded-full ${
+            <Package className={`w-4 h-4 shrink-0 ${abaAtiva === 'produtos' ? 'text-red-500' : 'text-zinc-400'}`} />
+            <span className="whitespace-nowrap font-bold">Produtos & Serviços</span>
+            <span className={`ml-auto text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${
               temaEscuro ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-100 text-zinc-600'
             }`}>
               {produtos.length}
@@ -349,13 +349,13 @@ export default function Home() {
                 : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 border border-transparent'
             }`}
           >
-            <LayoutDashboard className={`w-4 h-4 ${abaAtiva === 'dashboard' ? 'text-red-500' : 'text-zinc-400'}`} />
-            <span>Dashboard</span>
+            <LayoutDashboard className={`w-4 h-4 shrink-0 ${abaAtiva === 'dashboard' ? 'text-red-500' : 'text-zinc-400'}`} />
+            <span className="whitespace-nowrap font-bold">Dashboard</span>
           </button>
         </nav>
 
-        {/* ÁREA INFERIOR DA SIDEBAR */}
-        <div className={`p-3 space-y-2.5 border-t ${temaEscuro ? 'border-zinc-800 bg-zinc-950/40' : 'border-zinc-200 bg-zinc-50'}`}>
+        {/* ÁREA INFERIOR DA SIDEBAR (Sempre visível no rodapé, sem rolagem) */}
+        <div className={`p-3 space-y-2.5 border-t shrink-0 ${temaEscuro ? 'border-zinc-800 bg-zinc-950/40' : 'border-zinc-200 bg-zinc-50'}`}>
           
           {/* 1. SELETOR DE MODO DARK / LIGHT NO MENU */}
           <button
@@ -511,14 +511,14 @@ export default function Home() {
         {/* Barra de Título Superior */}
         <div className="hidden md:flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-black tracking-tight capitalize text-zinc-900 dark:text-white">
+            <h2 className={`text-2xl font-black tracking-tight capitalize ${temaEscuro ? 'text-white' : 'text-zinc-900'} dark:text-white`}>
               {abaAtiva === 'pedidos' && 'Ordens de Serviço / Pedidos'}
               {abaAtiva === 'clientes' && 'Gestão de Clientes'}
               {abaAtiva === 'produtos' && 'Catálogo de Produtos & Serviços'}
               {abaAtiva === 'dashboard' && 'Painel de Desempenho & Faturamento'}
             </h2>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-              Mário Luiz Gomes da Silva • Execução de Projetos AVCB • Conectado como <strong className="text-zinc-700 dark:text-zinc-200 font-semibold">{usuarioLogado.nome}</strong>
+            <p className={`text-xs mt-0.5 ${temaEscuro ? 'text-zinc-400' : 'text-zinc-500'} dark:text-zinc-400`}>
+              Mário Luiz Gomes da Silva • Execução de Projetos AVCB • Conectado como <strong className={`font-semibold ${temaEscuro ? 'text-zinc-200' : 'text-zinc-800'} dark:text-zinc-200`}>{usuarioLogado.nome}</strong>
             </p>
           </div>
 

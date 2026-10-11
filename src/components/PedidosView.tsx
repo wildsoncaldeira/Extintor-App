@@ -32,6 +32,12 @@ export function PedidosView({
   const [filtros, setFiltros] = useState<FiltrosPedidos>(FILTROS_PEDIDOS_PADRAO);
   const [filtrosModalAberto, setFiltrosModalAberto] = useState(false);
   const [baixandoPdfId, setBaixandoPdfId] = useState<string | null>(null);
+  const [limiteExibicao, setLimiteExibicao] = useState(10);
+  const sentinelRef = React.useRef<HTMLDivElement | null>(null);
+
+  React.useEffect(() => {
+    setLimiteExibicao(10);
+  }, [busca, filtros]);
 
   const filtrosAtivosCount =
     (filtros.status !== 'Todos' ? 1 : 0) +
@@ -100,6 +106,25 @@ export function PedidosView({
       return 0;
     });
 
+  const pedidosVisiveis = pedidosFiltrados.slice(0, limiteExibicao);
+  const temMais = limiteExibicao < pedidosFiltrados.length;
+
+  React.useEffect(() => {
+    if (!sentinelRef.current || !temMais) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setLimiteExibicao((prev) => Math.min(prev + 10, pedidosFiltrados.length));
+        }
+      },
+      { threshold: 0.1, rootMargin: '200px' }
+    );
+
+    observer.observe(sentinelRef.current);
+    return () => observer.disconnect();
+  }, [temMais, pedidosFiltrados.length]);
+
   const getWhatsAppUrl = (p: Pedido) => {
     if (!p.telefone_whatsapp) return '#';
     const cleanPhone = p.telefone_whatsapp.replace(/\D/g, '');
@@ -160,8 +185,9 @@ export function PedidosView({
     <div className="space-y-4">
       {/* Barra de Busca e Botão Filtros */}
       <div className="bg-white dark:bg-zinc-900/90 dark:border-zinc-800 dark:shadow-2xl p-4 rounded-xl border border-zinc-200 shadow-2xs space-y-3">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-          <div className="relative flex-1">
+        {/* Linha 1: Campo de Busca + Botão Filtros */}
+        <div className="flex items-center justify-between gap-2.5">
+          <div className="relative flex-1 min-w-0">
             <Search className="w-4 h-4 text-zinc-400 dark:text-zinc-500 absolute left-3 top-3" />
             <input
               type="text"
@@ -172,43 +198,41 @@ export function PedidosView({
             />
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* Filtros de status rápido */}
-            <div className="flex bg-zinc-100 dark:bg-zinc-950 dark:border dark:border-zinc-800 p-1 rounded-lg text-xs font-semibold">
-              {(['Todos', 'Orçamento', 'Aprovado', 'Pago'] as const).map((st) => (
-                <button
-                  key={st}
-                  onClick={() => setFiltros((prev) => ({ ...prev, status: st }))}
-                  className={`px-3 py-1.5 rounded-md transition cursor-pointer ${
-                    filtros.status === st
-                      ? 'bg-white text-zinc-900 shadow-2xs dark:bg-zinc-800 dark:text-white dark:shadow-none'
-                      : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200'
-                  }`}
-                >
-                  {st === 'Orçamento' ? '🔴 Orçamento' : st === 'Aprovado' ? '🔵 Aprovado' : st === 'Pago' ? '🟢 Pago' : 'Todos'}
-                </button>
-              ))}
-            </div>
+          {/* Botão de Filtros */}
+          <button
+            onClick={() => setFiltrosModalAberto(true)}
+            className={`inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-2 rounded-lg font-bold text-xs sm:text-sm transition shrink-0 border cursor-pointer ${
+              filtrosAtivosCount > 0
+                ? 'bg-red-50 text-red-700 border-red-300 shadow-2xs hover:bg-red-100 dark:bg-red-950/60 dark:text-red-300 dark:border-red-800/80'
+                : 'bg-zinc-50 hover:bg-zinc-100 text-zinc-700 border-zinc-300 dark:bg-zinc-950 dark:hover:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700'
+            }`}
+            title="Abrir opções de filtro"
+          >
+            <SlidersHorizontal className="w-4 h-4 text-current" />
+            <span>Filtros</span>
+            {filtrosAtivosCount > 0 && (
+              <span className="w-4.5 h-4.5 rounded-full bg-red-600 text-white text-[10px] font-black flex items-center justify-center">
+                {filtrosAtivosCount}
+              </span>
+            )}
+          </button>
+        </div>
 
-            {/* Botão de Filtros (Substitui o botão de adicionar) */}
+        {/* Linha 2: Seletor de Status Rápido (100% de largura, sem corte lateral) */}
+        <div className="grid grid-cols-4 bg-zinc-100 dark:bg-zinc-950 dark:border dark:border-zinc-800 p-1 rounded-xl text-xs font-semibold gap-1">
+          {(['Todos', 'Orçamento', 'Aprovado', 'Pago'] as const).map((st) => (
             <button
-              onClick={() => setFiltrosModalAberto(true)}
-              className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-lg font-bold text-sm transition shrink-0 border cursor-pointer ${
-                filtrosAtivosCount > 0
-                  ? 'bg-red-50 text-red-700 border-red-300 shadow-2xs hover:bg-red-100 dark:bg-red-950/60 dark:text-red-300 dark:border-red-800/80'
-                  : 'bg-zinc-50 hover:bg-zinc-100 text-zinc-700 border-zinc-300 dark:bg-zinc-950 dark:hover:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700'
+              key={st}
+              onClick={() => setFiltros((prev) => ({ ...prev, status: st }))}
+              className={`py-1.5 px-1 rounded-lg transition text-center truncate cursor-pointer text-[11px] sm:text-xs ${
+                filtros.status === st
+                  ? 'bg-white text-zinc-900 shadow-2xs font-bold dark:bg-zinc-800 dark:text-white dark:shadow-none'
+                  : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200'
               }`}
-              title="Abrir opções de filtro"
             >
-              <SlidersHorizontal className="w-4 h-4 text-current" />
-              <span>Filtros</span>
-              {filtrosAtivosCount > 0 && (
-                <span className="w-5 h-5 rounded-full bg-red-600 text-white text-[11px] font-black flex items-center justify-center">
-                  {filtrosAtivosCount}
-                </span>
-              )}
+              {st === 'Orçamento' ? '🔴 Orçamento' : st === 'Aprovado' ? '🔵 Aprovado' : st === 'Pago' ? '🟢 Pago' : 'Todos'}
             </button>
-          </div>
+          ))}
         </div>
 
         {/* Badges de filtros ativos */}
@@ -252,7 +276,7 @@ export function PedidosView({
             Nenhum pedido encontrado.
           </div>
         ) : (
-          pedidosFiltrados.map((pedido) => (
+          pedidosVisiveis.map((pedido) => (
             <div
               key={pedido.id}
               onClick={() => handleAbrirDetalhes(pedido)}
@@ -362,6 +386,19 @@ export function PedidosView({
           ))
         )}
       </div>
+
+      {/* Sentinela de Infinite Scroll (Carregamento de 10 em 10) */}
+      {temMais && (
+        <div ref={sentinelRef} className="py-4 flex flex-col items-center justify-center text-xs text-zinc-500 dark:text-zinc-400 gap-1.5">
+          <Loader2 className="w-5 h-5 text-red-600 animate-spin" />
+          <span>Carregando mais pedidos ({pedidosVisiveis.length} de {pedidosFiltrados.length})...</span>
+        </div>
+      )}
+      {!temMais && pedidosFiltrados.length > 10 && (
+        <div className="py-3 text-center text-xs text-zinc-400 dark:text-zinc-500">
+          Todos os {pedidosFiltrados.length} pedidos foram listados.
+        </div>
+      )}
 
       {/* Pop-up de Filtros de Pedidos */}
       <FiltrosPedidosModal
