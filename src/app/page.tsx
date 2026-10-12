@@ -112,6 +112,7 @@ export default function Home() {
   // Estados dos Modais
   const [pedidoModalAberto, setPedidoModalAberto] = useState(false);
   const [pedidoParaEditar, setPedidoParaEditar] = useState<Pedido | null>(null);
+  const [clienteInicialParaPedido, setClienteInicialParaPedido] = useState<{ id?: string; nome?: string } | null>(null);
 
   const [clienteModalAberto, setClienteModalAberto] = useState(false);
   const [clienteParaEditar, setClienteParaEditar] = useState<Cliente | null>(null);
@@ -740,6 +741,7 @@ export default function Home() {
               }
             }}
             onCriarNovoPedido={(clienteId, clienteNome) => {
+              setClienteInicialParaPedido({ id: clienteId, nome: clienteNome });
               setPedidoParaEditar(null);
               setPedidoModalAberto(true);
             }}
@@ -874,15 +876,19 @@ export default function Home() {
       {pedidoModalAberto && (
         <PedidoModal
           pedidoParaEditar={pedidoParaEditar}
+          clienteInicialId={clienteInicialParaPedido?.id}
+          clienteInicialNome={clienteInicialParaPedido?.nome}
           clientes={clientes}
           produtos={produtos}
           onClose={() => {
             setPedidoModalAberto(false);
             setPedidoParaEditar(null);
+            setClienteInicialParaPedido(null);
           }}
           onSaved={async () => {
             setPedidoModalAberto(false);
             setPedidoParaEditar(null);
+            setClienteInicialParaPedido(null);
             if (pedidoRecibo) {
               const detalhado = await getPedidoDetalhes(pedidoRecibo.id);
               if (detalhado) {

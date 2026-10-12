@@ -265,7 +265,7 @@ export async function agendarVendaFutura(pedidoId: string, dataVendaFutura: stri
       await sql.query(`
         INSERT INTO public.crm_oportunidades (
           titulo, cliente_id, cliente_nome, cliente_telefone, valor, etapa, pedido_id, data_previsao, data_venda_futura
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        ) VALUES ($1, $2, $3, $4, $5, $6, NULL, $7, $8)
       `, [
         `Renovação Extintores - ${ped.nome_empresa}`,
         ped.cliente_id,
@@ -273,7 +273,6 @@ export async function agendarVendaFutura(pedidoId: string, dataVendaFutura: stri
         ped.telefone_whatsapp,
         Number(ped.valor_total) || 0,
         'venda_futura',
-        pedidoId,
         dataVendaFutura,
         dataVendaFutura
       ]);
@@ -441,6 +440,13 @@ export async function updatePedido(
 
 export async function deletePedido(id: string): Promise<boolean> {
   try {
+    // Exclui oportunidades do CRM geradas a partir deste pedido
+    try {
+      await sql.query(`DELETE FROM public.crm_oportunidades WHERE pedido_id = $1`, [id]);
+    } catch (crmErr) {
+      console.warn('Erro ao excluir oportunidade vinculada ao pedido:', crmErr);
+    }
+
     await sql.query(`DELETE FROM public.pedidos WHERE id = $1`, [id]);
     revalidatePath('/');
     return true;
@@ -1691,3 +1697,84 @@ export async function deleteCrmOportunidade(id: string): Promise<{ success: bool
     return { success: false, error: err?.message || 'Erro ao deletar oportunidade CRM' };
   }
 }
+
+// Analisa clientes com datas no nome e gera oportunidades de Venda Futura automaticamente
+export async function processarDatasNomesClientes(): Promise<{ success: boolean; processados: number; error?: string }> {
+  try {
+    const MESES_MAP: Record<string, string> = {
+      'JAN': '01', 'JANEIRO': '01',
+      'FEV': '02', 'FEVEREIRO': '02',
+      'MAR': '03', 'MARCO': '03', 'MARÇO': '03',
+      'ABR': '04', 'ABRIL': '04',
+      'MAI': '05', 'MAIO': '05',
+      'JUN': '06', 'JUNHO': '06',
+      'JUL': '07', 'JULHO': '07',
+      'AGO': '08', 'AGOSTO': '08',
+      'SET': '09', 'SETEMBRO': '09',
+      'OUT': '10', 'OUTUBRO': '10',
+      'NOV': '11', 'NOVEMBRO': '11',
+      'DEZ': '12', 'DEZEMBRO': '12'
+    };
+
+    const regex = /[\s\-\(]*\(+(?:VENCE\s+EM\s+)?([A-Za-zÇç]+)[\s\-\/]*(\d{2,4})\)+/i;
+
+    const clientes = await sql.query(`
+      SELECT id, nome_empresa, telefone_whatsapp,
+        (SELECT valor_total FROM public.pedidos WHERE cliente_id = public.clientes.id ORDER BY data_pedido DESC LIMIT 1) as ultimo_valor
+      FROM public.clientes
+      ORDER BY nome_empresa ASC
+    `);
+
+    let total = 0;
+
+    for (const c of clientes as any[]) {
+      const match = c.nome_empresa.match(regex);
+      if (!match) continue;
+
+      const mesStr = match[1].toUpperCase();
+      const anoStr = match[2];
+      const mesNum = MESES_MAP[mesStr];
+      if (!mesNum) continue;
+
+      const anoCompleto = anoStr.length === 2 ? `20${anoStr}` : anoStr;
+      const dataFormatada = `${anoCompleto}-${mesNum}-10`;
+      const nomeLimpo = c.nome_empresa.replace(regex, '').replace(/\s*-\s*$/, '').trim();
+
+      // Atualiza nome do cliente
+      await sql.query(`UPDATE public.clientes SET nome_empresa = $1, updated_at = now() WHERE id = $2`, [nomeLimpo, c.id]);
+
+      // Verifica se já existe oportunidade de Venda Futura para este cliente
+      const opExistente = await sql.query(
+        `SELECT id FROM public.crm_oportunidades WHERE cliente_id = $1 AND etapa = 'venda_futura'`,
+        [c.id]
+      );
+
+      const valorEstimado = Number(c.ultimo_valor) || 0;
+      const tituloOp = `Renovação Extintores - ${nomeLimpo}`;
+      const obs = `Oportunidade gerada automaticamente a partir da data de renovação registrada no cadastro (${c.nome_empresa})`;
+
+      if (opExistente && (opExistente as any[]).length > 0) {
+        await sql.query(
+          `UPDATE public.crm_oportunidades SET titulo = $1, cliente_nome = $2, data_previsao = $3, data_venda_futura = $4, pedido_id = NULL, updated_at = now() WHERE id = $5`,
+          [tituloOp, nomeLimpo, dataFormatada, dataFormatada, (opExistente as any[])[0].id]
+        );
+      } else {
+        await sql.query(
+          `INSERT INTO public.crm_oportunidades (
+            titulo, cliente_id, cliente_nome, cliente_telefone, valor, etapa, pedido_id, data_previsao, data_venda_futura, observacoes
+          ) VALUES ($1, $2, $3, $4, $5, 'venda_futura', NULL, $6, $7, $8)`,
+          [tituloOp, c.id, nomeLimpo, c.telefone_whatsapp || null, valorEstimado, dataFormatada, dataFormatada, obs]
+        );
+      }
+
+      total++;
+    }
+
+    revalidatePath('/');
+    return { success: true, processados: total };
+  } catch (err: any) {
+    console.error('Erro ao processar datas nos nomes dos clientes:', err);
+    return { success: false, processados: 0, error: err?.message || 'Erro ao processar datas' };
+  }
+}
+

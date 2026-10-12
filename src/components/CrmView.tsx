@@ -986,6 +986,18 @@ export function CrmView({ onAbrirPedido, onCriarNovoPedido, onVerCliente }: CrmV
                                     </span>
                                   )}
                                 </div>
+
+                                {/* Botão Criar Pedido */}
+                                {onCriarNovoPedido && op.etapa !== 'pago' && !op.pedido_id && (
+                                  <button
+                                    type="button"
+                                    onClick={() => onCriarNovoPedido(op.cliente_id || undefined, op.cliente_nome)}
+                                    className="w-full mt-1 py-1 text-[10px] font-bold text-center rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 transition flex items-center justify-center gap-1 cursor-pointer"
+                                  >
+                                    <ShoppingBag className="w-3 h-3" />
+                                    <span>Criar Pedido deste Cliente</span>
+                                  </button>
+                                )}
                               </div>
                             );
                           })

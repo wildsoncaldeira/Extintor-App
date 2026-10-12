@@ -14,6 +14,8 @@ interface PedidoModalProps {
   onClose: () => void;
   onSaved: () => void;
   onOpenNovoCliente?: () => void;
+  clienteInicialId?: string;
+  clienteInicialNome?: string;
 }
 
 interface ItemForm {
@@ -177,14 +179,16 @@ export function PedidoModal({
   onClose,
   onSaved,
   onOpenNovoCliente,
+  clienteInicialId,
+  clienteInicialNome,
 }: PedidoModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Campos do Pedido
   const [proximoNumero, setProximoNumero] = useState<number>(1281);
-  const [clienteId, setClienteId] = useState<string>(pedidoParaEditar?.cliente_id || '');
-  const [clienteBusca, setClienteBusca] = useState<string>('');
+  const [clienteId, setClienteId] = useState<string>(pedidoParaEditar?.cliente_id || clienteInicialId || '');
+  const [clienteBusca, setClienteBusca] = useState<string>(clienteInicialNome || '');
   const [clienteDropdownAberto, setClienteDropdownAberto] = useState(false);
 
   // Datas: Pedido e Entrega
@@ -221,6 +225,15 @@ export function PedidoModal({
       const hoje = new Date().toISOString().split('T')[0];
       setDataPedido(hoje);
       setDataEntrega(hoje);
+      if (clienteInicialId) {
+        setClienteId(clienteInicialId);
+        const cli = clientes.find((c) => c.id === clienteInicialId || c.legacy_id === clienteInicialId);
+        if (cli) {
+          setClienteBusca(cli.nome_empresa);
+        } else if (clienteInicialNome) {
+          setClienteBusca(clienteInicialNome);
+        }
+      }
     } else {
       setProximoNumero(pedidoParaEditar.numero_pedido);
       setDescontoTipo((pedidoParaEditar.desconto_tipo as any) || 'reais');
@@ -243,7 +256,7 @@ export function PedidoModal({
         );
       }
     }
-  }, [pedidoParaEditar, clientes]);
+  }, [pedidoParaEditar, clientes, clienteInicialId, clienteInicialNome]);
 
   const clientesFiltrados = clientes.filter(
     (c) =>
@@ -311,6 +324,10 @@ export function PedidoModal({
 
     try {
       let pedidoIdFinal = '';
+      const itensValidados = itens.map((it) => ({
+        ...it,
+        quantidade: Math.max(1, Number(it.quantidade) || 1),
+      }));
 
       if (pedidoParaEditar) {
         const res = await updatePedido(pedidoParaEditar.id, {
@@ -321,7 +338,7 @@ export function PedidoModal({
           observacoes,
           desconto_tipo: descontoTipo,
           desconto_valor: Number(descontoValor),
-          itens,
+          itens: itensValidados,
         });
         if (!res.success) throw new Error(res.error);
         pedidoIdFinal = pedidoParaEditar.id;
@@ -334,7 +351,7 @@ export function PedidoModal({
           observacoes,
           desconto_tipo: descontoTipo,
           desconto_valor: Number(descontoValor),
-          itens,
+          itens: itensValidados,
         });
         if (!res.success) throw new Error(res.error);
         pedidoIdFinal = res.id || '';
@@ -589,8 +606,23 @@ export function PedidoModal({
                             type="number"
                             min="1"
                             step="1"
-                            value={item.quantidade}
-                            onChange={(e) => atualizarItem(idx, 'quantidade', Math.max(1, parseFloat(e.target.value) || 1))}
+                            value={item.quantidade === 0 ? '' : item.quantidade}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val === '') {
+                                atualizarItem(idx, 'quantidade', 0);
+                              } else {
+                                const parsed = parseInt(val, 10);
+                                if (!isNaN(parsed)) {
+                                  atualizarItem(idx, 'quantidade', Math.max(0, parsed));
+                                }
+                              }
+                            }}
+                            onBlur={() => {
+                              if (!item.quantidade || item.quantidade < 1) {
+                                atualizarItem(idx, 'quantidade', 1);
+                              }
+                            }}
                             className="w-14 sm:w-16 px-2 py-1.5 text-xs text-center border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-1 focus:ring-red-500 outline-none dark:bg-zinc-950 dark:text-white font-bold"
                           />
                         </div>
