@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Cliente } from '@/lib/types';
 import { createCliente, updateCliente } from '@/lib/actions';
-import { X, AlertCircle } from 'lucide-react';
+import { X, AlertCircle, Search, Loader2, MapPin } from 'lucide-react';
 
 interface ClienteModalProps {
   clienteParaEditar?: Cliente | null;
@@ -13,15 +13,64 @@ interface ClienteModalProps {
 
 export function ClienteModal({ clienteParaEditar, onClose, onSaved }: ClienteModalProps) {
   const [loading, setLoading] = useState(false);
+  const [buscandoCep, setBuscandoCep] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [nomeEmpresa, setNomeEmpresa] = useState(clienteParaEditar?.nome_empresa || '');
   const [nomeContato, setNomeContato] = useState(clienteParaEditar?.nome_contato || '');
   const [telefone, setTelefone] = useState(clienteParaEditar?.telefone_whatsapp || '');
+  
+  // Endereço completo com CEP (Requisito 7)
+  const [cep, setCep] = useState(clienteParaEditar?.cep || '');
   const [endereco, setEndereco] = useState(clienteParaEditar?.endereco || '');
+  const [numero, setNumero] = useState(clienteParaEditar?.numero || '');
+  const [bairro, setBairro] = useState(clienteParaEditar?.bairro || '');
+  const [complemento, setComplemento] = useState(clienteParaEditar?.complemento || '');
   const [cidade, setCidade] = useState(clienteParaEditar?.cidade || 'Conselheiro Lafaiete');
   const [uf, setUf] = useState(clienteParaEditar?.uf || 'MG');
   const [cnpj, setCnpj] = useState(clienteParaEditar?.cnpj || '');
+
+  // Formatação de CEP (99999-999)
+  const formatarCep = (v: string) => {
+    const digits = v.replace(/\D/g, '').slice(0, 8);
+    if (digits.length <= 5) return digits;
+    return `${digits.slice(0, 5)}-${digits.slice(5)}`;
+  };
+
+  // Integração automática com ViaCEP (Requisito 7)
+  const consultarCep = async (cepParaBuscar: string) => {
+    const clean = cepParaBuscar.replace(/\D/g, '');
+    if (clean.length !== 8) return;
+
+    setBuscandoCep(true);
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${clean}/json/`);
+      const data = await res.json();
+      if (!data.erro) {
+        if (data.logradouro) setEndereco(data.logradouro);
+        if (data.bairro) setBairro(data.bairro);
+        if (data.localidade) setCidade(data.localidade);
+        if (data.uf) setUf(data.uf);
+
+        // Foca automaticamente no campo número para agilizar
+        setTimeout(() => {
+          document.getElementById('cliente-numero-input')?.focus();
+        }, 100);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar dados do CEP:', err);
+    } finally {
+      setBuscandoCep(false);
+    }
+  };
+
+  const handleCepChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatado = formatarCep(e.target.value);
+    setCep(formatado);
+    if (formatado.replace(/\D/g, '').length === 8) {
+      consultarCep(formatado);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +88,11 @@ export function ClienteModal({ clienteParaEditar, onClose, onSaved }: ClienteMod
           nome_empresa: nomeEmpresa,
           nome_contato: nomeContato,
           telefone_whatsapp: telefone,
+          cep,
           endereco,
+          numero,
+          bairro,
+          complemento,
           cidade,
           uf,
           cnpj,
@@ -51,7 +104,11 @@ export function ClienteModal({ clienteParaEditar, onClose, onSaved }: ClienteMod
           nome_empresa: nomeEmpresa,
           nome_contato: nomeContato,
           telefone_whatsapp: telefone,
+          cep,
           endereco,
+          numero,
+          bairro,
+          complemento,
           cidade,
           uf,
           cnpj,
@@ -62,7 +119,11 @@ export function ClienteModal({ clienteParaEditar, onClose, onSaved }: ClienteMod
           nome_empresa: nomeEmpresa,
           nome_contato: nomeContato,
           telefone_whatsapp: telefone,
+          cep,
           endereco,
+          numero,
+          bairro,
+          complemento,
           cidade,
           uf,
           cnpj,
@@ -107,9 +168,10 @@ export function ClienteModal({ clienteParaEditar, onClose, onSaved }: ClienteMod
             </div>
           )}
 
+          {/* Nome da Empresa */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1">
-              Nome da Empresa <span className="text-red-600 dark:text-red-400">*</span>
+              Nome da Empresa / Razão Social <span className="text-red-600 dark:text-red-400">*</span>
             </label>
             <input
               type="text"
@@ -121,6 +183,7 @@ export function ClienteModal({ clienteParaEditar, onClose, onSaved }: ClienteMod
             />
           </div>
 
+          {/* Contato e Telefone */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1">
@@ -137,11 +200,11 @@ export function ClienteModal({ clienteParaEditar, onClose, onSaved }: ClienteMod
 
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1">
-                Telefone WhatsApp
+                Telefone / WhatsApp
               </label>
               <input
                 type="text"
-                placeholder="Ex: 31999998888"
+                placeholder="Ex: (31) 99999-8888"
                 value={telefone}
                 onChange={(e) => setTelefone(e.target.value)}
                 className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500"
@@ -149,46 +212,140 @@ export function ClienteModal({ clienteParaEditar, onClose, onSaved }: ClienteMod
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1">
-              Endereço
-            </label>
-            <input
-              type="text"
-              placeholder="Rua, número, bairro..."
-              value={endereco}
-              onChange={(e) => setEndereco(e.target.value)}
-              className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500"
-            />
-          </div>
-
-          <div className="grid grid-cols-3 gap-3">
-            <div className="col-span-2">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1">
-                Cidade
-              </label>
-              <input
-                type="text"
-                value={cidade}
-                onChange={(e) => setCidade(e.target.value)}
-                className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500"
-              />
+          {/* Seção de Endereço com Busca Automática por CEP (Requisito 7) */}
+          <div className="p-3.5 bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200 dark:border-zinc-800 rounded-xl space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5 text-red-600" />
+                <span>Localização & Endereço</span>
+              </span>
+              <span className="text-[10px] text-zinc-400">Preenchimento automático via CEP</span>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1">
-                UF
-              </label>
-              <input
-                type="text"
-                maxLength={2}
-                value={uf}
-                onChange={(e) => setUf(e.target.value.toUpperCase())}
-                className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm text-center font-bold dark:bg-zinc-950 dark:text-white"
-              />
+            {/* Linha do CEP com busca automática */}
+            <div className="flex items-center gap-2">
+              <div className="w-44">
+                <label className="block text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">
+                  CEP
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    maxLength={9}
+                    placeholder="00000-000"
+                    value={cep}
+                    onChange={handleCepChange}
+                    className="w-full px-3 py-1.5 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-xs font-mono font-bold dark:bg-zinc-900 dark:text-white"
+                  />
+                  {buscandoCep && (
+                    <Loader2 className="w-3.5 h-3.5 text-red-600 animate-spin absolute right-2.5 top-2" />
+                  )}
+                </div>
+              </div>
+
+              <div className="pt-4">
+                <button
+                  type="button"
+                  onClick={() => consultarCep(cep)}
+                  disabled={buscandoCep || cep.replace(/\D/g, '').length !== 8}
+                  className="px-3 py-1.5 text-xs font-bold rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 transition flex items-center gap-1 cursor-pointer disabled:opacity-40"
+                  title="Buscar endereço pelo CEP informado"
+                >
+                  <Search className="w-3 h-3" />
+                  <span>Buscar CEP</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Logradouro e Número */}
+            <div className="grid grid-cols-3 gap-2">
+              <div className="col-span-2">
+                <label className="block text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">
+                  Rua / Logradouro
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ex: Av. Telésforo Cândido de Rezende"
+                  value={endereco}
+                  onChange={(e) => setEndereco(e.target.value)}
+                  className="w-full px-3 py-1.5 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-xs dark:bg-zinc-900 dark:text-white dark:placeholder-zinc-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">
+                  Número
+                </label>
+                <input
+                  id="cliente-numero-input"
+                  type="text"
+                  placeholder="Ex: 120"
+                  value={numero}
+                  onChange={(e) => setNumero(e.target.value)}
+                  className="w-full px-3 py-1.5 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-xs dark:bg-zinc-900 dark:text-white dark:placeholder-zinc-500 font-bold"
+                />
+              </div>
+            </div>
+
+            {/* Bairro e Complemento */}
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">
+                  Bairro
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ex: Centro, Sagrado Coração..."
+                  value={bairro}
+                  onChange={(e) => setBairro(e.target.value)}
+                  className="w-full px-3 py-1.5 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-xs dark:bg-zinc-900 dark:text-white dark:placeholder-zinc-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">
+                  Complemento
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ex: Sala 2, Galpão A..."
+                  value={complemento}
+                  onChange={(e) => setComplemento(e.target.value)}
+                  className="w-full px-3 py-1.5 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-xs dark:bg-zinc-900 dark:text-white dark:placeholder-zinc-500"
+                />
+              </div>
+            </div>
+
+            {/* Cidade e UF */}
+            <div className="grid grid-cols-3 gap-2">
+              <div className="col-span-2">
+                <label className="block text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">
+                  Cidade
+                </label>
+                <input
+                  type="text"
+                  value={cidade}
+                  onChange={(e) => setCidade(e.target.value)}
+                  className="w-full px-3 py-1.5 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-xs dark:bg-zinc-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">
+                  UF
+                </label>
+                <input
+                  type="text"
+                  maxLength={2}
+                  value={uf}
+                  onChange={(e) => setUf(e.target.value.toUpperCase())}
+                  className="w-full px-3 py-1.5 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-xs text-center font-bold dark:bg-zinc-900 dark:text-white"
+                />
+              </div>
             </div>
           </div>
 
+          {/* CNPJ ou CPF */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1">
               CNPJ ou CPF
@@ -202,6 +359,7 @@ export function ClienteModal({ clienteParaEditar, onClose, onSaved }: ClienteMod
             />
           </div>
 
+          {/* Botões Salvar e Cancelar */}
           <div className="flex justify-end gap-2 pt-4 border-t border-zinc-200 dark:border-zinc-800">
             <button
               type="button"

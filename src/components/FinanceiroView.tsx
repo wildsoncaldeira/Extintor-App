@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { RelatorioFinanceiro, StatusPedido } from '@/lib/types';
-import { getRelatorioFinanceiro } from '@/lib/actions';
+import { RelatorioFinanceiro, StatusPedido, Despesa, CategoriaDespesa } from '@/lib/types';
+import { getRelatorioFinanceiro, getCategoriasDespesas, deleteDespesa } from '@/lib/actions';
+import { DespesaModal } from './DespesaModal';
+import { CategoriasDespesasModal } from './CategoriasDespesasModal';
 import { 
   DollarSign, 
   TrendingUp, 
@@ -20,7 +22,14 @@ import {
   Filter,
   BarChart3,
   Layers,
-  ChevronDown
+  ChevronDown,
+  Plus,
+  Settings,
+  Trash2,
+  Edit2,
+  PieChart,
+  WalletCards,
+  AlertCircle
 } from 'lucide-react';
 
 interface FinanceiroViewProps {
@@ -41,10 +50,26 @@ export function FinanceiroView({ onVerPedido, onVerCliente }: FinanceiroViewProp
 
   const [loading, setLoading] = useState(true);
   const [relatorio, setRelatorio] = useState<RelatorioFinanceiro | null>(null);
+  const [categorias, setCategorias] = useState<CategoriaDespesa[]>([]);
   
   // Abas internas de detalhamento
-  const [abaDetalhe, setAbaDetalhe] = useState<'produtos' | 'clientes' | 'pedidos'>('produtos');
+  const [abaDetalhe, setAbaDetalhe] = useState<'despesas' | 'produtos' | 'clientes' | 'pedidos'>('despesas');
   const [buscaTabela, setBuscaTabela] = useState('');
+
+  // Modais de Despesas
+  const [modalDespesaAberto, setModalDespesaAberto] = useState(false);
+  const [despesaParaEditar, setDespesaParaEditar] = useState<Despesa | null>(null);
+  const [modalCategoriasAberto, setModalCategoriasAberto] = useState(false);
+  const [excluindoDespesaId, setExcluindoDespesaId] = useState<string | null>(null);
+
+  const carregarCategorias = async () => {
+    try {
+      const data = await getCategoriasDespesas();
+      setCategorias(data);
+    } catch (err) {
+      console.error('Erro ao buscar categorias:', err);
+    }
+  };
 
   const carregarRelatorio = async () => {
     setLoading(true);
@@ -66,8 +91,33 @@ export function FinanceiroView({ onVerPedido, onVerCliente }: FinanceiroViewProp
   };
 
   useEffect(() => {
+    carregarCategorias();
+  }, []);
+
+  useEffect(() => {
     carregarRelatorio();
   }, [periodoTipo, mesSelecionado, anoSelecionado, dataInicio, dataFim, statusFiltro]);
+
+  const handleExcluirDespesa = async (despesa: Despesa) => {
+    if (!confirm(`Deseja realmente excluir a despesa "${despesa.descricao}" no valor de R$ ${despesa.valor.toFixed(2)}?`)) {
+      return;
+    }
+
+    setExcluindoDespesaId(despesa.id);
+    try {
+      const res = await deleteDespesa(despesa.id);
+      if (!res.success) {
+        alert(res.error || 'Erro ao excluir despesa.');
+      } else {
+        await carregarRelatorio();
+      }
+    } catch (err) {
+      console.error('Erro ao excluir despesa:', err);
+      alert('Erro ao excluir despesa.');
+    } finally {
+      setExcluindoDespesaId(null);
+    }
+  };
 
   const formatMoeda = (val: number) => {
     return `R$ ${val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -112,7 +162,13 @@ export function FinanceiroView({ onVerPedido, onVerCliente }: FinanceiroViewProp
 
   const anosDisponiveis = [2024, 2025, 2026, 2027];
 
-  // Filtro na busca da tabela ativa
+  // Filtros de busca nas tabelas
+  const despesasFiltradas = relatorio?.despesasLista?.filter((d) =>
+    d.descricao.toLowerCase().includes(buscaTabela.toLowerCase()) ||
+    (d.categoria_nome && d.categoria_nome.toLowerCase().includes(buscaTabela.toLowerCase())) ||
+    (d.observacoes && d.observacoes.toLowerCase().includes(buscaTabela.toLowerCase()))
+  ) || [];
+
   const topProdutosFiltrados = relatorio?.topProdutos.filter((p) => 
     p.nome.toLowerCase().includes(buscaTabela.toLowerCase()) ||
     (p.categoria && p.categoria.toLowerCase().includes(buscaTabela.toLowerCase())) ||
@@ -130,7 +186,7 @@ export function FinanceiroView({ onVerPedido, onVerCliente }: FinanceiroViewProp
     String(ped.numero_pedido).includes(buscaTabela)
   ) || [];
 
-  // Encontra o maior faturamento mensal para dimensionar o gráfico em barra
+  // Maior faturamento mensal para dimensionar o gráfico em barra
   const maiorFaturamentoMes = relatorio?.vendasPorMes?.reduce((max, m) => Math.max(max, m.faturamento), 0) || 1;
 
   return (
@@ -145,7 +201,7 @@ export function FinanceiroView({ onVerPedido, onVerCliente }: FinanceiroViewProp
                 <DollarSign className="w-5 h-5" />
               </div>
               <h2 className="text-lg font-black text-zinc-900 dark:text-white tracking-tight">
-                Painel Financeiro & Margens
+                Painel Financeiro, Custos & Despesas
               </h2>
             </div>
             <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
@@ -153,8 +209,29 @@ export function FinanceiroView({ onVerPedido, onVerCliente }: FinanceiroViewProp
             </p>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            {/* Botão Nova Despesa */}
+            <button
+              onClick={() => {
+                setDespesaParaEditar(null);
+                setModalDespesaAberto(true);
+              }}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg shadow-sm transition cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>+ Nova Despesa</span>
+            </button>
 
+            {/* Botão Gerenciar Categorias */}
+            <button
+              onClick={() => setModalCategoriasAberto(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg shadow-2xs transition cursor-pointer"
+            >
+              <Settings className="w-3.5 h-3.5 text-zinc-500" />
+              <span>Categorias</span>
+            </button>
+
+            {/* Atualizar */}
             <button
               onClick={carregarRelatorio}
               disabled={loading}
@@ -327,25 +404,25 @@ export function FinanceiroView({ onVerPedido, onVerCliente }: FinanceiroViewProp
         </div>
       </div>
 
-      {/* 2. CARDS DE PRINCIPAIS INDICADORES FINANCEIROS (KPIS) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* 2. CARDS DE PRINCIPAIS INDICADORES FINANCEIROS (KPIS) COM DESPESAS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
         
         {/* Card 1: Faturamento Bruto (Volume de Vendas) */}
-        <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 p-5 rounded-2xl border border-zinc-200 shadow-2xs flex flex-col justify-between space-y-3">
+        <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 p-4 rounded-2xl border border-zinc-200 shadow-2xs flex flex-col justify-between space-y-2.5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-              Volume de Vendas
+            <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+              Faturamento
             </span>
-            <div className="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center font-bold">
+            <div className="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
               <DollarSign className="w-4 h-4" />
             </div>
           </div>
           <div>
-            <h3 className="text-2xl font-black text-zinc-900 dark:text-white tracking-tight">
+            <h3 className="text-xl font-black text-zinc-900 dark:text-white tracking-tight">
               {formatMoeda(relatorio?.faturamentoTotal || 0)}
             </h3>
-            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1 flex items-center gap-1.5">
-              <span>{relatorio?.totalPedidos || 0} pedidos no período</span>
+            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">
+              {relatorio?.totalPedidos || 0} pedidos no período
             </p>
           </div>
           <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400">
@@ -356,91 +433,135 @@ export function FinanceiroView({ onVerPedido, onVerCliente }: FinanceiroViewProp
           </div>
         </div>
 
-        {/* Card 2: Custos Operacionais dos Produtos/Serviços */}
-        <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 p-5 rounded-2xl border border-zinc-200 shadow-2xs flex flex-col justify-between space-y-3">
+        {/* Card 2: Custo das Vendas (CMV) */}
+        <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 p-4 rounded-2xl border border-zinc-200 shadow-2xs flex flex-col justify-between space-y-2.5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-              Custo Total das Vendas
+            <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+              Custo dos Produtos (CMV)
             </span>
-            <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold">
+            <div className="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold">
+              <Package className="w-4 h-4" />
+            </div>
+          </div>
+          <div>
+            <h3 className="text-xl font-black text-amber-600 dark:text-amber-400 tracking-tight">
+              {formatMoeda(relatorio?.custoTotal || 0)}
+            </h3>
+            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">
+              Custos diretos dos itens
+            </p>
+          </div>
+          <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400">
+            <span>Margem Bruta:</span>
+            <strong className="text-zinc-800 dark:text-zinc-200 font-bold">
+              {(relatorio?.margemPercentual || 0).toFixed(1)}%
+            </strong>
+          </div>
+        </div>
+
+        {/* Card 3: Despesas Operacionais (Lançamentos manuais) */}
+        <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 p-4 rounded-2xl border border-zinc-200 shadow-2xs flex flex-col justify-between space-y-2.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+              Despesas Operacionais
+            </span>
+            <div className="w-7 h-7 rounded-lg bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center font-bold">
               <TrendingDown className="w-4 h-4" />
             </div>
           </div>
           <div>
-            <h3 className="text-2xl font-black text-zinc-900 dark:text-white tracking-tight">
-              {formatMoeda(relatorio?.custoTotal || 0)}
+            <h3 className="text-xl font-black text-red-600 dark:text-red-400 tracking-tight">
+              {formatMoeda(relatorio?.despesasOperacionaisTotal || 0)}
             </h3>
-            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">
-              Baseado no custo padrão dos itens
+            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">
+              {relatorio?.despesasLista?.length || 0} lançamentos manuais
             </p>
           </div>
           <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400">
-            <span>Representatividade:</span>
+            <span>Combustível, taxas, etc.</span>
+            <button
+              onClick={() => {
+                setDespesaParaEditar(null);
+                setModalDespesaAberto(true);
+              }}
+              className="text-red-600 dark:text-red-400 font-bold hover:underline cursor-pointer"
+            >
+              + Lançar
+            </button>
+          </div>
+        </div>
+
+        {/* Card 4: Total de Custos & Despesas (CMV + Operacionais) */}
+        <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 p-4 rounded-2xl border border-zinc-200 shadow-2xs flex flex-col justify-between space-y-2.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+              Despesas Totais
+            </span>
+            <div className="w-7 h-7 rounded-lg bg-orange-100 dark:bg-orange-950/60 text-orange-600 dark:text-orange-400 flex items-center justify-center font-bold">
+              <WalletCards className="w-4 h-4" />
+            </div>
+          </div>
+          <div>
+            <h3 className="text-xl font-black text-zinc-900 dark:text-white tracking-tight">
+              {formatMoeda(relatorio?.despesasGeraisTotal || 0)}
+            </h3>
+            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">
+              CMV + Custos Operacionais
+            </p>
+          </div>
+          <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400">
+            <span>Impacto na Receita:</span>
             <strong className="text-zinc-800 dark:text-zinc-200 font-bold">
               {((relatorio?.faturamentoTotal || 0) > 0 
-                ? (((relatorio?.custoTotal || 0) / (relatorio?.faturamentoTotal || 1)) * 100).toFixed(1) 
-                : '0')}% da receita
+                ? (((relatorio?.despesasGeraisTotal || 0) / (relatorio?.faturamentoTotal || 1)) * 100).toFixed(1) 
+                : '0')}%
             </strong>
           </div>
         </div>
 
-        {/* Card 3: Lucro Bruto Estimado */}
-        <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 p-5 rounded-2xl border border-zinc-200 shadow-2xs flex flex-col justify-between space-y-3">
+        {/* Card 5: Lucro Líquido Real */}
+        <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 p-4 rounded-2xl border border-zinc-200 shadow-2xs flex flex-col justify-between space-y-2.5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-              Lucro Bruto (Margem R$)
+            <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+              Lucro Líquido Real
             </span>
-            <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
+            <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold ${
+              (relatorio?.lucroLiquidoTotal || 0) >= 0
+                ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400'
+                : 'bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400'
+            }`}>
               <TrendingUp className="w-4 h-4" />
             </div>
           </div>
           <div>
-            <h3 className="text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
-              {formatMoeda(relatorio?.lucroTotal || 0)}
+            <h3 className={`text-xl font-black tracking-tight ${
+              (relatorio?.lucroLiquidoTotal || 0) >= 0
+                ? 'text-emerald-600 dark:text-emerald-400'
+                : 'text-red-600 dark:text-red-400'
+            }`}>
+              {formatMoeda(relatorio?.lucroLiquidoTotal || 0)}
             </h3>
-            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">
-              Faturamento líquido de custos
+            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">
+              Receita - Todos os Custos
             </p>
           </div>
           <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400">
-            <span>Status:</span>
-            <strong className="text-emerald-600 dark:text-emerald-400 font-bold">
-              {(relatorio?.lucroTotal || 0) >= 0 ? 'Resultado Positivo' : 'Prejuízo no Período'}
+            <span>Resultado:</span>
+            <strong className={`font-bold ${
+              (relatorio?.lucroLiquidoTotal || 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
+            }`}>
+              {(relatorio?.lucroLiquidoTotal || 0) >= 0 ? 'Lucro Líquido' : 'Prejuízo Real'}
             </strong>
-          </div>
-        </div>
-
-        {/* Card 4: Margem Média de Lucro (%) */}
-        <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 p-5 rounded-2xl border border-zinc-200 shadow-2xs flex flex-col justify-between space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-              Margem Média (%)
-            </span>
-            <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
-              <Percent className="w-4 h-4" />
-            </div>
-          </div>
-          <div>
-            <h3 className="text-2xl font-black text-blue-600 dark:text-blue-400 tracking-tight">
-              {(relatorio?.margemPercentual || 0).toFixed(1)}%
-            </h3>
-            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">
-              Retorno sobre o faturamento
-            </p>
-          </div>
-          <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400">
-            <span>Efetivados:</span>
-            <span className="font-semibold text-zinc-700 dark:text-zinc-300">
-              {relatorio?.pedidosPagos || 0} pagos • {relatorio?.pedidosAprovados || 0} aprovados
-            </span>
           </div>
         </div>
 
       </div>
 
-      {/* 3. GRÁFICO DE EVOLUÇÃO DE VENDAS E MARGENS NO ANO */}
-      {relatorio?.vendasPorMes && relatorio.vendasPorMes.length > 0 && (
-        <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 p-5 rounded-2xl border border-zinc-200 shadow-2xs space-y-4">
+      {/* 3. GRÁFICOS: EVOLUÇÃO MENSAL E DISTRIBUIÇÃO DE DESPESAS POR CATEGORIA */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        
+        {/* Gráfico 1: Evolução Mensal (2/3 da largura em telas grandes) */}
+        <div className="lg:col-span-2 bg-white dark:bg-[#18181c] dark:border-zinc-700/80 p-5 rounded-2xl border border-zinc-200 shadow-2xs space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4 text-red-600 dark:text-red-400" />
@@ -455,63 +576,138 @@ export function FinanceiroView({ onVerPedido, onVerCliente }: FinanceiroViewProp
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="w-3 h-3 rounded-xs bg-emerald-500"></span>
-                <span>Lucro</span>
+                <span>Lucro Bruto</span>
               </div>
             </div>
           </div>
 
           <div className="grid grid-cols-6 sm:grid-cols-12 gap-2 pt-4 border-t border-zinc-100 dark:border-zinc-800">
-            {relatorio.vendasPorMes.map((mesData, idx) => {
-              const alturaFat = maiorFaturamentoMes > 0 ? Math.max(6, (mesData.faturamento / maiorFaturamentoMes) * 100) : 6;
-              const alturaLuc = maiorFaturamentoMes > 0 ? Math.max(4, (Math.max(0, mesData.lucro) / maiorFaturamentoMes) * 100) : 4;
+            {relatorio?.vendasPorMes && relatorio.vendasPorMes.length > 0 ? (
+              relatorio.vendasPorMes.map((mesData, idx) => {
+                const alturaFat = maiorFaturamentoMes > 0 ? Math.max(6, (mesData.faturamento / maiorFaturamentoMes) * 100) : 6;
+                const alturaLuc = maiorFaturamentoMes > 0 ? Math.max(4, (Math.max(0, mesData.lucro) / maiorFaturamentoMes) * 100) : 4;
 
-              return (
-                <div key={idx} className="flex flex-col items-center gap-2 group">
-                  {/* Barras verticais */}
-                  <div className="h-28 w-full bg-zinc-50 dark:bg-zinc-900 rounded-lg flex items-end justify-center gap-1 p-1 relative">
-                    {/* Tooltip ao passar mouse */}
-                    <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-zinc-900 text-white text-[10px] py-1 px-2 rounded-md opacity-0 group-hover:opacity-100 transition pointer-events-none z-20 whitespace-nowrap shadow-lg">
-                      <p className="font-bold">{mesData.mesAno}</p>
-                      <p>Fat: {formatMoeda(mesData.faturamento)}</p>
-                      <p className="text-emerald-400">Lucro: {formatMoeda(mesData.lucro)}</p>
+                return (
+                  <div key={idx} className="flex flex-col items-center gap-2 group">
+                    <div className="h-28 w-full bg-zinc-50 dark:bg-zinc-900 rounded-lg flex items-end justify-center gap-1 p-1 relative">
+                      <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-zinc-900 text-white text-[10px] py-1 px-2 rounded-md opacity-0 group-hover:opacity-100 transition pointer-events-none z-20 whitespace-nowrap shadow-lg">
+                        <p className="font-bold">{mesData.mesAno}</p>
+                        <p>Fat: {formatMoeda(mesData.faturamento)}</p>
+                        <p className="text-emerald-400">Lucro: {formatMoeda(mesData.lucro)}</p>
+                      </div>
+
+                      <div 
+                        style={{ height: `${alturaFat}%` }}
+                        className="w-2.5 sm:w-3 bg-red-600 rounded-t-xs transition-all duration-300"
+                        title={`Faturamento: ${formatMoeda(mesData.faturamento)}`}
+                      ></div>
+                      <div 
+                        style={{ height: `${alturaLuc}%` }}
+                        className="w-2.5 sm:w-3 bg-emerald-500 rounded-t-xs transition-all duration-300"
+                        title={`Lucro: ${formatMoeda(mesData.lucro)}`}
+                      ></div>
                     </div>
 
-                    <div 
-                      style={{ height: `${alturaFat}%` }}
-                      className="w-2.5 sm:w-3.5 bg-red-600 rounded-t-xs transition-all duration-300"
-                      title={`Faturamento: ${formatMoeda(mesData.faturamento)}`}
-                    ></div>
-                    <div 
-                      style={{ height: `${alturaLuc}%` }}
-                      className="w-2.5 sm:w-3.5 bg-emerald-500 rounded-t-xs transition-all duration-300"
-                      title={`Lucro: ${formatMoeda(mesData.lucro)}`}
-                    ></div>
+                    <span className="text-[11px] font-bold text-zinc-600 dark:text-zinc-400">
+                      {mesData.rotulo}
+                    </span>
+
+                    <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono hidden sm:inline">
+                      {mesData.quantidadePedidos} ped
+                    </span>
                   </div>
-
-                  <span className="text-[11px] font-bold text-zinc-600 dark:text-zinc-400">
-                    {mesData.rotulo}
-                  </span>
-
-                  <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono hidden sm:inline">
-                    {mesData.quantidadePedidos} ped
-                  </span>
-                </div>
-              );
-            })}
+                );
+              })
+            ) : (
+              <div className="col-span-12 py-8 text-center text-xs text-zinc-400">
+                Sem dados mensais para exibir.
+              </div>
+            )}
           </div>
         </div>
-      )}
 
-      {/* 4. SEÇÃO DETALHADA: PRODUTOS MAIS VENDIDOS, CLIENTES COM MAIORES VENDAS E PEDIDOS */}
+        {/* Gráfico 2: Composição de Despesas por Categoria (1/3 da largura) */}
+        <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 p-5 rounded-2xl border border-zinc-200 shadow-2xs space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <PieChart className="w-4 h-4 text-red-600 dark:text-red-400" />
+              <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-800 dark:text-zinc-200">
+                Despesas por Categoria
+              </h3>
+            </div>
+            <span className="text-[11px] font-mono text-zinc-400 dark:text-zinc-500">
+              Total: {formatMoeda(relatorio?.despesasGeraisTotal || 0)}
+            </span>
+          </div>
+
+          <div className="space-y-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+            {(!relatorio?.despesasPorCategoria || relatorio.despesasPorCategoria.length === 0) ? (
+              <div className="py-8 text-center text-xs text-zinc-400">
+                Nenhuma despesa ou custo registrado no período.
+              </div>
+            ) : (
+              relatorio.despesasPorCategoria.map((cat, index) => (
+                <div key={index} className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2 truncate">
+                      <span
+                        className="w-2.5 h-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: cat.cor }}
+                      />
+                      <span className="font-bold text-zinc-800 dark:text-zinc-200 truncate">
+                        {cat.categoria_nome}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="font-mono text-zinc-500 dark:text-zinc-400 text-[11px]">
+                        {cat.porcentagem.toFixed(1)}%
+                      </span>
+                      <span className="font-bold text-zinc-900 dark:text-white">
+                        {formatMoeda(cat.total)}
+                      </span>
+                    </div>
+                  </div>
+                  {/* Barra de Progresso Proporcional */}
+                  <div className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-full h-2 overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-300"
+                      style={{
+                        width: `${Math.min(100, Math.max(3, cat.porcentagem))}%`,
+                        backgroundColor: cat.cor,
+                      }}
+                    />
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+      </div>
+
+      {/* 4. SEÇÃO DETALHADA COM ABAS: DESPESAS, PRODUTOS MAIS VENDIDOS, CLIENTES E PEDIDOS */}
       <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 rounded-2xl border border-zinc-200 shadow-2xs overflow-hidden">
         
         {/* Abas Superiores & Barra de Busca */}
         <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-zinc-50/70 dark:bg-zinc-950">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setAbaDetalhe('despesas')}
+              className={`px-3 py-2 text-xs font-bold rounded-xl transition cursor-pointer flex items-center gap-1.5 ${
+                abaDetalhe === 'despesas'
+                  ? 'bg-red-600 text-white shadow-xs'
+                  : 'bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white border border-zinc-200 dark:border-zinc-800'
+              }`}
+            >
+              <TrendingDown className="w-3.5 h-3.5" />
+              <span>Despesas ({relatorio?.despesasLista?.length || 0})</span>
+            </button>
+
             <button
               type="button"
               onClick={() => setAbaDetalhe('produtos')}
-              className={`px-3.5 py-2 text-xs font-bold rounded-xl transition cursor-pointer flex items-center gap-1.5 ${
+              className={`px-3 py-2 text-xs font-bold rounded-xl transition cursor-pointer flex items-center gap-1.5 ${
                 abaDetalhe === 'produtos'
                   ? 'bg-red-600 text-white shadow-xs'
                   : 'bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white border border-zinc-200 dark:border-zinc-800'
@@ -524,7 +720,7 @@ export function FinanceiroView({ onVerPedido, onVerCliente }: FinanceiroViewProp
             <button
               type="button"
               onClick={() => setAbaDetalhe('clientes')}
-              className={`px-3.5 py-2 text-xs font-bold rounded-xl transition cursor-pointer flex items-center gap-1.5 ${
+              className={`px-3 py-2 text-xs font-bold rounded-xl transition cursor-pointer flex items-center gap-1.5 ${
                 abaDetalhe === 'clientes'
                   ? 'bg-red-600 text-white shadow-xs'
                   : 'bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white border border-zinc-200 dark:border-zinc-800'
@@ -537,7 +733,7 @@ export function FinanceiroView({ onVerPedido, onVerCliente }: FinanceiroViewProp
             <button
               type="button"
               onClick={() => setAbaDetalhe('pedidos')}
-              className={`px-3.5 py-2 text-xs font-bold rounded-xl transition cursor-pointer flex items-center gap-1.5 ${
+              className={`px-3 py-2 text-xs font-bold rounded-xl transition cursor-pointer flex items-center gap-1.5 ${
                 abaDetalhe === 'pedidos'
                   ? 'bg-red-600 text-white shadow-xs'
                   : 'bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white border border-zinc-200 dark:border-zinc-800'
@@ -559,6 +755,112 @@ export function FinanceiroView({ onVerPedido, onVerCliente }: FinanceiroViewProp
             />
           </div>
         </div>
+
+        {/* TABELA: DESPESAS */}
+        {abaDetalhe === 'despesas' && (
+          <div>
+            <div className="p-3 bg-zinc-50 dark:bg-zinc-950/60 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-xs">
+              <span className="text-zinc-500 dark:text-zinc-400">
+                Mostrando {despesasFiltradas.length} despesas operacionais no período
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setDespesaParaEditar(null);
+                  setModalDespesaAberto(true);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg shadow-sm transition cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>+ Lançar Despesa</span>
+              </button>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-500 dark:text-zinc-400 font-bold uppercase tracking-wider text-[11px]">
+                    <th className="py-3 px-4">Data</th>
+                    <th className="py-3 px-4">Descrição da Despesa</th>
+                    <th className="py-3 px-4">Categoria</th>
+                    <th className="py-3 px-4">Observações</th>
+                    <th className="py-3 px-4 text-right">Valor (R$)</th>
+                    <th className="py-3 px-4 text-center w-20">Ações</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                  {despesasFiltradas.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-8 text-center text-zinc-400 dark:text-zinc-500">
+                        Nenhuma despesa registrada para o filtro atual.
+                      </td>
+                    </tr>
+                  ) : (
+                    despesasFiltradas.map((d) => (
+                      <tr 
+                        key={d.id}
+                        className="hover:bg-zinc-50/70 dark:hover:bg-zinc-900/50 transition"
+                      >
+                        <td className="py-3 px-4 text-zinc-500 dark:text-zinc-400 font-mono">
+                          {formatDate(d.data_despesa)}
+                        </td>
+                        <td className="py-3 px-4 font-bold text-zinc-900 dark:text-white">
+                          {d.descricao}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span
+                            className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold border"
+                            style={{
+                              borderColor: `${d.categoria_cor || '#64748b'}40`,
+                              backgroundColor: `${d.categoria_cor || '#64748b'}15`,
+                              color: d.categoria_cor || '#64748b',
+                            }}
+                          >
+                            <span
+                              className="w-2 h-2 rounded-full"
+                              style={{ backgroundColor: d.categoria_cor || '#64748b' }}
+                            />
+                            {d.categoria_nome || 'Outros'}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-zinc-500 dark:text-zinc-400 max-w-xs truncate">
+                          {d.observacoes || '-'}
+                        </td>
+                        <td className="py-3 px-4 text-right font-black text-red-600 dark:text-red-400 font-mono">
+                          {formatMoeda(d.valor)}
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setDespesaParaEditar(d);
+                                setModalDespesaAberto(true);
+                              }}
+                              className="p-1.5 text-zinc-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-zinc-800 rounded-lg transition cursor-pointer"
+                              title="Editar despesa"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleExcluirDespesa(d)}
+                              disabled={excluindoDespesaId === d.id}
+                              className="p-1.5 text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-zinc-800 rounded-lg transition cursor-pointer disabled:opacity-50"
+                              title="Excluir despesa"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
         {/* TABELA: PRODUTOS MAIS VENDIDOS */}
         {abaDetalhe === 'produtos' && (
@@ -775,6 +1077,35 @@ export function FinanceiroView({ onVerPedido, onVerCliente }: FinanceiroViewProp
         )}
 
       </div>
+
+      {/* MODAL: NOVA OU EDITAR DESPESA */}
+      {modalDespesaAberto && (
+        <DespesaModal
+          despesaParaEditar={despesaParaEditar}
+          categorias={categorias}
+          onClose={() => setModalDespesaAberto(false)}
+          onSalvo={async () => {
+            setModalDespesaAberto(false);
+            await carregarRelatorio();
+          }}
+          onAbrirGerenciadorCategorias={() => {
+            setModalDespesaAberto(false);
+            setModalCategoriasAberto(true);
+          }}
+        />
+      )}
+
+      {/* MODAL: GERENCIAR CATEGORIAS */}
+      {modalCategoriasAberto && (
+        <CategoriasDespesasModal
+          categorias={categorias}
+          onClose={() => setModalCategoriasAberto(false)}
+          onCategoriasAtualizadas={async () => {
+            await carregarCategorias();
+            await carregarRelatorio();
+          }}
+        />
+      )}
 
     </div>
   );

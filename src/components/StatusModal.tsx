@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import { Pedido, StatusPedido } from '@/lib/types';
-import { updatePedidoStatus } from '@/lib/actions';
+import { updatePedidoStatus, agendarVendaFutura } from '@/lib/actions';
+import { VendaFuturaModal } from './VendaFuturaModal';
 import { X, Check, AlertCircle, Clock, CheckCircle2 } from 'lucide-react';
 
 interface StatusModalProps {
@@ -14,6 +15,7 @@ interface StatusModalProps {
 export function StatusModal({ pedido, onClose, onSaved }: StatusModalProps) {
   const [statusSelecionado, setStatusSelecionado] = useState<StatusPedido>(pedido?.status || 'Orçamento');
   const [loading, setLoading] = useState(false);
+  const [vendaFuturaAberto, setVendaFuturaAberto] = useState(false);
 
   if (!pedido) return null;
 
@@ -21,7 +23,23 @@ export function StatusModal({ pedido, onClose, onSaved }: StatusModalProps) {
     setLoading(true);
     await updatePedidoStatus(pedido.id, statusSelecionado);
     setLoading(false);
-    onSaved(statusSelecionado);
+
+    if (statusSelecionado === 'Aprovado' && pedido.status !== 'Aprovado') {
+      setVendaFuturaAberto(true);
+    } else {
+      onSaved(statusSelecionado);
+    }
+  };
+
+  const handleSalvarVendaFutura = async (dataFutura: string) => {
+    await agendarVendaFutura(pedido.id, dataFutura);
+    setVendaFuturaAberto(false);
+    onSaved('Aprovado');
+  };
+
+  const handleIgnorarVendaFutura = () => {
+    setVendaFuturaAberto(false);
+    onSaved('Aprovado');
   };
 
   const statusOptions: {
@@ -157,6 +175,19 @@ export function StatusModal({ pedido, onClose, onSaved }: StatusModalProps) {
         </div>
 
       </div>
+
+      {/* Modal de Agendamento de Venda Futura */}
+      {vendaFuturaAberto && (
+        <VendaFuturaModal
+          isOpen={vendaFuturaAberto}
+          pedidoId={pedido.id}
+          numeroPedido={pedido.numero_pedido}
+          clienteNome={pedido.nome_empresa || ''}
+          dataEntrega={pedido.data_entrega || pedido.data_pedido}
+          onSalvar={handleSalvarVendaFutura}
+          onIgnorar={handleIgnorarVendaFutura}
+        />
+      )}
     </div>
   );
 }

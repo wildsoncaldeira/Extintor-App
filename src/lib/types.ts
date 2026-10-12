@@ -6,7 +6,11 @@ export interface Cliente {
   nome_empresa: string;
   nome_contato?: string | null;
   telefone_whatsapp?: string | null;
+  cep?: string | null;
   endereco?: string | null;
+  numero?: string | null;
+  bairro?: string | null;
+  complemento?: string | null;
   cidade?: string | null;
   uf?: string | null;
   cnpj?: string | null;
@@ -53,6 +57,8 @@ export interface Pedido {
   legacy_id?: string | null;
   numero_pedido: number;
   data_pedido: string;
+  data_entrega?: string | null;
+  data_venda_futura?: string | null;
   cliente_id: string;
   status: StatusPedido;
   valor_total: number;
@@ -68,7 +74,11 @@ export interface Pedido {
   nome_empresa?: string;
   nome_contato?: string | null;
   telefone_whatsapp?: string | null;
+  cep?: string | null;
   endereco?: string | null;
+  numero?: string | null;
+  bairro?: string | null;
+  complemento?: string | null;
   cidade?: string | null;
   uf?: string | null;
   cnpj?: string | null;
@@ -134,6 +144,53 @@ export interface PedidoFinanceiroItem {
   quantidade_itens: number;
 }
 
+export interface CategoriaDespesa {
+  id: string;
+  nome: string;
+  cor?: string;
+  created_at?: string;
+}
+
+export interface Despesa {
+  id: string;
+  descricao: string;
+  valor: number;
+  data_despesa: string;
+  categoria_id?: string | null;
+  categoria_nome?: string | null;
+  categoria_cor?: string | null;
+  observacoes?: string | null;
+  created_at?: string;
+}
+
+export interface CategoriaDespesaResumo {
+  categoria_nome: string;
+  cor: string;
+  total: number;
+  quantidade: number;
+  porcentagem: number;
+}
+
+export type CrmEtapa = 'potencial' | 'orcamento' | 'aprovado' | 'pago' | 'venda_futura';
+
+export interface CrmOportunidade {
+  id: string;
+  titulo: string;
+  cliente_id?: string | null;
+  cliente_nome: string;
+  cliente_telefone?: string | null;
+  cliente_email?: string | null;
+  valor: number;
+  etapa: CrmEtapa;
+  pedido_id?: string | null;
+  numero_pedido?: number | null;
+  data_previsao?: string | null;
+  data_venda_futura?: string | null;
+  observacoes?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface RelatorioFinanceiro {
   periodoDescricao: string;
   faturamentoTotal: number;
@@ -145,6 +202,12 @@ export interface RelatorioFinanceiro {
   pedidosPagos: number;
   pedidosAprovados: number;
   pedidosOrcamentos: number;
+  // Despesas Operacionais e Gerais
+  despesasOperacionaisTotal: number;
+  despesasGeraisTotal: number; // Custo dos Produtos (CMV) + Despesas Operacionais
+  lucroLiquidoTotal: number; // Faturamento - Despesas Gerais
+  despesasPorCategoria: CategoriaDespesaResumo[];
+  despesasLista: Despesa[];
   topProdutos: TopProdutoFinanceiro[];
   topClientes: TopClienteFinanceiro[];
   vendasPorMes: MesFinanceiro[];

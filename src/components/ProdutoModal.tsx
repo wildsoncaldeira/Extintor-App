@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { ProdutoServico, CategoriaProduto } from '@/lib/types';
 import { createProduto, updateProduto } from '@/lib/actions';
 import { X, AlertCircle } from 'lucide-react';
+import { CurrencyInput } from './CurrencyInput';
 
 interface ProdutoModalProps {
   produtoParaEditar?: ProdutoServico | null;
@@ -166,19 +167,16 @@ export function ProdutoModal({
             />
           </div>
 
-          {/* Preço de Venda e Custo */}
+          {/* Preço de Venda e Custo (Requisito 2: Máscara da direita para a esquerda) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1">
                 Preço de Venda (R$) <span className="text-red-600 dark:text-red-400">*</span>
               </label>
-              <input
-                type="number"
-                step="0.5"
-                min="0"
+              <CurrencyInput
                 value={valor}
-                onChange={(e) => setValor(parseFloat(e.target.value) || 0)}
-                className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm font-semibold dark:bg-zinc-950 dark:text-white"
+                onChange={setValor}
+                className="font-bold text-sm"
               />
             </div>
 
@@ -186,14 +184,10 @@ export function ProdutoModal({
               <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1">
                 Custo do Produto (R$)
               </label>
-              <input
-                type="number"
-                step="0.5"
-                min="0"
+              <CurrencyInput
                 value={custo}
-                onChange={(e) => setCusto(parseFloat(e.target.value) || 0)}
-                placeholder="0.00"
-                className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm font-semibold dark:bg-zinc-950 dark:text-white"
+                onChange={setCusto}
+                className="font-bold text-sm"
               />
             </div>
           </div>

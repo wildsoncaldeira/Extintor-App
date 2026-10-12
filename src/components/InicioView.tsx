@@ -30,6 +30,7 @@ interface InicioViewProps {
   onVerProdutos: () => void;
   onVerDashboard: () => void;
   onVerFinanceiro?: () => void;
+  onVerCrm?: () => void;
 }
 
 export function InicioView({
@@ -43,6 +44,7 @@ export function InicioView({
   onVerProdutos,
   onVerDashboard,
   onVerFinanceiro,
+  onVerCrm,
 }: InicioViewProps) {
   const primeiroNome = usuarioNome ? usuarioNome.split(' ')[0] : 'Usuário';
 
@@ -96,6 +98,16 @@ export function InicioView({
       badge: `${stats.totalProdutos} itens`,
       badgeCor: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/80',
       onClick: onVerProdutos,
+    },
+    {
+      id: 'crm',
+      titulo: 'CRM & Vendas Futuras',
+      subtitulo: 'Funil e renovações anuais',
+      icone: Users,
+      corFundoIcone: 'bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400 dark:border-rose-900/60',
+      badge: 'Renovações',
+      badgeCor: 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border border-rose-200 dark:border-rose-800/80',
+      onClick: () => (onVerCrm ? onVerCrm() : onVerPedidos()),
     },
     {
       id: 'financeiro',

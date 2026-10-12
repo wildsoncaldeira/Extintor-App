@@ -17,7 +17,12 @@ import {
   TopProdutoFinanceiro,
   TopClienteFinanceiro,
   MesFinanceiro,
-  PedidoFinanceiroItem
+  PedidoFinanceiroItem,
+  CategoriaDespesa,
+  Despesa,
+  CategoriaDespesaResumo,
+  CrmEtapa,
+  CrmOportunidade
 } from './types';
 import { revalidatePath } from 'next/cache';
 
@@ -33,6 +38,8 @@ export async function getPedidos(search?: string, statusFilter?: string): Promis
         p.legacy_id,
         p.numero_pedido,
         p.data_pedido::text as data_pedido,
+        COALESCE(p.data_entrega, p.data_pedido)::text as data_entrega,
+        p.data_venda_futura::text as data_venda_futura,
         p.cliente_id,
         p.status,
         p.valor_total::float as valor_total,
@@ -44,7 +51,11 @@ export async function getPedidos(search?: string, statusFilter?: string): Promis
         c.nome_empresa,
         c.nome_contato,
         c.telefone_whatsapp,
+        c.cep,
         c.endereco,
+        c.numero,
+        c.bairro,
+        c.complemento,
         c.cidade,
         c.uf,
         c.cnpj,
@@ -96,6 +107,8 @@ export async function getPedidoDetalhes(id: string): Promise<Pedido | null> {
         p.legacy_id,
         p.numero_pedido,
         p.data_pedido::text as data_pedido,
+        COALESCE(p.data_entrega, p.data_pedido)::text as data_entrega,
+        p.data_venda_futura::text as data_venda_futura,
         p.cliente_id,
         p.status,
         p.valor_total::float as valor_total,
@@ -107,7 +120,11 @@ export async function getPedidoDetalhes(id: string): Promise<Pedido | null> {
         c.nome_empresa,
         c.nome_contato,
         c.telefone_whatsapp,
+        c.cep,
         c.endereco,
+        c.numero,
+        c.bairro,
+        c.complemento,
         c.cidade,
         c.uf,
         c.cnpj,
@@ -165,9 +182,65 @@ export async function getProximoNumeroPedido(): Promise<number> {
   }
 }
 
+async function syncPedidoCrm(pedidoId: string, status: StatusPedido, valorTotal: number, dataPedido: string, clienteId: string) {
+  try {
+    const etapaMap: Record<StatusPedido, CrmEtapa> = {
+      'Orçamento': 'orcamento',
+      'Aprovado': 'aprovado',
+      'Pago': 'pago',
+    };
+    const etapa = etapaMap[status] || 'orcamento';
+
+    const cliRows = await sql.query(`SELECT nome_empresa, telefone_whatsapp FROM public.clientes WHERE id = $1`, [clienteId]);
+    const cli = (cliRows[0] as any) || { nome_empresa: 'Cliente', telefone_whatsapp: null };
+
+    const pedRows = await sql.query(`SELECT numero_pedido FROM public.pedidos WHERE id = $1`, [pedidoId]);
+    const numPed = (pedRows[0] as any)?.numero_pedido || '';
+
+    const opRows = await sql.query(
+      `SELECT id FROM public.crm_oportunidades WHERE pedido_id = $1 AND etapa != 'venda_futura'`,
+      [pedidoId]
+    );
+
+    if (opRows && opRows.length > 0) {
+      await sql.query(
+        `UPDATE public.crm_oportunidades 
+         SET etapa = $1, valor = $2, cliente_nome = $3, cliente_telefone = $4, data_previsao = $5, updated_at = now() 
+         WHERE id = $6`,
+        [etapa, valorTotal, cli.nome_empresa, cli.telefone_whatsapp, dataPedido, (opRows[0] as any).id]
+      );
+    } else {
+      await sql.query(
+        `INSERT INTO public.crm_oportunidades (
+          titulo, cliente_id, cliente_nome, cliente_telefone, valor, etapa, pedido_id, data_previsao
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [
+          `Pedido #${numPed} - ${cli.nome_empresa}`,
+          clienteId,
+          cli.nome_empresa,
+          cli.telefone_whatsapp,
+          valorTotal,
+          etapa,
+          pedidoId,
+          dataPedido,
+        ]
+      );
+    }
+  } catch (err) {
+    console.error('Erro ao sincronizar CRM para pedido:', err);
+  }
+}
+
 export async function updatePedidoStatus(id: string, status: StatusPedido): Promise<boolean> {
   try {
     await sql.query(`UPDATE public.pedidos SET status = $1, updated_at = now() WHERE id = $2`, [status, id]);
+
+    const rows = await sql.query(`SELECT valor_total, data_pedido::text as data_pedido, cliente_id FROM public.pedidos WHERE id = $1`, [id]);
+    if (rows && rows.length > 0) {
+      const p = rows[0] as any;
+      await syncPedidoCrm(id, status, Number(p.valor_total) || 0, p.data_pedido, p.cliente_id);
+    }
+
     revalidatePath('/');
     return true;
   } catch (error) {
@@ -176,9 +249,47 @@ export async function updatePedidoStatus(id: string, status: StatusPedido): Prom
   }
 }
 
+export async function agendarVendaFutura(pedidoId: string, dataVendaFutura: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    await sql.query(`UPDATE public.pedidos SET data_venda_futura = $1, updated_at = now() WHERE id = $2`, [dataVendaFutura, pedidoId]);
+
+    const rows = await sql.query(`
+      SELECT p.numero_pedido, p.valor_total, p.cliente_id, c.nome_empresa, c.telefone_whatsapp
+      FROM public.pedidos p
+      JOIN public.clientes c ON p.cliente_id = c.id
+      WHERE p.id = $1
+    `, [pedidoId]);
+
+    if (rows && rows.length > 0) {
+      const ped = rows[0] as any;
+      await sql.query(`
+        INSERT INTO public.crm_oportunidades (
+          titulo, cliente_id, cliente_nome, cliente_telefone, valor, etapa, pedido_id, data_previsao, data_venda_futura
+        ) VALUES ($1, $2, $3, $4, 'venda_futura', $5, $6, $6)
+      `, [
+        `Renovação Extintores - ${ped.nome_empresa}`,
+        ped.cliente_id,
+        ped.nome_empresa,
+        ped.telefone_whatsapp,
+        Number(ped.valor_total) || 0,
+        pedidoId,
+        dataVendaFutura
+      ]);
+    }
+
+    revalidatePath('/');
+    return { success: true };
+  } catch (err: any) {
+    console.error('Erro ao agendar venda futura:', err);
+    return { success: false, error: err?.message || 'Erro ao agendar venda futura' };
+  }
+}
+
 export async function createPedido(data: {
   cliente_id: string;
   data_pedido: string;
+  data_entrega?: string;
+  data_venda_futura?: string;
   status: StatusPedido;
   observacoes?: string;
   desconto_tipo?: 'reais' | 'porcentagem';
@@ -199,14 +310,29 @@ export async function createPedido(data: {
     const descValor = Number(data.desconto_valor) || 0;
     const descCalculado = descTipo === 'porcentagem' ? (subtotal * (descValor / 100)) : descValor;
     const valorTotal = Math.max(0, subtotal - descCalculado);
+    const dataEntrega = data.data_entrega || data.data_pedido;
 
     const pedRes = await sql.query(
       `
-      INSERT INTO public.pedidos (numero_pedido, data_pedido, cliente_id, status, observacoes, subtotal, desconto_tipo, desconto_valor, valor_total)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      INSERT INTO public.pedidos (
+        numero_pedido, data_pedido, data_entrega, data_venda_futura, cliente_id, status, observacoes, subtotal, desconto_tipo, desconto_valor, valor_total
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
       RETURNING id
       `,
-      [proximoNum, data.data_pedido, data.cliente_id, data.status, data.observacoes || null, subtotal, descTipo, descValor, valorTotal]
+      [
+        proximoNum, 
+        data.data_pedido, 
+        dataEntrega, 
+        data.data_venda_futura || null, 
+        data.cliente_id, 
+        data.status, 
+        data.observacoes || null, 
+        subtotal, 
+        descTipo, 
+        descValor, 
+        valorTotal
+      ]
     );
 
     const pedidoId = (pedRes[0] as any)?.id;
@@ -224,6 +350,9 @@ export async function createPedido(data: {
       }
     }
 
+    // Sincroniza com CRM
+    await syncPedidoCrm(pedidoId, data.status, valorTotal, data.data_pedido, data.cliente_id);
+
     revalidatePath('/');
     return { success: true, id: pedidoId };
   } catch (error: any) {
@@ -237,6 +366,8 @@ export async function updatePedido(
   data: {
     cliente_id: string;
     data_pedido: string;
+    data_entrega?: string;
+    data_venda_futura?: string;
     status: StatusPedido;
     observacoes?: string;
     desconto_tipo?: 'reais' | 'porcentagem';
@@ -256,14 +387,27 @@ export async function updatePedido(
     const descValor = Number(data.desconto_valor) || 0;
     const descCalculado = descTipo === 'porcentagem' ? (subtotal * (descValor / 100)) : descValor;
     const valorTotal = Math.max(0, subtotal - descCalculado);
+    const dataEntrega = data.data_entrega || data.data_pedido;
 
     await sql.query(
       `
       UPDATE public.pedidos 
-      SET cliente_id = $1, data_pedido = $2, status = $3, observacoes = $4, subtotal = $5, desconto_tipo = $6, desconto_valor = $7, valor_total = $8, updated_at = now()
-      WHERE id = $9
+      SET cliente_id = $1, data_pedido = $2, data_entrega = $3, data_venda_futura = $4, status = $5, observacoes = $6, subtotal = $7, desconto_tipo = $8, desconto_valor = $9, valor_total = $10, updated_at = now()
+      WHERE id = $11
       `,
-      [data.cliente_id, data.data_pedido, data.status, data.observacoes || null, subtotal, descTipo, descValor, valorTotal, id]
+      [
+        data.cliente_id, 
+        data.data_pedido, 
+        dataEntrega, 
+        data.data_venda_futura || null, 
+        data.status, 
+        data.observacoes || null, 
+        subtotal, 
+        descTipo, 
+        descValor, 
+        valorTotal, 
+        id
+      ]
     );
 
     // Substitui itens
@@ -281,6 +425,9 @@ export async function updatePedido(
         );
       }
     }
+
+    // Sincroniza com CRM
+    await syncPedidoCrm(id, data.status, valorTotal, data.data_pedido, data.cliente_id);
 
     revalidatePath('/');
     return { success: true };
@@ -314,7 +461,11 @@ export async function getClientes(search?: string): Promise<Cliente[]> {
         nome_empresa,
         nome_contato,
         telefone_whatsapp,
+        cep,
         endereco,
+        numero,
+        bairro,
+        complemento,
         cidade,
         uf,
         cnpj,
@@ -347,15 +498,19 @@ export async function createCliente(data: Omit<Cliente, 'id'>): Promise<{ succes
   try {
     const res = await sql.query(
       `
-      INSERT INTO public.clientes (nome_empresa, nome_contato, telefone_whatsapp, endereco, cidade, uf, cnpj)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      INSERT INTO public.clientes (nome_empresa, nome_contato, telefone_whatsapp, cep, endereco, numero, bairro, complemento, cidade, uf, cnpj)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
       RETURNING id
       `,
       [
         data.nome_empresa,
         data.nome_contato || null,
         data.telefone_whatsapp || null,
+        data.cep || null,
         data.endereco || null,
+        data.numero || null,
+        data.bairro || null,
+        data.complemento || null,
         normalizarCidade(data.cidade),
         data.uf || 'MG',
         data.cnpj || null,
@@ -374,14 +529,18 @@ export async function updateCliente(id: string, data: Partial<Cliente>): Promise
     await sql.query(
       `
       UPDATE public.clientes
-      SET nome_empresa = $1, nome_contato = $2, telefone_whatsapp = $3, endereco = $4, cidade = $5, uf = $6, cnpj = $7, updated_at = now()
-      WHERE id = $8
+      SET nome_empresa = $1, nome_contato = $2, telefone_whatsapp = $3, cep = $4, endereco = $5, numero = $6, bairro = $7, complemento = $8, cidade = $9, uf = $10, cnpj = $11, updated_at = now()
+      WHERE id = $12
       `,
       [
         data.nome_empresa,
         data.nome_contato || null,
         data.telefone_whatsapp || null,
+        data.cep || null,
         data.endereco || null,
+        data.numero || null,
+        data.bairro || null,
+        data.complemento || null,
         normalizarCidade(data.cidade),
         data.uf || 'MG',
         data.cnpj || null,
@@ -1113,6 +1272,84 @@ export async function getRelatorioFinanceiro(filtros?: {
 
     const vendasPorMes: MesFinanceiro[] = Object.values(mesesMap);
 
+    // 5. Despesas do período
+    let dateWhereDespesas = '1=1';
+    const paramsDespesas: (string | number)[] = [];
+    if (periodoTipo === 'mes') {
+      paramsDespesas.push(mes, ano);
+      dateWhereDespesas = `EXTRACT(MONTH FROM d.data_despesa) = $1 AND EXTRACT(YEAR FROM d.data_despesa) = $2`;
+    } else if (periodoTipo === 'ano') {
+      paramsDespesas.push(ano);
+      dateWhereDespesas = `EXTRACT(YEAR FROM d.data_despesa) = $1`;
+    } else if (periodoTipo === 'custom' && filtros?.dataInicio && filtros?.dataFim) {
+      paramsDespesas.push(filtros.dataInicio, filtros.dataFim);
+      dateWhereDespesas = `d.data_despesa >= $1 AND d.data_despesa <= $2`;
+    }
+
+    const despesasQuery = `
+      SELECT 
+        d.id,
+        d.descricao,
+        d.valor::float as valor,
+        d.data_despesa::text as data_despesa,
+        d.categoria_id,
+        COALESCE(c.nome, d.categoria_nome, 'Outros') as categoria_nome,
+        COALESCE(c.cor, '#64748b') as categoria_cor,
+        d.observacoes,
+        d.created_at::text as created_at
+      FROM public.despesas d
+      LEFT JOIN public.categorias_despesas c ON d.categoria_id = c.id
+      WHERE ${dateWhereDespesas}
+      ORDER BY d.data_despesa DESC, d.created_at DESC
+    `;
+
+    const despesasRows = (await sql.query(despesasQuery, paramsDespesas)) as any[];
+    const despesasLista: Despesa[] = despesasRows.map((r) => ({
+      id: r.id,
+      descricao: r.descricao,
+      valor: Number(r.valor || 0),
+      data_despesa: r.data_despesa,
+      categoria_id: r.categoria_id,
+      categoria_nome: r.categoria_nome,
+      categoria_cor: r.categoria_cor,
+      observacoes: r.observacoes,
+      created_at: r.created_at,
+    }));
+
+    const despesasOperacionaisTotal = despesasLista.reduce((acc, d) => acc + d.valor, 0);
+    const despesasGeraisTotal = custoTotal + despesasOperacionaisTotal;
+    const lucroLiquidoTotal = faturamentoTotal - despesasGeraisTotal;
+
+    // Agrupamento de despesas por categoria (incluindo Custo dos Produtos/Serviços como CMV)
+    const mapaCat: Record<string, { total: number; count: number; cor: string }> = {};
+
+    if (custoTotal > 0) {
+      mapaCat['Custo de Produtos/Serviços (CMV)'] = {
+        total: custoTotal,
+        count: totalPedidos,
+        cor: '#ef4444',
+      };
+    }
+
+    for (const d of despesasLista) {
+      const cNome = d.categoria_nome || 'Outros';
+      const cor = d.categoria_cor || '#64748b';
+      if (!mapaCat[cNome]) {
+        mapaCat[cNome] = { total: 0, count: 0, cor };
+      }
+      mapaCat[cNome].total += d.valor;
+      mapaCat[cNome].count += 1;
+    }
+
+    const totalBaseCategorias = Math.max(despesasGeraisTotal, 1);
+    const despesasPorCategoria: CategoriaDespesaResumo[] = Object.entries(mapaCat).map(([nome, dados]) => ({
+      categoria_nome: nome,
+      cor: dados.cor,
+      total: dados.total,
+      quantidade: dados.count,
+      porcentagem: (dados.total / totalBaseCategorias) * 100,
+    })).sort((a, b) => b.total - a.total);
+
     return {
       periodoDescricao,
       faturamentoTotal,
@@ -1124,6 +1361,11 @@ export async function getRelatorioFinanceiro(filtros?: {
       pedidosPagos,
       pedidosAprovados,
       pedidosOrcamentos,
+      despesasOperacionaisTotal,
+      despesasGeraisTotal,
+      lucroLiquidoTotal,
+      despesasPorCategoria,
+      despesasLista,
       topProdutos,
       topClientes,
       vendasPorMes,
@@ -1142,10 +1384,302 @@ export async function getRelatorioFinanceiro(filtros?: {
       pedidosPagos: 0,
       pedidosAprovados: 0,
       pedidosOrcamentos: 0,
+      despesasOperacionaisTotal: 0,
+      despesasGeraisTotal: 0,
+      lucroLiquidoTotal: 0,
+      despesasPorCategoria: [],
+      despesasLista: [],
       topProdutos: [],
       topClientes: [],
       vendasPorMes: [],
       pedidosLista: [],
     };
+  }
+}
+
+// ==========================================
+// CATEGORIAS DE DESPESAS
+// ==========================================
+
+export async function getCategoriasDespesas(): Promise<CategoriaDespesa[]> {
+  try {
+    const rows = await sql.query(`SELECT id, nome, cor, created_at::text as created_at FROM public.categorias_despesas ORDER BY nome ASC`);
+    return rows as unknown as CategoriaDespesa[];
+  } catch (err) {
+    console.error('Erro ao buscar categorias de despesas:', err);
+    return [];
+  }
+}
+
+export async function createCategoriaDespesa(nome: string, cor?: string): Promise<{ success: boolean; id?: string; error?: string }> {
+  try {
+    const res = await sql.query(`
+      INSERT INTO public.categorias_despesas (nome, cor) VALUES ($1, $2) RETURNING id
+    `, [nome.trim(), cor || '#ef4444']);
+    revalidatePath('/');
+    return { success: true, id: (res[0] as any)?.id };
+  } catch (err: any) {
+    return { success: false, error: err?.message || 'Erro ao criar categoria de despesa' };
+  }
+}
+
+export async function deleteCategoriaDespesa(id: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    await sql.query(`UPDATE public.despesas SET categoria_id = NULL WHERE categoria_id = $1`, [id]);
+    await sql.query(`DELETE FROM public.categorias_despesas WHERE id = $1`, [id]);
+    revalidatePath('/');
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message || 'Erro ao excluir categoria de despesa' };
+  }
+}
+
+// ==========================================
+// DESPESAS
+// ==========================================
+
+export async function getDespesas(filtros?: {
+  dataInicio?: string;
+  dataFim?: string;
+  categoriaId?: string;
+}): Promise<Despesa[]> {
+  try {
+    let query = `
+      SELECT 
+        d.id,
+        d.descricao,
+        d.valor::float as valor,
+        d.data_despesa::text as data_despesa,
+        d.categoria_id,
+        COALESCE(c.nome, d.categoria_nome, 'Outros') as categoria_nome,
+        COALESCE(c.cor, '#64748b') as categoria_cor,
+        d.observacoes,
+        d.created_at::text as created_at
+      FROM public.despesas d
+      LEFT JOIN public.categorias_despesas c ON d.categoria_id = c.id
+      WHERE 1=1
+    `;
+    const params: string[] = [];
+    if (filtros?.dataInicio) {
+      params.push(filtros.dataInicio);
+      query += ` AND d.data_despesa >= $${params.length}`;
+    }
+    if (filtros?.dataFim) {
+      params.push(filtros.dataFim);
+      query += ` AND d.data_despesa <= $${params.length}`;
+    }
+    if (filtros?.categoriaId) {
+      params.push(filtros.categoriaId);
+      query += ` AND d.categoria_id = $${params.length}`;
+    }
+    query += ` ORDER BY d.data_despesa DESC, d.created_at DESC`;
+    const rows = await sql.query(query, params);
+    return rows as unknown as Despesa[];
+  } catch (err) {
+    console.error('Erro ao buscar despesas:', err);
+    return [];
+  }
+}
+
+export async function createDespesa(data: {
+  descricao: string;
+  valor: number;
+  data_despesa: string;
+  categoria_id?: string;
+  observacoes?: string;
+}): Promise<{ success: boolean; id?: string; error?: string }> {
+  try {
+    let catNome = null;
+    if (data.categoria_id) {
+      const c = await sql.query(`SELECT nome FROM public.categorias_despesas WHERE id = $1`, [data.categoria_id]);
+      if (c && c.length > 0) catNome = (c[0] as any).nome;
+    }
+    const res = await sql.query(`
+      INSERT INTO public.despesas (descricao, valor, data_despesa, categoria_id, categoria_nome, observacoes)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING id
+    `, [
+      data.descricao.trim(),
+      Number(data.valor) || 0,
+      data.data_despesa || new Date().toISOString().split('T')[0],
+      data.categoria_id || null,
+      catNome,
+      data.observacoes || null
+    ]);
+    revalidatePath('/');
+    return { success: true, id: (res[0] as any)?.id };
+  } catch (err: any) {
+    return { success: false, error: err?.message || 'Erro ao criar despesa' };
+  }
+}
+
+export async function updateDespesa(
+  id: string,
+  data: {
+    descricao: string;
+    valor: number;
+    data_despesa: string;
+    categoria_id?: string;
+    observacoes?: string;
+  }
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    let catNome = null;
+    if (data.categoria_id) {
+      const c = await sql.query(`SELECT nome FROM public.categorias_despesas WHERE id = $1`, [data.categoria_id]);
+      if (c && c.length > 0) catNome = (c[0] as any).nome;
+    }
+    await sql.query(`
+      UPDATE public.despesas
+      SET descricao = $1, valor = $2, data_despesa = $3, categoria_id = $4, categoria_nome = $5, observacoes = $6
+      WHERE id = $7
+    `, [
+      data.descricao.trim(),
+      Number(data.valor) || 0,
+      data.data_despesa,
+      data.categoria_id || null,
+      catNome,
+      data.observacoes || null,
+      id
+    ]);
+    revalidatePath('/');
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message || 'Erro ao atualizar despesa' };
+  }
+}
+
+export async function deleteDespesa(id: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    await sql.query(`DELETE FROM public.despesas WHERE id = $1`, [id]);
+    revalidatePath('/');
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message || 'Erro ao excluir despesa' };
+  }
+}
+
+// ==========================================
+// CRM DE VENDAS & OPORTUNIDADES
+// ==========================================
+
+export async function getCrmOportunidades(): Promise<CrmOportunidade[]> {
+  try {
+    const rows = await sql.query(`
+      SELECT 
+        o.id,
+        o.titulo,
+        o.cliente_id,
+        o.cliente_nome,
+        o.cliente_telefone,
+        o.cliente_email,
+        o.valor::float as valor,
+        o.etapa,
+        o.pedido_id,
+        p.numero_pedido,
+        o.data_previsao::text as data_previsao,
+        o.data_venda_futura::text as data_venda_futura,
+        o.observacoes,
+        o.created_at::text as created_at,
+        o.updated_at::text as updated_at
+      FROM public.crm_oportunidades o
+      LEFT JOIN public.pedidos p ON o.pedido_id = p.id
+      ORDER BY o.created_at DESC
+    `);
+    return rows as unknown as CrmOportunidade[];
+  } catch (error) {
+    console.error('Erro ao buscar oportunidades CRM:', error);
+    return [];
+  }
+}
+
+export async function createCrmOportunidade(data: {
+  titulo: string;
+  cliente_id?: string;
+  cliente_nome: string;
+  cliente_telefone?: string;
+  cliente_email?: string;
+  valor: number;
+  etapa: CrmEtapa;
+  data_previsao?: string;
+  observacoes?: string;
+}): Promise<{ success: boolean; id?: string; error?: string }> {
+  try {
+    const res = await sql.query(`
+      INSERT INTO public.crm_oportunidades (
+        titulo, cliente_id, cliente_nome, cliente_telefone, cliente_email, valor, etapa, data_previsao, observacoes
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      RETURNING id
+    `, [
+      data.titulo.trim(),
+      data.cliente_id || null,
+      data.cliente_nome.trim(),
+      data.cliente_telefone || null,
+      data.cliente_email || null,
+      Number(data.valor) || 0,
+      data.etapa || 'potencial',
+      data.data_previsao || null,
+      data.observacoes || null
+    ]);
+    revalidatePath('/');
+    return { success: true, id: (res[0] as any)?.id };
+  } catch (err: any) {
+    return { success: false, error: err?.message || 'Erro ao criar oportunidade CRM' };
+  }
+}
+
+export async function updateCrmEtapa(id: string, etapa: CrmEtapa): Promise<{ success: boolean; error?: string }> {
+  try {
+    await sql.query(`UPDATE public.crm_oportunidades SET etapa = $1, updated_at = now() WHERE id = $2`, [etapa, id]);
+    revalidatePath('/');
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message || 'Erro ao atualizar etapa no CRM' };
+  }
+}
+
+export async function updateCrmOportunidade(
+  id: string,
+  data: {
+    titulo: string;
+    cliente_nome: string;
+    cliente_telefone?: string;
+    cliente_email?: string;
+    valor: number;
+    etapa: CrmEtapa;
+    data_previsao?: string;
+    observacoes?: string;
+  }
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    await sql.query(`
+      UPDATE public.crm_oportunidades
+      SET titulo = $1, cliente_nome = $2, cliente_telefone = $3, cliente_email = $4, valor = $5, etapa = $6, data_previsao = $7, observacoes = $8, updated_at = now()
+      WHERE id = $9
+    `, [
+      data.titulo.trim(),
+      data.cliente_nome.trim(),
+      data.cliente_telefone || null,
+      data.cliente_email || null,
+      Number(data.valor) || 0,
+      data.etapa,
+      data.data_previsao || null,
+      data.observacoes || null,
+      id
+    ]);
+    revalidatePath('/');
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message || 'Erro ao atualizar oportunidade CRM' };
+  }
+}
+
+export async function deleteCrmOportunidade(id: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    await sql.query(`DELETE FROM public.crm_oportunidades WHERE id = $1`, [id]);
+    revalidatePath('/');
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message || 'Erro ao deletar oportunidade CRM' };
   }
 }

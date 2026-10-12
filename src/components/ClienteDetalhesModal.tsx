@@ -180,7 +180,12 @@ export function ClienteDetalhesModal({
   };
 
   const getMapsUrl = () => {
-    const query = [cliente.endereco, cliente.cidade, cliente.uf, 'Brasil'].filter(Boolean).join(', ');
+    const enderecoCompleto = [
+      cliente.endereco,
+      cliente.numero ? `nº ${cliente.numero}` : null,
+      cliente.bairro,
+    ].filter(Boolean).join(', ');
+    const query = [enderecoCompleto, cliente.cidade, cliente.uf, cliente.cep, 'Brasil'].filter(Boolean).join(', ');
     return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query || cliente.nome_empresa)}`;
   };
 
@@ -340,14 +345,31 @@ export function ClienteDetalhesModal({
               </div>
 
               <div className="space-y-2">
+                {cliente.cep && (
+                  <div>
+                    <span className="text-xs text-zinc-400 dark:text-zinc-500">CEP:</span>
+                    <p className="text-xs font-mono font-bold text-zinc-800 dark:text-zinc-200">
+                      {cliente.cep}
+                    </p>
+                  </div>
+                )}
+
                 <div>
-                  <span className="text-xs text-zinc-400 dark:text-zinc-500">Logradouro:</span>
+                  <span className="text-xs text-zinc-400 dark:text-zinc-500">Logradouro / Número:</span>
                   <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
                     {cliente.endereco || 'Endereço não informado'}
+                    {cliente.numero ? `, nº ${cliente.numero}` : ''}
+                    {cliente.complemento ? ` (${cliente.complemento})` : ''}
                   </p>
                 </div>
 
-                <div className="flex items-center justify-between">
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <span className="text-xs text-zinc-400 dark:text-zinc-500">Bairro:</span>
+                    <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
+                      {cliente.bairro || 'Não informado'}
+                    </p>
+                  </div>
                   <div>
                     <span className="text-xs text-zinc-400 dark:text-zinc-500">Cidade / UF:</span>
                     <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">

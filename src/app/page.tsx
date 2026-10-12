@@ -17,6 +17,7 @@ import { ReciboModal } from '@/components/ReciboModal';
 import { StatusModal } from '@/components/StatusModal';
 import { CategoriasModal } from '@/components/CategoriasModal';
 import { InicioView } from '@/components/InicioView';
+import { CrmView } from '@/components/CrmView';
 import { downloadPedidoPdf } from '@/lib/pdfGenerator';
 import { 
   Flame, 
@@ -31,9 +32,10 @@ import {
   LogOut,
   Sun,
   Moon,
+  Sparkles,
 } from 'lucide-react';
 
-type AbaAtiva = 'inicio' | 'pedidos' | 'clientes' | 'produtos' | 'financeiro' | 'dashboard';
+type AbaAtiva = 'inicio' | 'pedidos' | 'clientes' | 'produtos' | 'crm' | 'financeiro' | 'dashboard';
 
 export default function Home() {
   const [usuarioLogado, setUsuarioLogado] = useState<Usuario | null>(null);
@@ -358,6 +360,22 @@ export default function Home() {
           </button>
 
           <button
+            onClick={() => setAbaAtiva('crm')}
+            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer ${
+              abaAtiva === 'crm'
+                ? temaEscuro
+                  ? 'bg-red-950/60 text-red-300 border border-red-800/80 shadow-md shadow-red-950/40'
+                  : 'bg-red-50 text-red-700 shadow-2xs border border-red-200'
+                : temaEscuro
+                ? 'text-zinc-400 hover:bg-zinc-800/80 hover:text-white border border-transparent'
+                : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 border border-transparent'
+            }`}
+          >
+            <Sparkles className={`w-4 h-4 shrink-0 ${abaAtiva === 'crm' ? 'text-red-500' : 'text-zinc-400'}`} />
+            <span className="whitespace-nowrap font-bold">CRM & Vendas Futuras</span>
+          </button>
+
+          <button
             onClick={() => setAbaAtiva('financeiro')}
             className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer ${
               abaAtiva === 'financeiro'
@@ -556,7 +574,8 @@ export default function Home() {
                 {abaAtiva === 'pedidos' && 'Ordens de Serviço / Pedidos'}
                 {abaAtiva === 'clientes' && 'Gestão de Clientes'}
                 {abaAtiva === 'produtos' && 'Catálogo de Produtos & Serviços'}
-                {abaAtiva === 'financeiro' && 'Gestão Financeira & Margens'}
+                {abaAtiva === 'crm' && 'CRM de Vendas & Vendas Futuras'}
+                {abaAtiva === 'financeiro' && 'Gestão Financeira, Custos & Despesas'}
                 {abaAtiva === 'dashboard' && 'Painel de Desempenho & Faturamento'}
               </h2>
               <p className={`text-xs mt-0.5 ${temaEscuro ? 'text-zinc-400' : 'text-zinc-500'} dark:text-zinc-400`}>
@@ -636,6 +655,7 @@ export default function Home() {
             onVerPedidos={() => setAbaAtiva('pedidos')}
             onVerClientes={() => setAbaAtiva('clientes')}
             onVerProdutos={() => setAbaAtiva('produtos')}
+            onVerCrm={() => setAbaAtiva('crm')}
             onVerFinanceiro={() => setAbaAtiva('financeiro')}
             onVerDashboard={() => setAbaAtiva('dashboard')}
           />
@@ -709,6 +729,31 @@ export default function Home() {
           />
         )}
 
+        {abaAtiva === 'crm' && (
+          <CrmView
+            onAbrirPedido={async (pedId) => {
+              const detalhado = await getPedidoDetalhes(pedId);
+              if (detalhado) {
+                setUltimoModalAberto('recibo');
+                setPedidoRecibo(detalhado);
+                setReciboModalAberto(true);
+              }
+            }}
+            onCriarNovoPedido={(clienteId, clienteNome) => {
+              setPedidoParaEditar(null);
+              setPedidoModalAberto(true);
+            }}
+            onVerCliente={(cliId) => {
+              const cli = clientes.find((c) => c.id === cliId || c.legacy_id === cliId);
+              if (cli) {
+                setUltimoModalAberto('cliente');
+                setClienteParaDetalhes(cli);
+                setClienteDetalhesAberto(true);
+              }
+            }}
+          />
+        )}
+
         {abaAtiva === 'financeiro' && (
           <FinanceiroView
             onVerPedido={async (pedId) => {
@@ -749,7 +794,7 @@ export default function Home() {
       </main>
 
       {/* BOTTOM NAVIGATION MOBILE */}
-      <nav className={`md:hidden fixed bottom-0 left-0 right-0 z-40 grid grid-cols-6 py-2 border-t transition-colors duration-200 ${
+      <nav className={`md:hidden fixed bottom-0 left-0 right-0 z-40 grid grid-cols-7 py-2 border-t transition-colors duration-200 ${
         temaEscuro
           ? 'bg-[#0f0f12]/95 border-zinc-800 text-zinc-400 backdrop-blur-md'
           : 'bg-white border-zinc-200 text-zinc-500'
@@ -760,8 +805,8 @@ export default function Home() {
             abaAtiva === 'inicio' ? 'text-red-600 dark:text-red-400 font-bold' : 'hover:text-zinc-900 dark:hover:text-white'
           }`}
         >
-          <HomeIcon className="w-5 h-5" />
-          <span className="text-[10px]">Início</span>
+          <HomeIcon className="w-4 h-4" />
+          <span className="text-[9px]">Início</span>
         </button>
 
         <button
@@ -770,8 +815,8 @@ export default function Home() {
             abaAtiva === 'pedidos' ? 'text-red-600 dark:text-red-400 font-bold' : 'hover:text-zinc-900 dark:hover:text-white'
           }`}
         >
-          <FileEdit className="w-5 h-5" />
-          <span className="text-[10px]">Pedidos</span>
+          <FileEdit className="w-4 h-4" />
+          <span className="text-[9px]">Pedidos</span>
         </button>
 
         <button
@@ -780,8 +825,8 @@ export default function Home() {
             abaAtiva === 'clientes' ? 'text-red-600 dark:text-red-400 font-bold' : 'hover:text-zinc-900 dark:hover:text-white'
           }`}
         >
-          <Users className="w-5 h-5" />
-          <span className="text-[10px]">Clientes</span>
+          <Users className="w-4 h-4" />
+          <span className="text-[9px]">Clientes</span>
         </button>
 
         <button
@@ -790,8 +835,18 @@ export default function Home() {
             abaAtiva === 'produtos' ? 'text-red-600 dark:text-red-400 font-bold' : 'hover:text-zinc-900 dark:hover:text-white'
           }`}
         >
-          <Package className="w-5 h-5" />
-          <span className="text-[10px]">Produtos</span>
+          <Package className="w-4 h-4" />
+          <span className="text-[9px]">Produtos</span>
+        </button>
+
+        <button
+          onClick={() => setAbaAtiva('crm')}
+          className={`flex flex-col items-center justify-center gap-1 transition cursor-pointer ${
+            abaAtiva === 'crm' ? 'text-red-600 dark:text-red-400 font-bold' : 'hover:text-zinc-900 dark:hover:text-white'
+          }`}
+        >
+          <Sparkles className="w-4 h-4" />
+          <span className="text-[9px]">CRM</span>
         </button>
 
         <button
@@ -800,8 +855,8 @@ export default function Home() {
             abaAtiva === 'financeiro' ? 'text-red-600 dark:text-red-400 font-bold' : 'hover:text-zinc-900 dark:hover:text-white'
           }`}
         >
-          <DollarSign className="w-5 h-5" />
-          <span className="text-[10px]">Financeiro</span>
+          <DollarSign className="w-4 h-4" />
+          <span className="text-[9px]">Financeiro</span>
         </button>
 
         <button
@@ -810,8 +865,8 @@ export default function Home() {
             abaAtiva === 'dashboard' ? 'text-red-600 dark:text-red-400 font-bold' : 'hover:text-zinc-900 dark:hover:text-white'
           }`}
         >
-          <LayoutDashboard className="w-5 h-5" />
-          <span className="text-[10px]">Dashboard</span>
+          <LayoutDashboard className="w-4 h-4" />
+          <span className="text-[9px]">Dashboard</span>
         </button>
       </nav>
 
