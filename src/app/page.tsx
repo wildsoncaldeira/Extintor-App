@@ -464,32 +464,6 @@ export default function Home() {
           </button>
 
           <button
-            onClick={() => setAbaAtiva('produtos')}
-            title={`Produtos & Serviços (${produtos.length})`}
-            className={`w-full flex items-center ${sidebarColapsada ? 'justify-center p-2.5' : 'gap-3 px-3.5 py-2.5'} rounded-xl text-sm font-bold transition cursor-pointer ${
-              abaAtiva === 'produtos'
-                ? temaEscuro
-                  ? 'bg-red-950/60 text-red-300 border border-red-800/80 shadow-md shadow-red-950/40'
-                  : 'bg-red-50 text-red-700 shadow-2xs border border-red-200'
-                : temaEscuro
-                ? 'text-zinc-400 hover:bg-zinc-800/80 hover:text-white border border-transparent'
-                : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 border border-transparent'
-            }`}
-          >
-            <Package className={`w-4 h-4 shrink-0 ${abaAtiva === 'produtos' ? 'text-red-500' : 'text-zinc-400'}`} />
-            {!sidebarColapsada && (
-              <>
-                <span className="whitespace-nowrap font-bold">Produtos & Serviços</span>
-                <span className={`ml-auto text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${
-                  temaEscuro ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-100 text-zinc-600'
-                }`}>
-                  {produtos.length}
-                </span>
-              </>
-            )}
-          </button>
-
-          <button
             onClick={() => setAbaAtiva('crm')}
             title="CRM & Vendas Futuras"
             className={`w-full flex items-center ${sidebarColapsada ? 'justify-center p-2.5' : 'gap-3 px-3.5 py-2.5'} rounded-xl text-sm font-bold transition cursor-pointer ${
@@ -538,6 +512,25 @@ export default function Home() {
           >
             <LayoutDashboard className={`w-4 h-4 shrink-0 ${abaAtiva === 'dashboard' ? 'text-red-500' : 'text-zinc-400'}`} />
             {!sidebarColapsada && <span className="whitespace-nowrap font-bold">Dashboard</span>}
+          </button>
+
+          <button
+            onClick={() => setAbaAtiva('produtos')}
+            title="Produtos & Serviços"
+            className={`w-full flex items-center ${sidebarColapsada ? 'justify-center p-2.5' : 'gap-3 px-3.5 py-2.5'} rounded-xl text-sm font-bold transition cursor-pointer ${
+              abaAtiva === 'produtos'
+                ? temaEscuro
+                  ? 'bg-red-950/60 text-red-300 border border-red-800/80 shadow-md shadow-red-950/40'
+                  : 'bg-red-50 text-red-700 shadow-2xs border border-red-200'
+                : temaEscuro
+                ? 'text-zinc-400 hover:bg-zinc-800/80 hover:text-white border border-transparent'
+                : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 border border-transparent'
+            }`}
+          >
+            <Package className={`w-4 h-4 shrink-0 ${abaAtiva === 'produtos' ? 'text-red-500' : 'text-zinc-400'}`} />
+            {!sidebarColapsada && (
+              <span className="whitespace-nowrap font-bold">Produtos & Serviços</span>
+            )}
           </button>
         </nav>
 
@@ -618,11 +611,11 @@ export default function Home() {
             </div>
           )}
 
-          {/* Conexão Neon Postgres */}
+          {/* Status de Sincronização */}
           <div className={`flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400 pt-2 px-1 ${sidebarColapsada ? 'justify-center' : ''}`}>
-            <div className="flex items-center gap-1.5" title="Neon Postgres Conectado">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              {!sidebarColapsada && <span>Neon Postgres</span>}
+            <div className="flex items-center gap-1.5" title={loading ? 'Sincronizando dados...' : 'Sincronizado com o banco de dados'}>
+              <span className={`w-2 h-2 rounded-full ${loading ? 'bg-amber-400 animate-spin' : 'bg-emerald-500 animate-pulse'}`}></span>
+              {!sidebarColapsada && <span>{loading ? 'Sincronizando...' : 'Sincronizado'}</span>}
             </div>
             {!sidebarColapsada && (
               <button
@@ -896,6 +889,9 @@ export default function Home() {
         {abaAtiva === 'dashboard' && (
           <DashboardView
             stats={stats}
+            pedidos={pedidos}
+            clientes={clientes}
+            produtos={produtos}
             loading={loading}
             onOpenNovoPedido={() => {
               setPedidoParaEditar(null);
@@ -1051,33 +1047,11 @@ export default function Home() {
               </button>
             </div>
 
-            {/* Minha Conta CTA button */}
-            <div className="p-3 border-b border-zinc-100 dark:border-zinc-850">
-              <button
-                onClick={() => {
-                  setMenuMobileAberto(false);
-                  setMinhaContaModalAberto(true);
-                }}
-                className="w-full flex items-center justify-between p-3 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-900/60 hover:bg-red-100 dark:hover:bg-red-900/40 transition text-left cursor-pointer"
-              >
-                <div className="flex items-center gap-2.5">
-                  <div className="p-1.5 rounded-lg bg-red-600 text-white">
-                    <User className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold">Minha Conta</p>
-                    <p className="text-[10px] text-red-600/80 dark:text-red-400/80">Editar foto, nome e senha</p>
-                  </div>
-                </div>
-                <span className="text-xs font-semibold">Editar &rarr;</span>
-              </button>
-            </div>
-
             {/* Drawer Navigation Links */}
             <div className="p-3 space-y-1 overflow-y-auto flex-1">
               <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 px-3 py-1">Navegação & Módulos</p>
               
-              {/* Início */}
+              {/* 1. Início */}
               <button
                 onClick={() => { setAbaAtiva('inicio'); setMenuMobileAberto(false); }}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
@@ -1090,38 +1064,7 @@ export default function Home() {
                 <span>Início</span>
               </button>
 
-              {/* Produtos & Serviços */}
-              <button
-                onClick={() => { setAbaAtiva('produtos'); setMenuMobileAberto(false); }}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-                  abaAtiva === 'produtos'
-                    ? 'bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800'
-                    : 'hover:bg-zinc-100 dark:hover:bg-zinc-800/60'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <Package className="w-4 h-4 text-zinc-400" />
-                  <span>Produtos & Serviços</span>
-                </div>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-200 dark:bg-zinc-800">
-                  {produtos.length}
-                </span>
-              </button>
-
-              {/* Dashboard */}
-              <button
-                onClick={() => { setAbaAtiva('dashboard'); setMenuMobileAberto(false); }}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-                  abaAtiva === 'dashboard'
-                    ? 'bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800'
-                    : 'hover:bg-zinc-100 dark:hover:bg-zinc-800/60'
-                }`}
-              >
-                <LayoutDashboard className="w-4 h-4 text-zinc-400" />
-                <span>Dashboard & Desempenho</span>
-              </button>
-
-              {/* Pedidos */}
+              {/* 2. Pedidos */}
               <button
                 onClick={() => { setAbaAtiva('pedidos'); setMenuMobileAberto(false); }}
                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
@@ -1139,7 +1082,7 @@ export default function Home() {
                 </span>
               </button>
 
-              {/* Clientes */}
+              {/* 3. Clientes */}
               <button
                 onClick={() => { setAbaAtiva('clientes'); setMenuMobileAberto(false); }}
                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
@@ -1157,7 +1100,7 @@ export default function Home() {
                 </span>
               </button>
 
-              {/* CRM */}
+              {/* 4. CRM & Vendas Futuras */}
               <button
                 onClick={() => { setAbaAtiva('crm'); setMenuMobileAberto(false); }}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
@@ -1170,7 +1113,7 @@ export default function Home() {
                 <span>CRM & Vendas Futuras</span>
               </button>
 
-              {/* Financeiro */}
+              {/* 5. Financeiro */}
               <button
                 onClick={() => { setAbaAtiva('financeiro'); setMenuMobileAberto(false); }}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
@@ -1180,7 +1123,33 @@ export default function Home() {
                 }`}
               >
                 <DollarSign className="w-4 h-4 text-zinc-400" />
-                <span>Financeiro & Despesas</span>
+                <span>Financeiro</span>
+              </button>
+
+              {/* 6. Dashboard */}
+              <button
+                onClick={() => { setAbaAtiva('dashboard'); setMenuMobileAberto(false); }}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  abaAtiva === 'dashboard'
+                    ? 'bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800'
+                    : 'hover:bg-zinc-100 dark:hover:bg-zinc-800/60'
+                }`}
+              >
+                <LayoutDashboard className="w-4 h-4 text-zinc-400" />
+                <span>Dashboard</span>
+              </button>
+
+              {/* 7. Produtos & Serviços (no final e sem número) */}
+              <button
+                onClick={() => { setAbaAtiva('produtos'); setMenuMobileAberto(false); }}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  abaAtiva === 'produtos'
+                    ? 'bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800'
+                    : 'hover:bg-zinc-100 dark:hover:bg-zinc-800/60'
+                }`}
+              >
+                <Package className="w-4 h-4 text-zinc-400" />
+                <span>Produtos & Serviços</span>
               </button>
             </div>
 
@@ -1208,6 +1177,25 @@ export default function Home() {
                 <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-zinc-200 dark:bg-zinc-800">
                   {temaEscuro ? 'DARK' : 'LIGHT'}
                 </span>
+              </button>
+
+              {/* Minha Conta (entre Dark Mode e Logout) */}
+              <button
+                onClick={() => {
+                  setMenuMobileAberto(false);
+                  setMinhaContaModalAberto(true);
+                }}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition border cursor-pointer ${
+                  temaEscuro
+                    ? 'bg-zinc-900 text-zinc-200 border-zinc-800 hover:bg-zinc-800'
+                    : 'bg-white text-zinc-800 border-zinc-200 hover:bg-zinc-100'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <User className="w-4 h-4 text-red-600" />
+                  <span>Minha Conta</span>
+                </div>
+                <span className="text-[10px] text-zinc-400">Editar</span>
               </button>
 
               {/* Logout (último, lá embaixo) */}

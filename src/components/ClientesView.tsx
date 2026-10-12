@@ -251,7 +251,7 @@ export function ClientesView({
               Carregando Clientes...
             </p>
             <span className="text-xs text-zinc-400 dark:text-zinc-500">
-              Buscando clientes cadastrados no Neon Postgres
+              Sincronizando clientes cadastrados
             </span>
           </div>
         ) : clientesFiltrados.length === 0 ? (

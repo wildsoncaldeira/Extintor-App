@@ -173,6 +173,17 @@ export default function MinhaContaModal({
     }
   };
 
+  // Fechar com tecla ESC
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   const iniciais = (nome || usuario.nome || 'U')
     .split(' ')
     .filter(Boolean)
@@ -181,24 +192,34 @@ export default function MinhaContaModal({
     .join('');
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[92vh]">
+    <div 
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-200"
+    >
+      <div 
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-lg bg-white dark:bg-[#18181c] rounded-2xl shadow-2xl border border-slate-200 dark:border-zinc-800 overflow-hidden flex flex-col max-h-[92vh]"
+      >
         
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-[#141418]">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
+            <div className="p-2 rounded-xl bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 border border-transparent dark:border-red-900/60">
               <User className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-850 dark:text-white">Minha Conta</h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Gerencie seus dados pessoais, foto e segurança</p>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Minha Conta</h2>
+              <p className="text-xs text-slate-500 dark:text-zinc-400">Gerencie seus dados pessoais, foto e segurança</p>
             </div>
           </div>
           <button
             onClick={onClose}
             type="button"
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-200 dark:hover:text-zinc-200 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -221,23 +242,23 @@ export default function MinhaContaModal({
           )}
 
           {/* Foto de Perfil */}
-          <div className="flex flex-col items-center sm:flex-row sm:items-center gap-5 p-4 rounded-xl bg-slate-50 dark:bg-slate-850/60 border border-slate-200/80 dark:border-slate-800">
+          <div className="flex flex-col items-center sm:flex-row sm:items-center gap-5 p-4 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700/80">
             <div className="relative group shrink-0">
               {fotoUrl ? (
                 <img
                   src={fotoUrl}
                   alt={nome}
-                  className="w-20 h-20 rounded-full object-cover ring-4 ring-white dark:ring-slate-800 shadow-md"
+                  className="w-20 h-20 rounded-full object-cover ring-4 ring-white dark:ring-zinc-700 shadow-md"
                 />
               ) : (
-                <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-red-600 to-rose-500 text-white font-bold text-2xl flex items-center justify-center ring-4 ring-white dark:ring-slate-800 shadow-md">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-red-600 to-rose-500 text-white font-bold text-2xl flex items-center justify-center ring-4 ring-white dark:ring-zinc-700 shadow-md">
                   {iniciais}
                 </div>
               )}
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="absolute bottom-0 right-0 p-1.5 rounded-full bg-slate-900 dark:bg-slate-800 text-white shadow hover:bg-red-600 transition-colors"
+                className="absolute bottom-0 right-0 p-1.5 rounded-full bg-slate-900 dark:bg-zinc-700 text-white shadow hover:bg-red-600 transition-colors cursor-pointer"
                 title="Alterar foto"
               >
                 <Camera className="w-3.5 h-3.5" />
@@ -246,8 +267,8 @@ export default function MinhaContaModal({
 
             <div className="flex-1 text-center sm:text-left space-y-2">
               <div>
-                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Foto de Perfil</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">JPG, PNG ou WEBP. A foto será ajustada automaticamente.</p>
+                <p className="text-sm font-semibold text-slate-800 dark:text-zinc-100">Foto de Perfil</p>
+                <p className="text-xs text-slate-500 dark:text-zinc-400">JPG, PNG ou WEBP. A foto será ajustada automaticamente.</p>
               </div>
 
               <div className="flex items-center justify-center sm:justify-start gap-2 pt-1">
@@ -261,7 +282,7 @@ export default function MinhaContaModal({
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-750 transition-colors"
+                  className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white dark:bg-zinc-800 border border-slate-300 dark:border-zinc-600 text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
                 >
                   Selecionar foto
                 </button>
@@ -269,7 +290,7 @@ export default function MinhaContaModal({
                   <button
                     type="button"
                     onClick={handleRemoverFoto}
-                    className="px-2.5 py-1.5 text-xs font-medium rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors flex items-center gap-1"
+                    className="px-2.5 py-1.5 text-xs font-medium rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors flex items-center gap-1 cursor-pointer"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                     Remover
@@ -282,7 +303,7 @@ export default function MinhaContaModal({
           {/* Dados Pessoais */}
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">
                 Nome Completo *
               </label>
               <div className="relative">
@@ -293,13 +314,13 @@ export default function MinhaContaModal({
                   onChange={(e) => setNome(e.target.value)}
                   placeholder="Seu nome completo"
                   required
-                  className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all font-medium"
+                  className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all font-medium"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">
                 E-mail de Acesso *
               </label>
               <div className="relative">
@@ -310,24 +331,14 @@ export default function MinhaContaModal({
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="seu.email@empresa.com"
                   required
-                  className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all font-medium"
+                  className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all font-medium"
                 />
               </div>
-            </div>
-
-            <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-850/40 border border-slate-200/60 dark:border-slate-800">
-              <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400 font-medium">
-                <Shield className="w-4 h-4 text-red-500" />
-                <span>Cargo: <strong className="text-slate-850 dark:text-slate-200">{usuario.cargo || 'Administrador'}</strong></span>
-              </div>
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900">
-                Ativo
-              </span>
             </div>
           </div>
 
           {/* Alteração de Senha */}
-          <div className="border-t border-slate-200 dark:border-slate-800 pt-4">
+          <div className="border-t border-slate-200 dark:border-zinc-800 pt-4">
             <button
               type="button"
               onClick={() => {
@@ -336,10 +347,10 @@ export default function MinhaContaModal({
                 setNovaSenha('');
                 setConfirmaSenha('');
               }}
-              className="w-full flex items-center justify-between py-2 text-left text-sm font-semibold text-slate-800 dark:text-slate-200 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+              className="w-full flex items-center justify-between py-2 text-left text-sm font-semibold text-slate-800 dark:text-zinc-200 hover:text-red-600 dark:hover:text-red-400 transition-colors cursor-pointer"
             >
               <span className="flex items-center gap-2">
-                <KeyRound className="w-4 h-4 text-slate-500" />
+                <KeyRound className="w-4 h-4 text-slate-500 dark:text-zinc-400" />
                 Alterar Senha de Acesso
               </span>
               <span className="text-xs text-red-600 dark:text-red-400 font-medium">
@@ -348,9 +359,9 @@ export default function MinhaContaModal({
             </button>
 
             {alterarSenha && (
-              <div className="mt-3 p-4 rounded-xl bg-slate-50 dark:bg-slate-850/60 border border-slate-200 dark:border-slate-800 space-y-3.5 animate-in slide-in-from-top-2 duration-200">
+              <div className="mt-3 p-4 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 space-y-3.5 animate-in slide-in-from-top-2 duration-200">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1">
                     Senha Atual *
                   </label>
                   <div className="relative">
@@ -360,14 +371,14 @@ export default function MinhaContaModal({
                       value={senhaAtual}
                       onChange={(e) => setSenhaAtual(e.target.value)}
                       placeholder="Digite sua senha atual"
-                      className="w-full pl-10 pr-4 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500"
+                      className="w-full pl-10 pr-4 py-2 text-sm rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1">
                       Nova Senha *
                     </label>
                     <div className="relative">
@@ -377,13 +388,13 @@ export default function MinhaContaModal({
                         value={novaSenha}
                         onChange={(e) => setNovaSenha(e.target.value)}
                         placeholder="Mínimo 6 dígitos"
-                        className="w-full pl-10 pr-4 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500"
+                        className="w-full pl-10 pr-4 py-2 text-sm rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1">
                       Confirmar Nova Senha *
                     </label>
                     <div className="relative">
@@ -393,7 +404,7 @@ export default function MinhaContaModal({
                         value={confirmaSenha}
                         onChange={(e) => setConfirmaSenha(e.target.value)}
                         placeholder="Repita a nova senha"
-                        className="w-full pl-10 pr-4 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500"
+                        className="w-full pl-10 pr-4 py-2 text-sm rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500"
                       />
                     </div>
                   </div>
@@ -403,12 +414,12 @@ export default function MinhaContaModal({
           </div>
 
           {/* Footer buttons */}
-          <div className="pt-2 flex items-center justify-end gap-3 border-t border-slate-200 dark:border-slate-800">
+          <div className="pt-2 flex items-center justify-end gap-3 border-t border-slate-200 dark:border-zinc-800">
             <button
               type="button"
               onClick={onClose}
               disabled={salvando}
-              className="px-4 py-2.5 text-sm font-semibold rounded-xl text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-750 transition-colors"
+              className="px-4 py-2.5 text-sm font-semibold rounded-xl text-slate-700 dark:text-zinc-300 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
             >
               Cancelar
             </button>

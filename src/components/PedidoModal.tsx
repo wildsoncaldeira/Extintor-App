@@ -395,7 +395,7 @@ export function PedidoModal({
         onClick={onClose}
       >
         <div 
-          className="relative w-full max-w-3xl bg-white dark:bg-zinc-900 dark:border dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] animate-modal-content"
+          className="relative w-full max-w-4xl bg-white dark:bg-zinc-900 dark:border dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] animate-modal-content"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Cabeçalho do Modal */}
@@ -584,7 +584,7 @@ export function PedidoModal({
                   {itens.map((item, idx) => (
                     <div
                       key={idx}
-                      className="bg-white dark:bg-zinc-900 p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-xs flex flex-col md:flex-row gap-2.5 items-stretch md:items-center"
+                      className="bg-white dark:bg-zinc-900 p-3 sm:p-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-xs flex flex-col lg:flex-row gap-2.5 lg:items-center"
                     >
                       {/* Produto com Seletor Buscável (Quebra texto longo sem empurrar colunas) */}
                       <div className="flex-1 min-w-0 w-full">
@@ -598,62 +598,70 @@ export function PedidoModal({
                       </div>
 
                       {/* Controles de Quantidade, Preço Unitário, Subtotal e Excluir */}
-                      <div className="flex items-center justify-between md:justify-end gap-2.5 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-zinc-100 dark:border-zinc-800">
-                        {/* Quantidade */}
-                        <div className="flex items-center gap-1 shrink-0">
-                          <label className="text-[10px] text-zinc-400 dark:text-zinc-500 font-semibold uppercase">Qtd:</label>
-                          <input
-                            type="number"
-                            min="1"
-                            step="1"
-                            value={item.quantidade === 0 ? '' : item.quantidade}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              if (val === '') {
-                                atualizarItem(idx, 'quantidade', 0);
-                              } else {
-                                const parsed = parseInt(val, 10);
-                                if (!isNaN(parsed)) {
-                                  atualizarItem(idx, 'quantidade', Math.max(0, parsed));
+                      <div className="flex items-center justify-between lg:justify-end gap-2 sm:gap-3 pt-2 lg:pt-0 border-t lg:border-t-0 border-zinc-100 dark:border-zinc-800">
+                        {/* Grupo de Qtd e Unit */}
+                        <div className="flex items-center gap-2 shrink-0">
+                          {/* Quantidade */}
+                          <div className="flex items-center gap-1">
+                            <label className="text-[10px] text-zinc-400 dark:text-zinc-500 font-semibold uppercase">Qtd:</label>
+                            <input
+                              type="number"
+                              min="1"
+                              step="1"
+                              value={item.quantidade === 0 ? '' : item.quantidade}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                if (val === '') {
+                                  atualizarItem(idx, 'quantidade', 0);
+                                } else {
+                                  const parsed = parseInt(val, 10);
+                                  if (!isNaN(parsed)) {
+                                    atualizarItem(idx, 'quantidade', Math.max(0, parsed));
+                                  }
                                 }
-                              }
-                            }}
-                            onBlur={() => {
-                              if (!item.quantidade || item.quantidade < 1) {
-                                atualizarItem(idx, 'quantidade', 1);
-                              }
-                            }}
-                            className="w-14 sm:w-16 px-2 py-1.5 text-xs text-center border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-1 focus:ring-red-500 outline-none dark:bg-zinc-950 dark:text-white font-bold"
-                          />
-                        </div>
-
-                        {/* Valor Unitário */}
-                        <div className="flex items-center gap-1 shrink-0">
-                          <label className="text-[10px] text-zinc-400 dark:text-zinc-500 font-semibold uppercase">Unit:</label>
-                          <div className="w-24 sm:w-28">
-                            <CurrencyInput
-                              value={item.valor_unitario}
-                              onChange={(val) => atualizarItem(idx, 'valor_unitario', val)}
-                              prefix=""
-                              className="py-1 px-2 text-xs text-right font-semibold"
+                              }}
+                              onBlur={() => {
+                                if (!item.quantidade || item.quantidade < 1) {
+                                  atualizarItem(idx, 'quantidade', 1);
+                                }
+                              }}
+                              className="w-12 sm:w-14 px-1.5 py-1.5 text-xs text-center border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-1 focus:ring-red-500 outline-none dark:bg-zinc-950 dark:text-white font-bold"
                             />
+                          </div>
+
+                          {/* Valor Unitário */}
+                          <div className="flex items-center gap-1">
+                            <label className="text-[10px] text-zinc-400 dark:text-zinc-500 font-semibold uppercase">Unit:</label>
+                            <div className="w-20 sm:w-24">
+                              <CurrencyInput
+                                value={item.valor_unitario}
+                                onChange={(val) => atualizarItem(idx, 'valor_unitario', val)}
+                                prefix=""
+                                className="py-1 px-1.5 text-xs text-right font-semibold"
+                              />
+                            </div>
                           </div>
                         </div>
 
-                        {/* Subtotal do Item */}
-                        <div className="min-w-[75px] sm:min-w-[85px] text-right font-black text-zinc-800 dark:text-white text-xs shrink-0 font-mono">
-                          R$ {(item.quantidade * item.valor_unitario).toFixed(2).replace('.', ',')}
-                        </div>
+                        {/* Subtotal do Item e Excluir */}
+                        <div className="flex items-center gap-2 shrink-0">
+                          <div className="text-right">
+                            <span className="block text-[9px] uppercase text-zinc-400 font-semibold lg:hidden">Subtotal</span>
+                            <span className="text-xs font-black text-zinc-900 dark:text-white font-mono whitespace-nowrap">
+                              R$ {(item.quantidade * item.valor_unitario).toFixed(2).replace('.', ',')}
+                            </span>
+                          </div>
 
-                        {/* Excluir inline */}
-                        <button
-                          type="button"
-                          onClick={() => removerItem(idx)}
-                          className="p-1.5 text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-zinc-800 rounded-lg transition cursor-pointer shrink-0"
-                          title="Remover item"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                          {/* Excluir inline */}
+                          <button
+                            type="button"
+                            onClick={() => removerItem(idx)}
+                            className="p-1.5 text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-zinc-800 rounded-lg transition cursor-pointer shrink-0"
+                            title="Remover item"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}

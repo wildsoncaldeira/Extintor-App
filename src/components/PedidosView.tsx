@@ -280,7 +280,7 @@ export function PedidosView({
               Carregando Pedidos...
             </p>
             <span className="text-xs text-zinc-400 dark:text-zinc-500">
-              Buscando ordens de serviço no Neon Postgres
+              Sincronizando ordens de serviço
             </span>
           </div>
         ) : pedidosFiltrados.length === 0 ? (
