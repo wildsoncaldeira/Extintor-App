@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Pedido, Cliente, ProdutoServico, CategoriaProduto, DashboardStats, Usuario } from '@/lib/types';
-import { getPedidos, getClientes, getProdutos, getCategorias, getDashboardStats, getPedidoDetalhes } from '@/lib/actions';
+import { getPedidos, getClientes, getProdutos, getCategorias, getDashboardStats, getPedidoDetalhes, getUsuarioAtual } from '@/lib/actions';
 import { PedidosView } from '@/components/PedidosView';
 import { ClientesView } from '@/components/ClientesView';
 import { ProdutosView } from '@/components/ProdutosView';
@@ -36,6 +36,8 @@ import {
   Menu,
   X,
   User,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import MinhaContaModal from '@/components/MinhaContaModal';
 
@@ -50,13 +52,34 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [menuMobileAberto, setMenuMobileAberto] = useState(false);
   const [minhaContaModalAberto, setMinhaContaModalAberto] = useState(false);
+  const [sidebarColapsada, setSidebarColapsada] = useState(false);
 
   // Checa se há usuário autenticado no navegador e tema salvo
   useEffect(() => {
     try {
       const salvo = localStorage.getItem('usuario_extintores') || sessionStorage.getItem('usuario_extintores');
       if (salvo) {
-        setUsuarioLogado(JSON.parse(salvo));
+        const u = JSON.parse(salvo);
+        setUsuarioLogado(u);
+        // Sincroniza dados frescos do banco para refletir foto ou alterações feitas em outros dispositivos (mobile/desktop)
+        if (u.id) {
+          getUsuarioAtual(u.id).then((fresh) => {
+            if (fresh) {
+              setUsuarioLogado(fresh);
+              if (localStorage.getItem('usuario_extintores')) {
+                localStorage.setItem('usuario_extintores', JSON.stringify(fresh));
+              }
+              if (sessionStorage.getItem('usuario_extintores')) {
+                sessionStorage.setItem('usuario_extintores', JSON.stringify(fresh));
+              }
+            }
+          }).catch(console.error);
+        }
+      }
+
+      const sidebarSalva = localStorage.getItem('sidebar_colapsada');
+      if (sidebarSalva === 'true') {
+        setSidebarColapsada(true);
       }
 
       const temaSalvo = localStorage.getItem('tema_extintores');
@@ -73,6 +96,18 @@ export default function Home() {
       setChecandoAuth(false);
     }
   }, []);
+
+  const alternarSidebar = () => {
+    setSidebarColapsada((prev) => {
+      const novo = !prev;
+      try {
+        localStorage.setItem('sidebar_colapsada', novo ? 'true' : 'false');
+      } catch (e) {
+        console.error(e);
+      }
+      return novo;
+    });
+  };
 
   const alternarTema = () => {
     setTemaEscuro((prev) => {
@@ -170,6 +205,17 @@ export default function Home() {
       setProdutos(produtosData);
       setCategorias(categoriasData);
       setStats(statsData);
+
+      if (usuarioLogado?.id) {
+        getUsuarioAtual(usuarioLogado.id).then((fresh) => {
+          if (fresh) {
+            setUsuarioLogado(fresh);
+            if (localStorage.getItem('usuario_extintores')) {
+              localStorage.setItem('usuario_extintores', JSON.stringify(fresh));
+            }
+          }
+        }).catch(console.error);
+      }
     } catch (err) {
       console.error('Erro ao carregar dados:', err);
     } finally {
@@ -277,33 +323,94 @@ export default function Home() {
     }`}>
       
       {/* SIDEBAR DESKTOP (Fixa no topo da tela, nunca rola para fora) */}
-      <aside className={`hidden md:flex flex-col w-72 h-screen sticky top-0 border-r shrink-0 select-none overflow-hidden transition-colors duration-200 z-30 ${
+      <aside className={`hidden md:flex flex-col h-screen sticky top-0 border-r shrink-0 select-none overflow-visible transition-all duration-300 z-30 relative ${
+        sidebarColapsada ? 'w-20' : 'w-72'
+      } ${
         temaEscuro
           ? 'bg-[#0f0f12] border-zinc-800 text-zinc-100 shadow-2xl'
           : 'bg-white border-zinc-300 text-zinc-900 shadow-sm'
       }`}>
-        {/* Logo / Header */}
-        <div className={`p-5 border-b flex items-center gap-3 shrink-0 ${
+        {/* Botão de colapsar / expandir o menu na borda (metade de baixo do menu) */}
+        <button
+          onClick={alternarSidebar}
+          className={`absolute -right-3.5 top-[65%] z-40 w-7 h-7 rounded-full border shadow-md flex items-center justify-center cursor-pointer transition-transform hover:scale-110 active:scale-95 ${
+            temaEscuro
+              ? 'bg-[#18181c] border-zinc-750 text-zinc-300 hover:text-white hover:bg-zinc-800'
+              : 'bg-white border-zinc-300 text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50'
+          }`}
+          title={sidebarColapsada ? 'Expandir menu lateral' : 'Colapsar menu lateral'}
+        >
+          {sidebarColapsada ? (
+            <ChevronRight className="w-4 h-4" />
+          ) : (
+            <ChevronLeft className="w-4 h-4" />
+          )}
+        </button>
+
+        {/* Logo / Header com toggle simplificado de Dark Mode no topo */}
+        <div className={`p-4 border-b flex items-center justify-between shrink-0 ${
           temaEscuro ? 'border-zinc-800' : 'border-zinc-200'
         }`}>
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-red-600 to-red-500 text-white flex items-center justify-center shadow-lg shadow-red-900/40 border border-red-400/30 shrink-0">
-            <Flame className="w-6 h-6 animate-pulse" />
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-red-600 to-red-500 text-white flex items-center justify-center shadow-lg shadow-red-900/40 border border-red-400/30 shrink-0">
+              <Flame className="w-6 h-6 animate-pulse" />
+            </div>
+            {!sidebarColapsada && (
+              <div className="min-w-0">
+                <h1 className="text-sm font-black tracking-tight text-zinc-900 dark:text-white leading-tight truncate">
+                  Recarga de Extintores
+                </h1>
+                <p className="text-[10px] text-red-500 dark:text-red-400 font-semibold uppercase tracking-wider truncate">
+                  AVCB • Lafaiete e Região
+                </p>
+              </div>
+            )}
           </div>
-          <div className="min-w-0">
-            <h1 className="text-sm font-black tracking-tight text-zinc-900 dark:text-white leading-tight truncate">
-              Recarga de Extintores
-            </h1>
-            <p className="text-[11px] text-red-500 dark:text-red-400 font-semibold uppercase tracking-wider truncate">
-              AVCB • Lafaiete e Região
-            </p>
-          </div>
+
+          {/* Toggle de Dark Mode Simplificado no Topo */}
+          {!sidebarColapsada && (
+            <button
+              onClick={alternarTema}
+              title={temaEscuro ? 'Mudar para Modo Claro' : 'Mudar para Modo Escuro'}
+              className={`p-2 rounded-xl transition cursor-pointer border shrink-0 ${
+                temaEscuro
+                  ? 'bg-zinc-900 text-amber-400 border-zinc-750 hover:bg-zinc-800'
+                  : 'bg-zinc-100 text-zinc-600 border-zinc-200 hover:bg-zinc-200'
+              }`}
+            >
+              {temaEscuro ? (
+                <Moon className="w-4 h-4 text-amber-400 fill-amber-400/20" />
+              ) : (
+                <Sun className="w-4 h-4 text-amber-500" />
+              )}
+            </button>
+          )}
         </div>
 
         {/* Links de Navegação */}
         <nav className="p-3 space-y-1.5 flex-1 overflow-y-auto">
+          {sidebarColapsada && (
+            <button
+              onClick={alternarTema}
+              title={temaEscuro ? 'Mudar para Modo Claro' : 'Mudar para Modo Escuro'}
+              className={`w-full flex items-center justify-center p-2.5 rounded-xl transition cursor-pointer mb-2 border ${
+                temaEscuro
+                  ? 'bg-zinc-900 text-amber-400 border-zinc-750 hover:bg-zinc-800'
+                  : 'bg-zinc-100 text-zinc-600 border-zinc-200 hover:bg-zinc-200'
+              }`}
+            >
+              {temaEscuro ? (
+                <Moon className="w-4 h-4 text-amber-400 fill-amber-400/20" />
+              ) : (
+                <Sun className="w-4 h-4 text-amber-500" />
+              )}
+            </button>
+          )}
+
           <button
             onClick={() => setAbaAtiva('inicio')}
-            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer ${
+            title="Início"
+            className={`w-full flex items-center ${sidebarColapsada ? 'justify-center p-2.5' : 'gap-3 px-3.5 py-2.5'} rounded-xl text-sm font-bold transition cursor-pointer ${
               abaAtiva === 'inicio'
                 ? temaEscuro
                   ? 'bg-red-950/60 text-red-300 border border-red-800/80 shadow-md shadow-red-950/40'
@@ -314,12 +421,13 @@ export default function Home() {
             }`}
           >
             <HomeIcon className={`w-4 h-4 shrink-0 ${abaAtiva === 'inicio' ? 'text-red-500' : 'text-zinc-400'}`} />
-            <span className="whitespace-nowrap font-bold">Início</span>
+            {!sidebarColapsada && <span className="whitespace-nowrap font-bold">Início</span>}
           </button>
 
           <button
             onClick={() => setAbaAtiva('pedidos')}
-            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer ${
+            title={`Pedidos (${pedidos.length})`}
+            className={`w-full flex items-center ${sidebarColapsada ? 'justify-center p-2.5' : 'gap-3 px-3.5 py-2.5'} rounded-xl text-sm font-bold transition cursor-pointer ${
               abaAtiva === 'pedidos'
                 ? temaEscuro
                   ? 'bg-red-950/60 text-red-300 border border-red-800/80 shadow-md shadow-red-950/40'
@@ -330,17 +438,22 @@ export default function Home() {
             }`}
           >
             <FileEdit className={`w-4 h-4 shrink-0 ${abaAtiva === 'pedidos' ? 'text-red-500' : 'text-zinc-400'}`} />
-            <span className="whitespace-nowrap font-bold">Pedidos</span>
-            <span className={`ml-auto text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${
-              temaEscuro ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-100 text-zinc-600'
-            }`}>
-              {pedidos.length}
-            </span>
+            {!sidebarColapsada && (
+              <>
+                <span className="whitespace-nowrap font-bold">Pedidos</span>
+                <span className={`ml-auto text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${
+                  temaEscuro ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-100 text-zinc-600'
+                }`}>
+                  {pedidos.length}
+                </span>
+              </>
+            )}
           </button>
 
           <button
             onClick={() => setAbaAtiva('clientes')}
-            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer ${
+            title={`Clientes (${clientes.length})`}
+            className={`w-full flex items-center ${sidebarColapsada ? 'justify-center p-2.5' : 'gap-3 px-3.5 py-2.5'} rounded-xl text-sm font-bold transition cursor-pointer ${
               abaAtiva === 'clientes'
                 ? temaEscuro
                   ? 'bg-red-950/60 text-red-300 border border-red-800/80 shadow-md shadow-red-950/40'
@@ -351,17 +464,22 @@ export default function Home() {
             }`}
           >
             <Users className={`w-4 h-4 shrink-0 ${abaAtiva === 'clientes' ? 'text-red-500' : 'text-zinc-400'}`} />
-            <span className="whitespace-nowrap font-bold">Clientes</span>
-            <span className={`ml-auto text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${
-              temaEscuro ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-100 text-zinc-600'
-            }`}>
-              {clientes.length}
-            </span>
+            {!sidebarColapsada && (
+              <>
+                <span className="whitespace-nowrap font-bold">Clientes</span>
+                <span className={`ml-auto text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${
+                  temaEscuro ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-100 text-zinc-600'
+                }`}>
+                  {clientes.length}
+                </span>
+              </>
+            )}
           </button>
 
           <button
             onClick={() => setAbaAtiva('produtos')}
-            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer ${
+            title={`Produtos & Serviços (${produtos.length})`}
+            className={`w-full flex items-center ${sidebarColapsada ? 'justify-center p-2.5' : 'gap-3 px-3.5 py-2.5'} rounded-xl text-sm font-bold transition cursor-pointer ${
               abaAtiva === 'produtos'
                 ? temaEscuro
                   ? 'bg-red-950/60 text-red-300 border border-red-800/80 shadow-md shadow-red-950/40'
@@ -372,17 +490,22 @@ export default function Home() {
             }`}
           >
             <Package className={`w-4 h-4 shrink-0 ${abaAtiva === 'produtos' ? 'text-red-500' : 'text-zinc-400'}`} />
-            <span className="whitespace-nowrap font-bold">Produtos & Serviços</span>
-            <span className={`ml-auto text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${
-              temaEscuro ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-100 text-zinc-600'
-            }`}>
-              {produtos.length}
-            </span>
+            {!sidebarColapsada && (
+              <>
+                <span className="whitespace-nowrap font-bold">Produtos & Serviços</span>
+                <span className={`ml-auto text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${
+                  temaEscuro ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-100 text-zinc-600'
+                }`}>
+                  {produtos.length}
+                </span>
+              </>
+            )}
           </button>
 
           <button
             onClick={() => setAbaAtiva('crm')}
-            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer ${
+            title="CRM & Vendas Futuras"
+            className={`w-full flex items-center ${sidebarColapsada ? 'justify-center p-2.5' : 'gap-3 px-3.5 py-2.5'} rounded-xl text-sm font-bold transition cursor-pointer ${
               abaAtiva === 'crm'
                 ? temaEscuro
                   ? 'bg-red-950/60 text-red-300 border border-red-800/80 shadow-md shadow-red-950/40'
@@ -393,12 +516,13 @@ export default function Home() {
             }`}
           >
             <Sparkles className={`w-4 h-4 shrink-0 ${abaAtiva === 'crm' ? 'text-red-500' : 'text-zinc-400'}`} />
-            <span className="whitespace-nowrap font-bold">CRM & Vendas Futuras</span>
+            {!sidebarColapsada && <span className="whitespace-nowrap font-bold">CRM & Vendas Futuras</span>}
           </button>
 
           <button
             onClick={() => setAbaAtiva('financeiro')}
-            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer ${
+            title="Financeiro"
+            className={`w-full flex items-center ${sidebarColapsada ? 'justify-center p-2.5' : 'gap-3 px-3.5 py-2.5'} rounded-xl text-sm font-bold transition cursor-pointer ${
               abaAtiva === 'financeiro'
                 ? temaEscuro
                   ? 'bg-red-950/60 text-red-300 border border-red-800/80 shadow-md shadow-red-950/40'
@@ -409,12 +533,13 @@ export default function Home() {
             }`}
           >
             <DollarSign className={`w-4 h-4 shrink-0 ${abaAtiva === 'financeiro' ? 'text-red-500' : 'text-zinc-400'}`} />
-            <span className="whitespace-nowrap font-bold">Financeiro</span>
+            {!sidebarColapsada && <span className="whitespace-nowrap font-bold">Financeiro</span>}
           </button>
 
           <button
             onClick={() => setAbaAtiva('dashboard')}
-            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer ${
+            title="Dashboard"
+            className={`w-full flex items-center ${sidebarColapsada ? 'justify-center p-2.5' : 'gap-3 px-3.5 py-2.5'} rounded-xl text-sm font-bold transition cursor-pointer ${
               abaAtiva === 'dashboard'
                 ? temaEscuro
                   ? 'bg-red-950/60 text-red-300 border border-red-800/80 shadow-md shadow-red-950/40'
@@ -425,112 +550,102 @@ export default function Home() {
             }`}
           >
             <LayoutDashboard className={`w-4 h-4 shrink-0 ${abaAtiva === 'dashboard' ? 'text-red-500' : 'text-zinc-400'}`} />
-            <span className="whitespace-nowrap font-bold">Dashboard</span>
+            {!sidebarColapsada && <span className="whitespace-nowrap font-bold">Dashboard</span>}
           </button>
         </nav>
 
         {/* ÁREA INFERIOR DA SIDEBAR (Sempre visível no rodapé, sem rolagem) */}
-        <div className={`p-3 space-y-2.5 border-t shrink-0 ${temaEscuro ? 'border-zinc-800 bg-zinc-950/40' : 'border-zinc-200 bg-zinc-50'}`}>
+        <div className={`p-3 border-t shrink-0 ${temaEscuro ? 'border-zinc-800 bg-zinc-950/40' : 'border-zinc-200 bg-zinc-50'}`}>
           
-          {/* 1. SELETOR DE MODO DARK / LIGHT NO MENU */}
-          <button
-            onClick={alternarTema}
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
-              temaEscuro
-                ? 'bg-zinc-950/90 text-amber-400 border border-zinc-700 hover:border-zinc-600 hover:bg-zinc-900'
-                : 'bg-white text-zinc-700 border border-zinc-200 hover:bg-zinc-100'
-            }`}
-            title={temaEscuro ? 'Ativar Modo Claro' : 'Ativar Modo Escuro'}
-          >
-            <div className="flex items-center gap-2">
-              {temaEscuro ? (
-                <Moon className="w-4 h-4 text-amber-400 fill-amber-400/20" />
-              ) : (
-                <Sun className="w-4 h-4 text-amber-500 fill-amber-500/20" />
-              )}
-              <span>{temaEscuro ? 'Modo Escuro' : 'Modo Claro'}</span>
+          {sidebarColapsada ? (
+            <div className="flex flex-col items-center gap-2">
+              <button
+                onClick={() => setMinhaContaModalAberto(true)}
+                className="relative group cursor-pointer"
+                title={`Minha Conta (${usuarioLogado.nome})`}
+              >
+                {usuarioLogado.foto_url ? (
+                  <img
+                    src={usuarioLogado.foto_url}
+                    alt={usuarioLogado.nome}
+                    className="w-9 h-9 rounded-full object-cover ring-2 ring-red-500/40"
+                  />
+                ) : (
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-red-600 to-red-500 text-white font-black text-xs flex items-center justify-center shadow-sm">
+                    {usuarioLogado.nome.slice(0, 2).toUpperCase()}
+                  </div>
+                )}
+              </button>
+
+              <button
+                onClick={handleLogout}
+                className="p-2 rounded-xl text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition cursor-pointer"
+                title="Sair do Sistema (Logout)"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
             </div>
-            <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
-              temaEscuro ? 'bg-amber-400/10 text-amber-400 border border-amber-400/30' : 'bg-zinc-200 text-zinc-700'
-            }`}>
-              {temaEscuro ? 'DARK' : 'LIGHT'}
-            </span>
-          </button>
-
-          {/* 2. CARD DO USUÁRIO LOGADO E MINHA CONTA */}
-          <div className="space-y-1.5">
-            <button
-              onClick={() => setMinhaContaModalAberto(true)}
-              className={`w-full p-2.5 rounded-xl border flex items-center gap-2.5 overflow-hidden text-left transition hover:border-red-400 group cursor-pointer ${
-                temaEscuro
-                  ? 'bg-zinc-950/70 border-zinc-800 text-zinc-100 hover:bg-zinc-900/80'
-                  : 'bg-white border-zinc-200 text-zinc-900 hover:bg-zinc-50'
-              }`}
-              title="Abrir Minha Conta"
-            >
-              {usuarioLogado.foto_url ? (
-                <img
-                  src={usuarioLogado.foto_url}
-                  alt={usuarioLogado.nome}
-                  className="w-8 h-8 rounded-full object-cover shrink-0 ring-1 ring-red-500/40"
-                />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-red-600 to-red-500 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-sm border border-red-400/30">
-                  {usuarioLogado.nome.slice(0, 2).toUpperCase()}
-                </div>
-              )}
-              <div className="overflow-hidden flex-1 min-w-0">
-                <p className="text-xs font-bold truncate leading-tight group-hover:text-red-500 transition-colors" title={usuarioLogado.nome}>
-                  {usuarioLogado.nome}
-                </p>
-                <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate" title={usuarioLogado.email}>
-                  {usuarioLogado.email}
-                </p>
-              </div>
-              <User className="w-4 h-4 text-zinc-400 group-hover:text-red-500 shrink-0 transition-colors" />
-            </button>
-
-            <button
-              onClick={() => setMinhaContaModalAberto(true)}
-              className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer border ${
-                temaEscuro
-                  ? 'bg-zinc-900 text-zinc-200 border-zinc-750 hover:bg-zinc-800 hover:text-white'
-                  : 'bg-zinc-100 text-zinc-700 border-zinc-200 hover:bg-zinc-200'
-              }`}
-              title="Minha Conta (Editar foto, nome, email e senha)"
-            >
-              <User className="w-3.5 h-3.5 text-red-500" />
-              <span>Minha Conta</span>
-            </button>
-          </div>
-
-          {/* 3. BOTÃO DE LOGOUT DEDICADO NO FIM DO MENU LATERAL */}
-          <button
-            onClick={handleLogout}
-            className={`w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer shadow-sm ${
+          ) : (
+            /* CARD UNIFICADO: MINHA CONTA + LOGOUT EM UM ÚNICO ELEMENTO */
+            <div className={`p-2 rounded-xl border flex items-center justify-between gap-2 select-none ${
               temaEscuro
-                ? 'bg-red-950/50 text-red-400 hover:bg-red-900/60 border border-red-800/60 hover:text-white'
-                : 'bg-red-50 text-red-700 hover:bg-red-600 hover:text-white border border-red-200'
-            }`}
-            title="Sair da Conta (Logout)"
-          >
-            <LogOut className="w-4 h-4" />
-            <span>Sair do Sistema (Logout)</span>
-          </button>
+                ? 'bg-zinc-950/70 border-zinc-800 text-zinc-100'
+                : 'bg-white border-zinc-200 text-zinc-900 shadow-2xs'
+            }`}>
+              <button
+                onClick={() => setMinhaContaModalAberto(true)}
+                className="flex items-center gap-2.5 min-w-0 flex-1 p-1 -m-1 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-850 transition text-left cursor-pointer group"
+                title="Abrir Minha Conta (Editar foto, nome e senha)"
+              >
+                {usuarioLogado.foto_url ? (
+                  <img
+                    src={usuarioLogado.foto_url}
+                    alt={usuarioLogado.nome}
+                    className="w-8 h-8 rounded-full object-cover shrink-0 ring-1 ring-red-500/40"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-red-600 to-red-500 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-sm border border-red-400/30">
+                    {usuarioLogado.nome.slice(0, 2).toUpperCase()}
+                  </div>
+                )}
+                <div className="overflow-hidden flex-1 min-w-0">
+                  <p className="text-xs font-bold truncate leading-tight group-hover:text-red-500 transition-colors" title={usuarioLogado.nome}>
+                    {usuarioLogado.nome}
+                  </p>
+                  <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">
+                    Minha Conta
+                  </p>
+                </div>
+              </button>
+
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleLogout();
+                }}
+                className="p-1.5 rounded-lg text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition shrink-0 cursor-pointer"
+                title="Sair do Sistema (Logout)"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          )}
 
           {/* Conexão Neon Postgres */}
-          <div className="flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400 pt-0.5 px-1">
-            <div className="flex items-center gap-1.5">
+          <div className={`flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400 pt-2 px-1 ${sidebarColapsada ? 'justify-center' : ''}`}>
+            <div className="flex items-center gap-1.5" title="Neon Postgres Conectado">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span>Neon Postgres</span>
+              {!sidebarColapsada && <span>Neon Postgres</span>}
             </div>
-            <button
-              onClick={carregarDados}
-              title="Atualizar dados"
-              className="p-1 text-zinc-400 hover:text-zinc-200 transition cursor-pointer"
-            >
-              <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
-            </button>
+            {!sidebarColapsada && (
+              <button
+                onClick={carregarDados}
+                title="Atualizar dados"
+                className="p-1 text-zinc-400 hover:text-zinc-200 transition cursor-pointer"
+              >
+                <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
+              </button>
+            )}
           </div>
 
         </div>

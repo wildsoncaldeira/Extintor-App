@@ -20,6 +20,13 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Proporção desktop padrão em 90% conforme solicitado */
+@media (min-width: 768px) {
+  body {
+    zoom: 0.9;
+  }
+}
+
 /* Animações suaves para os Modais / Pop-ups */
 @keyframes modalBackdropFade {
   from {

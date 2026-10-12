@@ -1024,6 +1024,33 @@ export async function updateUsuarioPerfil(
   }
 }
 
+export async function getUsuarioAtual(id: string): Promise<Usuario | null> {
+  try {
+    await sql.query(`ALTER TABLE public.usuarios ADD COLUMN IF NOT EXISTS foto_url text;`);
+    const rows = (await sql.query(
+      `SELECT id, nome, email, cargo, ativo, foto_url, ultimo_login::text as ultimo_login, created_at::text as created_at
+       FROM public.usuarios WHERE id = $1 AND ativo = true`,
+      [id]
+    )) as any[];
+
+    if (!rows || rows.length === 0) return null;
+    const u = rows[0];
+    return {
+      id: u.id,
+      nome: u.nome,
+      email: u.email,
+      cargo: u.cargo || 'Administrador',
+      ativo: u.ativo,
+      foto_url: u.foto_url || null,
+      ultimo_login: u.ultimo_login,
+      created_at: u.created_at,
+    };
+  } catch (err) {
+    console.error('Erro ao buscar dados atualizados do usuário:', err);
+    return null;
+  }
+}
+
 // ==========================================
 // ANEXOS DE CLIENTES
 // ==========================================
