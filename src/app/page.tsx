@@ -605,6 +605,7 @@ export default function Home() {
           <InicioView
             usuarioNome={usuarioLogado.nome}
             stats={stats}
+            loading={loading}
             onCriarPedido={() => {
               setPedidoParaEditar(null);
               setPedidoModalAberto(true);
@@ -622,6 +623,7 @@ export default function Home() {
         {abaAtiva === 'pedidos' && (
           <PedidosView
             pedidos={pedidos}
+            loading={loading}
             onOpenNovoPedido={() => {
               setPedidoParaEditar(null);
               setPedidoModalAberto(true);
@@ -651,6 +653,7 @@ export default function Home() {
           <ClientesView
             clientes={clientes}
             pedidos={pedidos}
+            loading={loading}
             onOpenNovoCliente={() => {
               setClienteParaEditar(null);
               setClienteModalAberto(true);
@@ -672,6 +675,7 @@ export default function Home() {
           <ProdutosView
             produtos={produtos}
             categorias={categorias}
+            loading={loading}
             onOpenNovoProduto={() => {
               setProdutoParaEditar(null);
               setProdutoModalAberto(true);
@@ -688,6 +692,7 @@ export default function Home() {
         {abaAtiva === 'dashboard' && (
           <DashboardView
             stats={stats}
+            loading={loading}
             onOpenNovoPedido={() => {
               setPedidoParaEditar(null);
               setPedidoModalAberto(true);

@@ -2,10 +2,11 @@
 
 import React from 'react';
 import { DashboardStats } from '@/lib/types';
-import { DollarSign, FileText, Users, Package, Plus, TrendingUp, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { DollarSign, FileText, Users, Package, Plus, TrendingUp, AlertCircle, CheckCircle, Clock, Loader2 } from 'lucide-react';
 
 interface DashboardViewProps {
   stats: DashboardStats;
+  loading?: boolean;
   onOpenNovoPedido: () => void;
   onOpenNovoCliente: () => void;
   onIrParaPedidos: (status?: string) => void;
@@ -13,10 +14,25 @@ interface DashboardViewProps {
 
 export function DashboardView({
   stats,
+  loading = false,
   onOpenNovoPedido,
   onOpenNovoCliente,
   onIrParaPedidos,
 }: DashboardViewProps) {
+  if (loading && stats.totalPedidos === 0 && stats.totalClientes === 0) {
+    return (
+      <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 dark:shadow-md py-20 px-4 rounded-xl border border-zinc-200 flex flex-col items-center justify-center text-center gap-3">
+        <Loader2 className="w-8 h-8 text-red-600 dark:text-red-500 animate-spin" />
+        <p className="text-sm font-bold text-zinc-800 dark:text-zinc-200">
+          Carregando Dashboard & Faturamento...
+        </p>
+        <span className="text-xs text-zinc-400 dark:text-zinc-500">
+          Calculando métricas e histórico financeiro
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Cards de Métricas Principais */}

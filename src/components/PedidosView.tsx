@@ -11,6 +11,7 @@ import { FiltrosPedidosModal, FiltrosPedidos, FILTROS_PEDIDOS_PADRAO } from './F
 
 interface PedidosViewProps {
   pedidos: Pedido[];
+  loading?: boolean;
   onOpenNovoPedido?: () => void;
   onEditarPedido: (pedido: Pedido) => void;
   onVerRecibo: (pedido: Pedido) => void;
@@ -21,6 +22,7 @@ interface PedidosViewProps {
 
 export function PedidosView({
   pedidos,
+  loading = false,
   onOpenNovoPedido,
   onEditarPedido,
   onVerRecibo,
@@ -271,7 +273,17 @@ export function PedidosView({
 
       {/* Lista de Pedidos */}
       <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 dark:shadow-md rounded-xl border border-zinc-200 shadow-2xs overflow-hidden divide-y divide-zinc-100 dark:divide-zinc-800">
-        {pedidosFiltrados.length === 0 ? (
+        {loading && pedidos.length === 0 ? (
+          <div className="py-16 px-4 flex flex-col items-center justify-center text-center gap-3">
+            <Loader2 className="w-8 h-8 text-red-600 dark:text-red-500 animate-spin" />
+            <p className="text-sm font-bold text-zinc-800 dark:text-zinc-200">
+              Carregando Pedidos...
+            </p>
+            <span className="text-xs text-zinc-400 dark:text-zinc-500">
+              Buscando ordens de serviço no Neon Postgres
+            </span>
+          </div>
+        ) : pedidosFiltrados.length === 0 ? (
           <div className="p-8 text-center text-zinc-500 dark:text-zinc-400 text-sm">
             Nenhum pedido encontrado.
           </div>

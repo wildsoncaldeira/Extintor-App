@@ -10,6 +10,7 @@ import { FiltrosClientesModal, FiltrosClientes, FILTROS_CLIENTES_PADRAO } from '
 interface ClientesViewProps {
   clientes: Cliente[];
   pedidos?: Pedido[];
+  loading?: boolean;
   onOpenNovoCliente?: () => void;
   onEditarCliente: (cliente: Cliente) => void;
   onVerCliente: (cliente: Cliente) => void;
@@ -19,6 +20,7 @@ interface ClientesViewProps {
 export function ClientesView({
   clientes,
   pedidos = [],
+  loading = false,
   onOpenNovoCliente,
   onEditarCliente,
   onVerCliente,
@@ -242,7 +244,17 @@ export function ClientesView({
 
       {/* Lista de Clientes */}
       <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 dark:shadow-md rounded-xl border border-zinc-200 shadow-2xs divide-y divide-zinc-100 dark:divide-zinc-800 overflow-hidden">
-        {clientesFiltrados.length === 0 ? (
+        {loading && clientes.length === 0 ? (
+          <div className="py-16 px-4 flex flex-col items-center justify-center text-center gap-3">
+            <Loader2 className="w-8 h-8 text-red-600 dark:text-red-500 animate-spin" />
+            <p className="text-sm font-bold text-zinc-800 dark:text-zinc-200">
+              Carregando Clientes...
+            </p>
+            <span className="text-xs text-zinc-400 dark:text-zinc-500">
+              Buscando clientes cadastrados no Neon Postgres
+            </span>
+          </div>
+        ) : clientesFiltrados.length === 0 ? (
           <div className="p-8 text-center text-zinc-500 dark:text-zinc-400 text-sm">
             Nenhum cliente encontrado.
           </div>
@@ -254,94 +266,100 @@ export function ClientesView({
               className="p-4 hover:bg-zinc-50/80 dark:hover:bg-zinc-800/60 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer group"
             >
               {/* Informações do Cliente */}
-              <div className="space-y-1 flex-1">
+              <div className="space-y-1 flex-1 min-w-0">
                 <div className="flex items-center justify-between sm:justify-start gap-2">
-                  <h3 className="text-sm font-bold text-zinc-900 dark:text-white group-hover:text-red-700 dark:group-hover:text-red-400 transition">
+                  <h3 className="text-sm font-bold text-zinc-900 dark:text-white group-hover:text-red-700 dark:group-hover:text-red-400 transition truncate">
                     {cliente.nome_empresa}
                   </h3>
-                  <span className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase sm:hidden">
+                  <span className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase sm:hidden shrink-0">
                     {cliente.cidade || 'Conselheiro Lafaiete'}
                   </span>
                 </div>
 
                 {cliente.nome_contato && (
-                  <p className="text-xs text-zinc-600 dark:text-zinc-300">
+                  <p className="text-xs text-zinc-600 dark:text-zinc-300 truncate">
                     {cliente.nome_contato}
                   </p>
                 )}
 
                 {cliente.endereco && (
-                  <p className="text-xs text-zinc-400 dark:text-zinc-500 line-clamp-1">
+                  <p className="text-xs text-zinc-400 dark:text-zinc-500 line-clamp-1 truncate">
                     {cliente.endereco}
                   </p>
                 )}
               </div>
 
-              {/* Cidade no Desktop e Barra de Ações com Ícones */}
+              {/* Cidade no Desktop e Barra de Ações com Ícones Alinhados */}
               <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0">
-                <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase hidden sm:block mr-2">
+                {/* Cidade alinhada à direita em coluna com largura fixa */}
+                <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase hidden sm:block text-right w-44 lg:w-48 shrink-0 truncate">
                   {cliente.cidade || 'Conselheiro Lafaiete'}
                 </span>
 
-                <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                  {/* Ligar */}
-                  {cliente.telefone_whatsapp && (
+                {/* Grid de ações sempre com 5 slots de largura idêntica */}
+                <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                  {/* Ligar (Slot 1) */}
+                  {cliente.telefone_whatsapp ? (
                     <a
                       href={`tel:${cliente.telefone_whatsapp.replace(/\D/g, '')}`}
                       onClick={(e) => e.stopPropagation()}
                       title="Ligar para o cliente"
-                      className="p-2 text-zinc-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:text-blue-400 dark:hover:bg-zinc-800 rounded-lg transition"
+                      className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:text-blue-400 dark:hover:bg-zinc-800 rounded-lg transition shrink-0"
                     >
                       <Phone className="w-4 h-4" />
                     </a>
+                  ) : (
+                    <div className="w-8 h-8 shrink-0" aria-hidden="true" />
                   )}
 
-                  {/* WhatsApp com Contorno Verde */}
-                  {cliente.telefone_whatsapp && (
+                  {/* WhatsApp com Contorno Verde (Slot 2) */}
+                  {cliente.telefone_whatsapp ? (
                     <a
                       href={getWhatsAppUrl(cliente.telefone_whatsapp)}
                       onClick={(e) => e.stopPropagation()}
                       target="_blank"
                       rel="noopener noreferrer"
                       title="Conversar no WhatsApp"
-                      className="p-1.5 border-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50 dark:bg-zinc-950 dark:border-emerald-500/80 dark:hover:bg-emerald-950/40 rounded-xl transition flex items-center justify-center bg-white shadow-2xs"
+                      className="w-8 h-8 border-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50 dark:bg-zinc-950 dark:border-emerald-500/80 dark:hover:bg-emerald-950/40 rounded-xl transition flex items-center justify-center bg-white shadow-2xs shrink-0"
                     >
                       <WhatsAppIcon className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                     </a>
+                  ) : (
+                    <div className="w-8 h-8 shrink-0" aria-hidden="true" />
                   )}
 
-                  {/* Google Maps / Localização */}
+                  {/* Google Maps / Localização (Slot 3) */}
                   <a
                     href={getMapsUrl(cliente)}
                     onClick={(e) => e.stopPropagation()}
                     target="_blank"
                     rel="noopener noreferrer"
                     title="Ver no Google Maps"
-                    className="p-2 text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-zinc-800 rounded-lg transition"
+                    className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-zinc-800 rounded-lg transition shrink-0"
                   >
                     <MapPin className="w-4 h-4" />
                   </a>
 
-                  {/* Editar */}
+                  {/* Editar (Slot 4) */}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       onEditarCliente(cliente);
                     }}
                     title="Editar cliente"
-                    className="p-2 text-zinc-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:text-blue-400 dark:hover:bg-zinc-800 rounded-lg transition"
+                    className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:text-blue-400 dark:hover:bg-zinc-800 rounded-lg transition shrink-0 cursor-pointer"
                   >
                     <Edit className="w-4 h-4" />
                   </button>
 
-                  {/* Excluir */}
+                  {/* Excluir (Slot 5) */}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       handleExcluir(cliente);
                     }}
                     title="Excluir cliente"
-                    className="p-2 text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-zinc-800 rounded-lg transition"
+                    className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-zinc-800 rounded-lg transition shrink-0 cursor-pointer"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>

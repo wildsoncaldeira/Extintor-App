@@ -13,13 +13,15 @@ import {
   TrendingUp,
   Clock,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Loader2
 } from 'lucide-react';
 import { DashboardStats } from '@/lib/types';
 
 interface InicioViewProps {
   usuarioNome: string;
   stats: DashboardStats;
+  loading?: boolean;
   onCriarPedido: () => void;
   onCriarCliente: () => void;
   onVerPedidos: (status?: string) => void;
@@ -31,6 +33,7 @@ interface InicioViewProps {
 export function InicioView({
   usuarioNome,
   stats,
+  loading = false,
   onCriarPedido,
   onCriarCliente,
   onVerPedidos,
@@ -194,9 +197,15 @@ export function InicioView({
             <span className="text-[10px] sm:text-xs font-bold uppercase text-red-700 dark:text-red-300 flex items-center gap-1">
               <AlertCircle className="w-3.5 h-3.5" /> Orçamentos
             </span>
-            <p className="text-lg sm:text-2xl font-black text-red-700 dark:text-red-400 mt-0.5 sm:mt-1">
-              {stats.pedidosOrcamento}
-            </p>
+            <div className="mt-0.5 sm:mt-1 h-7 sm:h-8 flex items-center">
+              {loading && stats.totalPedidos === 0 ? (
+                <Loader2 className="w-5 h-5 text-red-600 dark:text-red-400 animate-spin" />
+              ) : (
+                <p className="text-lg sm:text-2xl font-black text-red-700 dark:text-red-400">
+                  {stats.pedidosOrcamento}
+                </p>
+              )}
+            </div>
           </button>
 
           <button
@@ -206,9 +215,15 @@ export function InicioView({
             <span className="text-[10px] sm:text-xs font-bold uppercase text-blue-700 dark:text-blue-300 flex items-center gap-1">
               <Clock className="w-3.5 h-3.5" /> Aprovados
             </span>
-            <p className="text-lg sm:text-2xl font-black text-blue-700 dark:text-blue-400 mt-0.5 sm:mt-1">
-              {stats.pedidosAprovado}
-            </p>
+            <div className="mt-0.5 sm:mt-1 h-7 sm:h-8 flex items-center">
+              {loading && stats.totalPedidos === 0 ? (
+                <Loader2 className="w-5 h-5 text-blue-600 dark:text-blue-400 animate-spin" />
+              ) : (
+                <p className="text-lg sm:text-2xl font-black text-blue-700 dark:text-blue-400">
+                  {stats.pedidosAprovado}
+                </p>
+              )}
+            </div>
           </button>
 
           <button
@@ -218,9 +233,15 @@ export function InicioView({
             <span className="text-[10px] sm:text-xs font-bold uppercase text-emerald-700 dark:text-emerald-300 flex items-center gap-1">
               <CheckCircle className="w-3.5 h-3.5" /> Pagos
             </span>
-            <p className="text-lg sm:text-2xl font-black text-emerald-700 dark:text-emerald-400 mt-0.5 sm:mt-1">
-              {stats.pedidosPago}
-            </p>
+            <div className="mt-0.5 sm:mt-1 h-7 sm:h-8 flex items-center">
+              {loading && stats.totalPedidos === 0 ? (
+                <Loader2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 animate-spin" />
+              ) : (
+                <p className="text-lg sm:text-2xl font-black text-emerald-700 dark:text-emerald-400">
+                  {stats.pedidosPago}
+                </p>
+              )}
+            </div>
           </button>
         </div>
       </div>

@@ -3,11 +3,12 @@
 import React, { useState } from 'react';
 import { ProdutoServico, CategoriaProduto } from '@/lib/types';
 import { deleteProduto } from '@/lib/actions';
-import { Search, Plus, Edit, Trash2, Layers, ChevronDown, ChevronRight } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, Layers, ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
 
 interface ProdutosViewProps {
   produtos: ProdutoServico[];
   categorias: CategoriaProduto[];
+  loading?: boolean;
   onOpenNovoProduto: () => void;
   onEditarProduto: (produto: ProdutoServico) => void;
   onOpenGerenciarCategorias: () => void;
@@ -17,6 +18,7 @@ interface ProdutosViewProps {
 export function ProdutosView({
   produtos,
   categorias,
+  loading = false,
   onOpenNovoProduto,
   onEditarProduto,
   onOpenGerenciarCategorias,
@@ -112,7 +114,17 @@ export function ProdutosView({
 
       {/* Lista Agrupada por Categoria */}
       <div className="space-y-3">
-        {listaCategorias.length === 0 ? (
+        {loading && produtos.length === 0 ? (
+          <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 dark:shadow-md py-16 px-4 rounded-xl border border-zinc-200 flex flex-col items-center justify-center text-center gap-3">
+            <Loader2 className="w-8 h-8 text-red-600 dark:text-red-500 animate-spin" />
+            <p className="text-sm font-bold text-zinc-800 dark:text-zinc-200">
+              Carregando Produtos & Serviços...
+            </p>
+            <span className="text-xs text-zinc-400 dark:text-zinc-500">
+              Buscando catálogo de produtos e recargas
+            </span>
+          </div>
+        ) : listaCategorias.length === 0 ? (
           <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 dark:shadow-md p-8 rounded-xl border border-zinc-200 text-center text-zinc-500 dark:text-zinc-400 text-sm">
             Nenhum produto cadastrado com este critério de busca.
           </div>
