@@ -15,9 +15,11 @@ import { ProdutoModal } from '@/components/ProdutoModal';
 import { ReciboModal } from '@/components/ReciboModal';
 import { StatusModal } from '@/components/StatusModal';
 import { CategoriasModal } from '@/components/CategoriasModal';
+import { InicioView } from '@/components/InicioView';
 import { downloadPedidoPdf } from '@/lib/pdfGenerator';
 import { 
   Flame, 
+  Home as HomeIcon,
   FileEdit, 
   Users, 
   Package, 
@@ -29,14 +31,14 @@ import {
   Moon,
 } from 'lucide-react';
 
-type AbaAtiva = 'pedidos' | 'clientes' | 'produtos' | 'dashboard';
+type AbaAtiva = 'inicio' | 'pedidos' | 'clientes' | 'produtos' | 'dashboard';
 
 export default function Home() {
   const [usuarioLogado, setUsuarioLogado] = useState<Usuario | null>(null);
   const [checandoAuth, setChecandoAuth] = useState(true);
   const [temaEscuro, setTemaEscuro] = useState(false);
 
-  const [abaAtiva, setAbaAtiva] = useState<AbaAtiva>('pedidos');
+  const [abaAtiva, setAbaAtiva] = useState<AbaAtiva>('inicio');
   const [loading, setLoading] = useState(true);
 
   // Checa se há usuário autenticado no navegador e tema salvo
@@ -275,6 +277,22 @@ export default function Home() {
         {/* Links de Navegação */}
         <nav className="p-3 space-y-1.5 flex-1 overflow-y-auto">
           <button
+            onClick={() => setAbaAtiva('inicio')}
+            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer ${
+              abaAtiva === 'inicio'
+                ? temaEscuro
+                  ? 'bg-red-950/60 text-red-300 border border-red-800/80 shadow-md shadow-red-950/40'
+                  : 'bg-red-50 text-red-700 shadow-2xs border border-red-200'
+                : temaEscuro
+                ? 'text-zinc-400 hover:bg-zinc-800/80 hover:text-white border border-transparent'
+                : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 border border-transparent'
+            }`}
+          >
+            <HomeIcon className={`w-4 h-4 shrink-0 ${abaAtiva === 'inicio' ? 'text-red-500' : 'text-zinc-400'}`} />
+            <span className="whitespace-nowrap font-bold">Início</span>
+          </button>
+
+          <button
             onClick={() => setAbaAtiva('pedidos')}
             className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer ${
               abaAtiva === 'pedidos'
@@ -439,7 +457,11 @@ export default function Home() {
           ? 'bg-zinc-900/95 border-zinc-800 text-white backdrop-blur-md'
           : 'bg-white border-zinc-200 text-zinc-900'
       }`}>
-        <div className="flex items-center gap-2.5 overflow-hidden">
+        <div 
+          onClick={() => setAbaAtiva('inicio')}
+          className="flex items-center gap-2.5 overflow-hidden cursor-pointer"
+          title="Ir para o Início"
+        >
           <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-red-600 to-red-500 text-white flex items-center justify-center shadow-md border border-red-400/30 shrink-0">
             <Flame className="w-5 h-5" />
           </div>
@@ -508,75 +530,95 @@ export default function Home() {
       {/* CONTEÚDO PRINCIPAL */}
       <main className="flex-1 p-3 sm:p-6 lg:p-8 max-w-6xl w-full mx-auto pb-24 md:pb-8">
         
-        {/* Barra de Título Superior */}
-        <div className="hidden md:flex items-center justify-between mb-6">
-          <div>
-            <h2 className={`text-2xl font-black tracking-tight capitalize ${temaEscuro ? 'text-white' : 'text-zinc-900'} dark:text-white`}>
-              {abaAtiva === 'pedidos' && 'Ordens de Serviço / Pedidos'}
-              {abaAtiva === 'clientes' && 'Gestão de Clientes'}
-              {abaAtiva === 'produtos' && 'Catálogo de Produtos & Serviços'}
-              {abaAtiva === 'dashboard' && 'Painel de Desempenho & Faturamento'}
-            </h2>
-            <p className={`text-xs mt-0.5 ${temaEscuro ? 'text-zinc-400' : 'text-zinc-500'} dark:text-zinc-400`}>
-              Mário Luiz Gomes da Silva • Execução de Projetos AVCB • Conectado como <strong className={`font-semibold ${temaEscuro ? 'text-zinc-200' : 'text-zinc-800'} dark:text-zinc-200`}>{usuarioLogado.nome}</strong>
-            </p>
+        {/* Barra de Título Superior (visível nas abas de listagem) */}
+        {abaAtiva !== 'inicio' && (
+          <div className="hidden md:flex items-center justify-between mb-6">
+            <div>
+              <h2 className={`text-2xl font-black tracking-tight capitalize ${temaEscuro ? 'text-white' : 'text-zinc-900'} dark:text-white`}>
+                {abaAtiva === 'pedidos' && 'Ordens de Serviço / Pedidos'}
+                {abaAtiva === 'clientes' && 'Gestão de Clientes'}
+                {abaAtiva === 'produtos' && 'Catálogo de Produtos & Serviços'}
+                {abaAtiva === 'dashboard' && 'Painel de Desempenho & Faturamento'}
+              </h2>
+              <p className={`text-xs mt-0.5 ${temaEscuro ? 'text-zinc-400' : 'text-zinc-500'} dark:text-zinc-400`}>
+                Mário Luiz Gomes da Silva • Execução de Projetos AVCB • Conectado como <strong className={`font-semibold ${temaEscuro ? 'text-zinc-200' : 'text-zinc-800'} dark:text-zinc-200`}>{usuarioLogado.nome}</strong>
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={carregarDados}
+                className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg transition shadow-2xs cursor-pointer ${
+                  temaEscuro
+                    ? 'bg-zinc-900 text-zinc-300 hover:bg-zinc-800 border border-zinc-700'
+                    : 'bg-white text-zinc-600 hover:bg-zinc-50 border border-zinc-200'
+                }`}
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+                <span>Sincronizar</span>
+              </button>
+
+              {abaAtiva === 'pedidos' && (
+                <button
+                  onClick={() => {
+                    setPedidoParaEditar(null);
+                    setPedidoModalAberto(true);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg shadow-sm transition"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Novo Pedido</span>
+                </button>
+              )}
+
+              {abaAtiva === 'clientes' && (
+                <button
+                  onClick={() => {
+                    setClienteParaEditar(null);
+                    setClienteModalAberto(true);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg shadow-sm transition"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Novo Cliente</span>
+                </button>
+              )}
+
+              {abaAtiva === 'produtos' && (
+                <button
+                  onClick={() => {
+                    setProdutoParaEditar(null);
+                    setProdutoModalAberto(true);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg shadow-sm transition"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Novo Produto</span>
+                </button>
+              )}
+            </div>
           </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={carregarDados}
-              className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg transition shadow-2xs cursor-pointer ${
-                temaEscuro
-                  ? 'bg-zinc-900 text-zinc-300 hover:bg-zinc-800 border border-zinc-700'
-                  : 'bg-white text-zinc-600 hover:bg-zinc-50 border border-zinc-200'
-              }`}
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-              <span>Sincronizar</span>
-            </button>
-
-            {abaAtiva === 'pedidos' && (
-              <button
-                onClick={() => {
-                  setPedidoParaEditar(null);
-                  setPedidoModalAberto(true);
-                }}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg shadow-sm transition"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Novo Pedido</span>
-              </button>
-            )}
-
-            {abaAtiva === 'clientes' && (
-              <button
-                onClick={() => {
-                  setClienteParaEditar(null);
-                  setClienteModalAberto(true);
-                }}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg shadow-sm transition"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Novo Cliente</span>
-              </button>
-            )}
-
-            {abaAtiva === 'produtos' && (
-              <button
-                onClick={() => {
-                  setProdutoParaEditar(null);
-                  setProdutoModalAberto(true);
-                }}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg shadow-sm transition"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Novo Produto</span>
-              </button>
-            )}
-          </div>
-        </div>
+        )}
 
         {/* Visualização de cada Aba */}
+        {abaAtiva === 'inicio' && (
+          <InicioView
+            usuarioNome={usuarioLogado.nome}
+            stats={stats}
+            onCriarPedido={() => {
+              setPedidoParaEditar(null);
+              setPedidoModalAberto(true);
+            }}
+            onCriarCliente={() => {
+              setClienteParaEditar(null);
+              setClienteModalAberto(true);
+            }}
+            onVerPedidos={() => setAbaAtiva('pedidos')}
+            onVerClientes={() => setAbaAtiva('clientes')}
+            onVerProdutos={() => setAbaAtiva('produtos')}
+            onVerDashboard={() => setAbaAtiva('dashboard')}
+          />
+        )}
         {abaAtiva === 'pedidos' && (
           <PedidosView
             pedidos={pedidos}
@@ -661,11 +703,25 @@ export default function Home() {
       </main>
 
       {/* BOTTOM NAVIGATION MOBILE */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-zinc-200 z-40 grid grid-cols-4 py-2">
+      <nav className={`md:hidden fixed bottom-0 left-0 right-0 z-40 grid grid-cols-5 py-2 border-t transition-colors duration-200 ${
+        temaEscuro
+          ? 'bg-zinc-950/95 border-zinc-800 text-zinc-400 backdrop-blur-md'
+          : 'bg-white border-zinc-200 text-zinc-500'
+      }`}>
+        <button
+          onClick={() => setAbaAtiva('inicio')}
+          className={`flex flex-col items-center justify-center gap-1 transition cursor-pointer ${
+            abaAtiva === 'inicio' ? 'text-red-600 dark:text-red-400 font-bold' : 'hover:text-zinc-900 dark:hover:text-white'
+          }`}
+        >
+          <HomeIcon className="w-5 h-5" />
+          <span className="text-[10px]">Início</span>
+        </button>
+
         <button
           onClick={() => setAbaAtiva('pedidos')}
-          className={`flex flex-col items-center justify-center gap-1 ${
-            abaAtiva === 'pedidos' ? 'text-red-600 font-bold' : 'text-zinc-500'
+          className={`flex flex-col items-center justify-center gap-1 transition cursor-pointer ${
+            abaAtiva === 'pedidos' ? 'text-red-600 dark:text-red-400 font-bold' : 'hover:text-zinc-900 dark:hover:text-white'
           }`}
         >
           <FileEdit className="w-5 h-5" />
@@ -674,8 +730,8 @@ export default function Home() {
 
         <button
           onClick={() => setAbaAtiva('clientes')}
-          className={`flex flex-col items-center justify-center gap-1 ${
-            abaAtiva === 'clientes' ? 'text-red-600 font-bold' : 'text-zinc-500'
+          className={`flex flex-col items-center justify-center gap-1 transition cursor-pointer ${
+            abaAtiva === 'clientes' ? 'text-red-600 dark:text-red-400 font-bold' : 'hover:text-zinc-900 dark:hover:text-white'
           }`}
         >
           <Users className="w-5 h-5" />
@@ -684,8 +740,8 @@ export default function Home() {
 
         <button
           onClick={() => setAbaAtiva('produtos')}
-          className={`flex flex-col items-center justify-center gap-1 ${
-            abaAtiva === 'produtos' ? 'text-red-600 font-bold' : 'text-zinc-500'
+          className={`flex flex-col items-center justify-center gap-1 transition cursor-pointer ${
+            abaAtiva === 'produtos' ? 'text-red-600 dark:text-red-400 font-bold' : 'hover:text-zinc-900 dark:hover:text-white'
           }`}
         >
           <Package className="w-5 h-5" />
@@ -694,8 +750,8 @@ export default function Home() {
 
         <button
           onClick={() => setAbaAtiva('dashboard')}
-          className={`flex flex-col items-center justify-center gap-1 ${
-            abaAtiva === 'dashboard' ? 'text-red-600 font-bold' : 'text-zinc-500'
+          className={`flex flex-col items-center justify-center gap-1 transition cursor-pointer ${
+            abaAtiva === 'dashboard' ? 'text-red-600 dark:text-red-400 font-bold' : 'hover:text-zinc-900 dark:hover:text-white'
           }`}
         >
           <LayoutDashboard className="w-5 h-5" />
