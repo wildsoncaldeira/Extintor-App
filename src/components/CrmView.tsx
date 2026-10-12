@@ -35,7 +35,8 @@ import {
   X,
   Loader2,
   CalendarDays,
-  ShoppingBag
+  ShoppingBag,
+  LayoutDashboard
 } from 'lucide-react';
 
 interface CrmViewProps {
@@ -96,6 +97,68 @@ export function CrmView({ onAbrirPedido, onCriarNovoPedido, onVerCliente }: CrmV
   // Modais
   const [modalNovaAberto, setModalNovaAberto] = useState(false);
   const [oportunidadeParaEditar, setOportunidadeParaEditar] = useState<CrmOportunidade | null>(null);
+
+  // Modo de Visualização do CRM: Kanban ou Calendário
+  const [visualizacao, setVisualizacao] = useState<'kanban' | 'calendario'>('kanban');
+  const [calendarioModo, setCalendarioModo] = useState<'mes' | 'semana'>('mes');
+  const [dataRef, setDataRef] = useState<Date>(new Date());
+
+  const navegarAnterior = () => {
+    setDataRef((prev) => {
+      const d = new Date(prev);
+      if (calendarioModo === 'mes') {
+        d.setMonth(d.getMonth() - 1);
+      } else {
+        d.setDate(d.getDate() - 7);
+      }
+      return d;
+    });
+  };
+
+  const navegarProximo = () => {
+    setDataRef((prev) => {
+      const d = new Date(prev);
+      if (calendarioModo === 'mes') {
+        d.setMonth(d.getMonth() + 1);
+      } else {
+        d.setDate(d.getDate() + 7);
+      }
+      return d;
+    });
+  };
+
+  const formatToYMD = (d: Date) => {
+    const ano = d.getFullYear();
+    const mes = String(d.getMonth() + 1).padStart(2, '0');
+    const dia = String(d.getDate()).padStart(2, '0');
+    return `${ano}-${mes}-${dia}`;
+  };
+
+  const getOpDateString = (op: CrmOportunidade): string => {
+    const raw = op.etapa === 'venda_futura'
+      ? (op.data_venda_futura || op.data_previsao || '')
+      : (op.data_previsao || (op.created_at ? op.created_at.split('T')[0] : ''));
+    return raw ? raw.split('T')[0] : '';
+  };
+
+  const getChipClasses = (etapa: CrmEtapa) => {
+    switch (etapa) {
+      case 'potencial':
+        return 'bg-purple-100 text-purple-900 border-l-2 border-purple-600 hover:bg-purple-200 dark:bg-purple-950/70 dark:text-purple-200 dark:border-purple-500';
+      case 'orcamento':
+        return 'bg-amber-100 text-amber-900 border-l-2 border-amber-600 hover:bg-amber-200 dark:bg-amber-950/70 dark:text-amber-200 dark:border-amber-500';
+      case 'aprovado':
+        return 'bg-blue-100 text-blue-900 border-l-2 border-blue-600 hover:bg-blue-200 dark:bg-blue-950/70 dark:text-blue-200 dark:border-blue-500';
+      case 'pago':
+        return 'bg-emerald-100 text-emerald-900 border-l-2 border-emerald-600 hover:bg-emerald-200 dark:bg-emerald-950/70 dark:text-emerald-200 dark:border-emerald-500';
+      case 'venda_futura':
+        return 'bg-red-100 text-red-900 border-l-2 border-red-600 hover:bg-red-200 dark:bg-red-950/70 dark:text-red-200 dark:border-red-500';
+      default:
+        return 'bg-zinc-100 text-zinc-900 border-l-2 border-zinc-600';
+    }
+  };
+
+  const mesesNomes = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
   // Form State
   const [formTitulo, setFormTitulo] = useState('');
@@ -287,11 +350,59 @@ export function CrmView({ onAbrirPedido, onCriarNovoPedido, onVerCliente }: CrmV
   const totalPipeline = oportunidadesFiltradas.reduce((acc, o) => acc + (Number(o.valor) || 0), 0);
   const totalVendasFuturas = oportunidadesFiltradas.filter((o) => o.etapa === 'venda_futura').length;
 
+  // Cálculos para o Calendário
+  const anoRef = dataRef.getFullYear();
+  const mesRef = dataRef.getMonth();
+
+  // Matriz Mensal
+  const primeiroDiaMes = new Date(anoRef, mesRef, 1);
+  const diaSemanaInicio = primeiroDiaMes.getDay(); // 0 = Domingo
+  const diasNoMes = new Date(anoRef, mesRef + 1, 0).getDate();
+  const diasNoMesAnterior = new Date(anoRef, mesRef, 0).getDate();
+
+  const diasMatriz: { data: Date; noMes: boolean; ymd: string }[] = [];
+  // Dias do mês anterior
+  for (let i = diaSemanaInicio - 1; i >= 0; i--) {
+    const d = new Date(anoRef, mesRef - 1, diasNoMesAnterior - i);
+    diasMatriz.push({ data: d, noMes: false, ymd: formatToYMD(d) });
+  }
+  // Dias do mês atual
+  for (let dia = 1; dia <= diasNoMes; dia++) {
+    const d = new Date(anoRef, mesRef, dia);
+    diasMatriz.push({ data: d, noMes: true, ymd: formatToYMD(d) });
+  }
+  // Dias do próximo mês para completar grade de 35 ou 42 células
+  const totalSlots = diasMatriz.length <= 35 ? 35 : 42;
+  let proxDia = 1;
+  while (diasMatriz.length < totalSlots) {
+    const d = new Date(anoRef, mesRef + 1, proxDia++);
+    diasMatriz.push({ data: d, noMes: false, ymd: formatToYMD(d) });
+  }
+
+  // Dias da Semana (Semanal)
+  const inicioSemana = new Date(dataRef);
+  const diaSemanaAtual = inicioSemana.getDay();
+  inicioSemana.setDate(inicioSemana.getDate() - diaSemanaAtual);
+
+  const diasSemana = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(inicioSemana);
+    d.setDate(d.getDate() + i);
+    return { data: d, ymd: formatToYMD(d) };
+  });
+
+  const diasNomesSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
+  const tituloPeriodo = calendarioModo === 'mes'
+    ? `${mesesNomes[mesRef]} de ${anoRef}`
+    : diasSemana[0].data.getMonth() === diasSemana[6].data.getMonth()
+      ? `${diasSemana[0].data.getDate()} a ${diasSemana[6].data.getDate()} de ${mesesNomes[diasSemana[6].data.getMonth()]} de ${diasSemana[6].data.getFullYear()}`
+      : `${diasSemana[0].data.getDate()} de ${mesesNomes[diasSemana[0].data.getMonth()]} a ${diasSemana[6].data.getDate()} de ${mesesNomes[diasSemana[6].data.getMonth()]} de ${diasSemana[6].data.getFullYear()}`;
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-5">
       
       {/* 1. TOPO COMPACTO: BUSCA, AÇÕES E 3 CARDS DE MÉTRICAS */}
-      <div className="bg-white dark:bg-[#18181c] p-3 sm:p-4 rounded-2xl border border-zinc-200/90 dark:border-zinc-800 shadow-xs space-y-3">
+      <div className="bg-white dark:bg-[#18181c] p-3 sm:p-4 rounded-2xl border border-zinc-300 dark:border-zinc-800 shadow-xs space-y-3">
         {/* Linha 1: Campo de Busca à esquerda e Botões à direita */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
           <div className="relative flex-1">
@@ -327,7 +438,7 @@ export function CrmView({ onAbrirPedido, onCriarNovoPedido, onVerCliente }: CrmV
               onClick={carregarDados}
               disabled={loading}
               title="Atualizar dados do CRM"
-              className="inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl transition bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 cursor-pointer"
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl transition bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 cursor-pointer"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
               <span className="hidden sm:inline">Atualizar</span>
@@ -379,185 +490,515 @@ export function CrmView({ onAbrirPedido, onCriarNovoPedido, onVerCliente }: CrmV
         </div>
       </div>
 
-      {/* 2. KANBAN COM AS 5 ETAPAS (MAIOR ESPAÇO VISUAL NA TELA) */}
-      <div className="overflow-x-auto pb-4">
-        <div className="flex gap-4 min-w-[1200px]">
-          {ETAPAS.map((etapaDef) => {
-            const Icon = etapaDef.icone;
-            const opsEtapa = oportunidadesFiltradas.filter((o) => o.etapa === etapaDef.key);
-            const totalEtapa = opsEtapa.reduce((acc, o) => acc + (Number(o.valor) || 0), 0);
+      {/* BARRA DE CONTROLE: SELETOR KANBAN vs CALENDÁRIO */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-[#18181c] p-2.5 sm:p-3 rounded-2xl border border-zinc-300 dark:border-zinc-800 shadow-xs">
+        {/* Alternador de Visualização: Funil Kanban ou Calendário */}
+        <div className="flex items-center gap-1.5 p-1 bg-zinc-200/80 dark:bg-zinc-900 rounded-xl shrink-0">
+          <button
+            type="button"
+            onClick={() => setVisualizacao('kanban')}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+              visualizacao === 'kanban'
+                ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-xs'
+                : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+            }`}
+          >
+            <LayoutDashboard className="w-3.5 h-3.5 text-red-600" />
+            <span>Funil Kanban</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setVisualizacao('calendario')}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+              visualizacao === 'calendario'
+                ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-xs'
+                : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+            }`}
+          >
+            <CalendarDays className="w-3.5 h-3.5 text-red-600" />
+            <span>Visualização Calendário</span>
+          </button>
+        </div>
 
-            return (
-              <div
-                key={etapaDef.key}
-                className="flex-1 min-w-[250px] max-w-[320px] bg-zinc-200/70 dark:bg-[#151518] rounded-2xl p-3 border border-zinc-300/90 dark:border-zinc-800 flex flex-col"
+        {/* Controles Específicos do Calendário */}
+        {visualizacao === 'calendario' ? (
+          <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2.5">
+            {/* Alternador Mensal / Semanal */}
+            <div className="flex items-center gap-1 p-0.5 bg-zinc-100 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 rounded-lg text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => setCalendarioModo('mes')}
+                className={`px-2.5 py-1 rounded-md transition cursor-pointer ${
+                  calendarioModo === 'mes'
+                    ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-2xs font-bold'
+                    : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200'
+                }`}
               >
-                {/* Cabeçalho da Coluna */}
-                <div className="flex items-center justify-between pb-2 mb-2 border-b border-zinc-300/80 dark:border-zinc-800">
-                  <div className="flex items-center gap-2">
-                    <span className={`w-2.5 h-2.5 rounded-full ${etapaDef.corBg}`} />
-                    <h3 className="font-bold text-xs text-zinc-900 dark:text-zinc-100">
-                      {etapaDef.titulo}
-                    </h3>
-                  </div>
-                  <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 shadow-2xs">
-                    {opsEtapa.length}
-                  </span>
-                </div>
+                Mensal
+              </button>
+              <button
+                type="button"
+                onClick={() => setCalendarioModo('semana')}
+                className={`px-2.5 py-1 rounded-md transition cursor-pointer ${
+                  calendarioModo === 'semana'
+                    ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-2xs font-bold'
+                    : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200'
+                }`}
+              >
+                Semanal
+              </button>
+            </div>
 
-                {/* Subtotal da Coluna */}
-                <div className="text-[11px] bg-zinc-100 dark:bg-zinc-900/60 p-1.5 rounded-lg border border-zinc-300/70 dark:border-zinc-800/80 text-zinc-600 dark:text-zinc-400 mb-2.5 flex items-center justify-between">
-                  <span>Subtotal:</span>
-                  <strong className="text-zinc-900 dark:text-zinc-100 font-bold">
-                    {formatMoeda(totalEtapa)}
-                  </strong>
-                </div>
+            {/* Navegação < Anterior | Hoje | Próximo > */}
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={navegarAnterior}
+                className="p-1.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 text-zinc-700 dark:text-zinc-300 cursor-pointer"
+                title="Período anterior"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setDataRef(new Date())}
+                className="px-2.5 py-1 text-xs font-bold rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 text-zinc-700 dark:text-zinc-300 cursor-pointer"
+              >
+                Hoje
+              </button>
+              <button
+                type="button"
+                onClick={navegarProximo}
+                className="p-1.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 text-zinc-700 dark:text-zinc-300 cursor-pointer"
+                title="Próximo período"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
 
-                {/* Cards das Oportunidades */}
-                <div className="space-y-2.5 flex-1 overflow-y-auto max-h-[calc(100vh-250px)] pr-0.5">
-                  {opsEtapa.length === 0 ? (
-                    <div className="p-4 text-center text-xs text-zinc-500 dark:text-zinc-500 border border-dashed border-zinc-300 dark:border-zinc-800 rounded-xl bg-zinc-100/60 dark:bg-zinc-900/30">
-                      Nenhuma oportunidade nesta etapa.
+            {/* Título do Período */}
+            <span className="text-xs font-black text-zinc-900 dark:text-white min-w-[130px] text-right">
+              {tituloPeriodo}
+            </span>
+          </div>
+        ) : (
+          /* Legenda de cores para o Kanban */
+          <div className="hidden lg:flex items-center gap-3 text-[11px] text-zinc-600 dark:text-zinc-400">
+            <span className="flex items-center gap-1 font-medium"><span className="w-2 h-2 rounded-full bg-purple-500"></span> Potencial</span>
+            <span className="flex items-center gap-1 font-medium"><span className="w-2 h-2 rounded-full bg-amber-500"></span> Orçamento</span>
+            <span className="flex items-center gap-1 font-medium"><span className="w-2 h-2 rounded-full bg-blue-500"></span> Aprovado</span>
+            <span className="flex items-center gap-1 font-medium"><span className="w-2 h-2 rounded-full bg-emerald-500"></span> Pago</span>
+            <span className="flex items-center gap-1 font-medium"><span className="w-2 h-2 rounded-full bg-red-600"></span> Venda Futura</span>
+          </div>
+        )}
+      </div>
+
+      {/* 2. VISUALIZAÇÃO KANBAN (FUNIL) */}
+      {visualizacao === 'kanban' && (
+        <div className="overflow-x-auto pb-4">
+          <div className="flex gap-4 min-w-[1200px]">
+            {ETAPAS.map((etapaDef) => {
+              const Icon = etapaDef.icone;
+              const opsEtapa = oportunidadesFiltradas.filter((o) => o.etapa === etapaDef.key);
+              const totalEtapa = opsEtapa.reduce((acc, o) => acc + (Number(o.valor) || 0), 0);
+
+              return (
+                <div
+                  key={etapaDef.key}
+                  className="flex-1 min-w-[250px] max-w-[320px] bg-zinc-200/80 dark:bg-[#151518] rounded-2xl p-3 border border-zinc-300 dark:border-zinc-800 flex flex-col"
+                >
+                  {/* Cabeçalho da Coluna */}
+                  <div className="flex items-center justify-between pb-2 mb-2 border-b border-zinc-300/80 dark:border-zinc-800">
+                    <div className="flex items-center gap-2">
+                      <span className={`w-2.5 h-2.5 rounded-full ${etapaDef.corBg}`} />
+                      <h3 className="font-bold text-xs text-zinc-900 dark:text-zinc-100">
+                        {etapaDef.titulo}
+                      </h3>
                     </div>
-                  ) : (
-                    opsEtapa.map((op) => (
-                      <div
-                        key={op.id}
-                        className="bg-white dark:bg-[#1d1d22] p-3 rounded-xl border border-zinc-200/90 dark:border-zinc-800 shadow-xs hover:shadow-md transition space-y-2.5 group relative"
-                      >
-                        {/* Título & Ações Rápidas */}
-                        <div className="flex items-start justify-between gap-2">
-                          <h4 
-                            className="font-bold text-xs text-zinc-900 dark:text-white leading-tight cursor-pointer hover:text-red-600 dark:hover:text-red-400 transition"
-                            onClick={() => handleAbrirEditar(op)}
-                          >
-                            {op.titulo}
-                          </h4>
-                          
-                          <div className="flex items-center gap-1 shrink-0">
-                            <button
-                              type="button"
+                    <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 shadow-2xs">
+                      {opsEtapa.length}
+                    </span>
+                  </div>
+
+                  {/* Subtotal da Coluna */}
+                  <div className="text-[11px] bg-zinc-100 dark:bg-zinc-900/60 p-1.5 rounded-lg border border-zinc-300/70 dark:border-zinc-800/80 text-zinc-600 dark:text-zinc-400 mb-2.5 flex items-center justify-between">
+                    <span>Subtotal:</span>
+                    <strong className="text-zinc-900 dark:text-zinc-100 font-bold">
+                      {formatMoeda(totalEtapa)}
+                    </strong>
+                  </div>
+
+                  {/* Cards das Oportunidades */}
+                  <div className="space-y-2.5 flex-1 overflow-y-auto max-h-[calc(100vh-250px)] pr-0.5">
+                    {opsEtapa.length === 0 ? (
+                      <div className="p-4 text-center text-xs text-zinc-500 dark:text-zinc-500 border border-dashed border-zinc-300 dark:border-zinc-800 rounded-xl bg-zinc-100/60 dark:bg-zinc-900/30">
+                        Nenhuma oportunidade nesta etapa.
+                      </div>
+                    ) : (
+                      opsEtapa.map((op) => (
+                        <div
+                          key={op.id}
+                          className="bg-white dark:bg-[#1d1d22] p-3 rounded-xl border border-zinc-300 dark:border-zinc-800 shadow-xs hover:shadow-md transition space-y-2.5 group relative"
+                        >
+                          {/* Título & Ações Rápidas */}
+                          <div className="flex items-start justify-between gap-2">
+                            <h4 
+                              className="font-bold text-xs text-zinc-900 dark:text-white leading-tight cursor-pointer hover:text-red-600 dark:hover:text-red-400 transition"
                               onClick={() => handleAbrirEditar(op)}
-                              className="p-1 text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition cursor-pointer"
-                              title="Editar oportunidade"
                             >
-                              <Edit2 className="w-3 h-3" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleExcluirOportunidade(op.id, op.titulo)}
-                              className="p-1 text-zinc-400 hover:text-red-600 dark:hover:text-red-400 rounded-md transition cursor-pointer"
-                              title="Excluir oportunidade"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Cliente & Telefone */}
-                        <div className="space-y-1 text-[11px]">
-                          <div className="flex items-center gap-1.5 text-zinc-700 dark:text-zinc-300 font-semibold truncate">
-                            <Building2 className="w-3 h-3 text-zinc-400 shrink-0" />
-                            <span 
-                              className="truncate hover:underline cursor-pointer"
-                              onClick={() => op.cliente_id && onVerCliente && onVerCliente(op.cliente_id)}
-                            >
-                              {op.cliente_nome}
-                            </span>
-                          </div>
-
-                          {op.cliente_telefone && (
-                            <div className="flex items-center gap-2">
-                              <a
-                                href={getWhatsAppUrl(op.cliente_telefone, op.cliente_nome)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline"
-                                title="Abrir conversa no WhatsApp"
+                              {op.titulo}
+                            </h4>
+                            
+                            <div className="flex items-center gap-1 shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => handleAbrirEditar(op)}
+                                className="p-1 text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-md transition cursor-pointer"
+                                title="Editar oportunidade"
                               >
-                                <WhatsAppIcon className="w-3 h-3" />
-                                <span>{op.cliente_telefone}</span>
-                              </a>
+                                <Edit2 className="w-3 h-3" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleExcluirOportunidade(op.id, op.titulo)}
+                                className="p-1 text-zinc-400 hover:text-red-600 dark:hover:text-red-400 rounded-md transition cursor-pointer"
+                                title="Excluir oportunidade"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Cliente & Telefone */}
+                          <div className="space-y-1 text-[11px]">
+                            <div className="flex items-center gap-1.5 text-zinc-700 dark:text-zinc-300 font-semibold truncate">
+                              <Building2 className="w-3 h-3 text-zinc-400 shrink-0" />
+                              <span 
+                                className="truncate hover:underline cursor-pointer"
+                                onClick={() => op.cliente_id && onVerCliente && onVerCliente(op.cliente_id)}
+                              >
+                                {op.cliente_nome}
+                              </span>
+                            </div>
+
+                            {op.cliente_telefone && (
+                              <div className="flex items-center gap-2">
+                                <a
+                                  href={getWhatsAppUrl(op.cliente_telefone, op.cliente_nome)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline"
+                                  title="Abrir conversa no WhatsApp"
+                                >
+                                  <WhatsAppIcon className="w-3 h-3" />
+                                  <span>{op.cliente_telefone}</span>
+                                </a>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Pedido Vinculado (se houver) */}
+                          {op.numero_pedido && (
+                            <div className="text-[11px] flex items-center justify-between bg-zinc-50 dark:bg-zinc-900/60 p-1.5 rounded-lg border border-zinc-200/60 dark:border-zinc-800">
+                              <span className="text-zinc-500 dark:text-zinc-400">Pedido Gerado:</span>
+                              <button
+                                type="button"
+                                onClick={() => op.pedido_id && onAbrirPedido && onAbrirPedido(op.pedido_id)}
+                                className="font-bold text-red-600 dark:text-red-400 hover:underline cursor-pointer"
+                              >
+                                #{op.numero_pedido}
+                              </button>
                             </div>
                           )}
-                        </div>
 
-                        {/* Pedido Vinculado (se houver) */}
-                        {op.numero_pedido && (
-                          <div className="text-[11px] flex items-center justify-between bg-zinc-50 dark:bg-zinc-900/60 p-1.5 rounded-lg border border-zinc-200/60 dark:border-zinc-800">
-                            <span className="text-zinc-500 dark:text-zinc-400">Pedido Gerado:</span>
+                          {/* Data de Venda Futura ou Previsão */}
+                          {op.etapa === 'venda_futura' ? (
+                            <div className="p-2 rounded-lg bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900/60 text-[11px] text-red-700 dark:text-red-300 flex items-center gap-1.5">
+                              <CalendarDays className="w-3.5 h-3.5 shrink-0" />
+                              <span>
+                                Renovação: <strong className="font-bold">{formatDate(op.data_venda_futura || op.data_previsao) || 'A definir'}</strong>
+                              </span>
+                            </div>
+                          ) : op.data_previsao ? (
+                            <div className="text-[11px] text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
+                              <Calendar className="w-3.5 h-3.5" />
+                              <span>Previsão: {formatDate(op.data_previsao)}</span>
+                            </div>
+                          ) : null}
+
+                          {/* Observações */}
+                          {op.observacoes && (
+                            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 italic line-clamp-2">
+                              "{op.observacoes}"
+                            </p>
+                          )}
+
+                          {/* Rodapé do Card: Valor e Movimentação */}
+                          <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between">
+                            <span className="font-black text-xs text-zinc-900 dark:text-white">
+                              {formatMoeda(Number(op.valor) || 0)}
+                            </span>
+
+                            {/* Seletor rápido de Etapa */}
+                            <select
+                              value={op.etapa}
+                              onChange={(e) => handleMudarEtapa(op.id, e.target.value as CrmEtapa)}
+                              className="text-[10px] font-bold py-0.5 px-1.5 rounded-md border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 outline-none cursor-pointer"
+                            >
+                              <option value="potencial">Potencial</option>
+                              <option value="orcamento">Orçamento</option>
+                              <option value="aprovado">Aprovado</option>
+                              <option value="pago">Pago</option>
+                              <option value="venda_futura">Venda Futura</option>
+                            </select>
+                          </div>
+
+                          {/* Botão rápido: Criar Pedido */}
+                          {onCriarNovoPedido && op.etapa !== 'pago' && !op.pedido_id && (
                             <button
                               type="button"
-                              onClick={() => op.pedido_id && onAbrirPedido && onAbrirPedido(op.pedido_id)}
-                              className="font-bold text-red-600 dark:text-red-400 hover:underline cursor-pointer"
+                              onClick={() => onCriarNovoPedido(op.cliente_id || undefined, op.cliente_nome)}
+                              className="w-full mt-1 py-1 text-[11px] font-bold text-center rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 transition flex items-center justify-center gap-1 cursor-pointer"
                             >
-                              #{op.numero_pedido}
+                              <ShoppingBag className="w-3 h-3" />
+                              <span>Criar Pedido deste Cliente</span>
                             </button>
-                          </div>
-                        )}
-
-                        {/* Data de Venda Futura ou Previsão */}
-                        {op.etapa === 'venda_futura' ? (
-                          <div className="p-2 rounded-lg bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900/60 text-[11px] text-red-700 dark:text-red-300 flex items-center gap-1.5">
-                            <CalendarDays className="w-3.5 h-3.5 shrink-0" />
-                            <span>
-                              Renovação: <strong className="font-bold">{formatDate(op.data_venda_futura || op.data_previsao) || 'A definir'}</strong>
-                            </span>
-                          </div>
-                        ) : op.data_previsao ? (
-                          <div className="text-[11px] text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
-                            <span>Previsão: {formatDate(op.data_previsao)}</span>
-                          </div>
-                        ) : null}
-
-                        {/* Observações */}
-                        {op.observacoes && (
-                          <p className="text-[11px] text-zinc-500 dark:text-zinc-400 italic line-clamp-2">
-                            "{op.observacoes}"
-                          </p>
-                        )}
-
-                        {/* Rodapé do Card: Valor e Movimentação */}
-                        <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between">
-                          <span className="font-black text-xs text-zinc-900 dark:text-white">
-                            {formatMoeda(Number(op.valor) || 0)}
-                          </span>
-
-                          {/* Seletor rápido de Etapa */}
-                          <select
-                            value={op.etapa}
-                            onChange={(e) => handleMudarEtapa(op.id, e.target.value as CrmEtapa)}
-                            className="text-[10px] font-bold py-0.5 px-1.5 rounded-md border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 outline-none cursor-pointer"
-                          >
-                            <option value="potencial">Potencial</option>
-                            <option value="orcamento">Orçamento</option>
-                            <option value="aprovado">Aprovado</option>
-                            <option value="pago">Pago</option>
-                            <option value="venda_futura">Venda Futura</option>
-                          </select>
+                          )}
                         </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
-                        {/* Botão rápido: Criar Pedido */}
-                        {onCriarNovoPedido && op.etapa !== 'pago' && !op.pedido_id && (
+      {/* 3. VISUALIZAÇÃO CALENDÁRIO (MENSAL OU SEMANAL) */}
+      {visualizacao === 'calendario' && (
+        <div className="space-y-4">
+          {/* Legenda de Cores do Calendário */}
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4 px-3 py-2 bg-white dark:bg-[#18181c] rounded-xl border border-zinc-300 dark:border-zinc-800 text-xs">
+            <span className="font-bold text-zinc-700 dark:text-zinc-300">Legenda de Etapas:</span>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
+              <span className="text-zinc-600 dark:text-zinc-400 font-medium text-[11px]">Potencial</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+              <span className="text-zinc-600 dark:text-zinc-400 font-medium text-[11px]">Orçamento</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+              <span className="text-zinc-600 dark:text-zinc-400 font-medium text-[11px]">Aprovado</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+              <span className="text-zinc-600 dark:text-zinc-400 font-medium text-[11px]">Pago</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-red-600"></span>
+              <span className="text-zinc-700 dark:text-zinc-300 font-bold text-[11px]">Venda Futura</span>
+            </div>
+          </div>
+
+          {/* MODO MENSAL (Grade com Chips estilo Google Calendar) */}
+          {calendarioModo === 'mes' && (
+            <div className="bg-white dark:bg-[#18181c] rounded-2xl border border-zinc-300 dark:border-zinc-800 shadow-xs overflow-hidden">
+              {/* Dias da Semana - Cabeçalho */}
+              <div className="grid grid-cols-7 border-b border-zinc-300 dark:border-zinc-800 bg-zinc-100 dark:bg-[#121215] text-center text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                {diasNomesSemana.map((nome, i) => (
+                  <div key={nome} className="py-2.5 border-r last:border-r-0 border-zinc-300 dark:border-zinc-800">
+                    <span className="hidden sm:inline">{['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'][i]}</span>
+                    <span className="sm:hidden">{nome}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Grade de Dias */}
+              <div className="grid grid-cols-7 auto-rows-fr divide-x divide-y divide-zinc-200 dark:divide-zinc-800">
+                {diasMatriz.map((slot, index) => {
+                  const hojeYMD = formatToYMD(new Date());
+                  const isHoje = slot.ymd === hojeYMD;
+                  const opsNoDia = oportunidadesFiltradas.filter((o) => getOpDateString(o) === slot.ymd);
+
+                  return (
+                    <div
+                      key={index}
+                      className={`min-h-[105px] sm:min-h-[125px] p-1.5 flex flex-col transition ${
+                        slot.noMes
+                          ? 'bg-white dark:bg-[#18181c]'
+                          : 'bg-zinc-100/60 dark:bg-zinc-950/40 text-zinc-400 dark:text-zinc-600'
+                      }`}
+                    >
+                      {/* Topo da Célula de Data */}
+                      <div className="flex items-center justify-between px-1 mb-1">
+                        <span
+                          className={`text-xs font-black flex items-center justify-center ${
+                            isHoje
+                              ? 'w-5 h-5 rounded-full bg-red-600 text-white shadow-2xs'
+                              : slot.noMes
+                              ? 'text-zinc-800 dark:text-zinc-200'
+                              : 'text-zinc-400 dark:text-zinc-600'
+                          }`}
+                        >
+                          {slot.data.getDate()}
+                        </span>
+                        {opsNoDia.length > 0 && (
+                          <span className="text-[10px] font-extrabold px-1.5 py-0.2 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
+                            {opsNoDia.length}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Lista de Chips Pequenos - Estilo Google Calendar */}
+                      <div className="space-y-1 flex-1 overflow-y-auto max-h-[85px] pr-0.5">
+                        {opsNoDia.slice(0, 3).map((op) => (
+                          <button
+                            key={op.id}
+                            type="button"
+                            onClick={() => handleAbrirEditar(op)}
+                            title={`${op.titulo} - ${op.cliente_nome} (${formatMoeda(Number(op.valor) || 0)})`}
+                            className={`w-full text-left px-1.5 py-0.5 rounded text-[10px] font-bold truncate flex items-center justify-between gap-1 shadow-2xs transition cursor-pointer ${getChipClasses(op.etapa)}`}
+                          >
+                            <span className="truncate flex-1">{op.cliente_nome || op.titulo}</span>
+                            <span className="shrink-0 font-extrabold text-[9px]">{formatMoeda(Number(op.valor) || 0)}</span>
+                          </button>
+                        ))}
+                        {opsNoDia.length > 3 && (
                           <button
                             type="button"
-                            onClick={() => onCriarNovoPedido(op.cliente_id || undefined, op.cliente_nome)}
-                            className="w-full mt-1 py-1 text-[11px] font-bold text-center rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 transition flex items-center justify-center gap-1 cursor-pointer"
+                            onClick={() => {
+                              setDataRef(slot.data);
+                              setCalendarioModo('semana');
+                            }}
+                            className="w-full text-left px-1 text-[9px] font-bold text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-white"
                           >
-                            <ShoppingBag className="w-3 h-3" />
-                            <span>Criar Pedido deste Cliente</span>
+                            +{opsNoDia.length - 3} mais...
                           </button>
                         )}
                       </div>
-                    ))
-                  )}
-                </div>
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
+            </div>
+          )}
+
+          {/* MODO SEMANAL (7 Colunas com Cards Detalhados) */}
+          {calendarioModo === 'semana' && (
+            <div className="overflow-x-auto pb-4">
+              <div className="flex gap-3 min-w-[1050px]">
+                {diasSemana.map((dia, idx) => {
+                  const hojeYMD = formatToYMD(new Date());
+                  const isHoje = dia.ymd === hojeYMD;
+                  const opsNoDia = oportunidadesFiltradas.filter((o) => getOpDateString(o) === dia.ymd);
+                  const subtotalDia = opsNoDia.reduce((acc, o) => acc + (Number(o.valor) || 0), 0);
+
+                  return (
+                    <div
+                      key={idx}
+                      className={`flex-1 min-w-[210px] rounded-2xl p-3 border flex flex-col transition ${
+                        isHoje
+                          ? 'bg-red-50/50 dark:bg-red-950/20 border-red-300 dark:border-red-900/60 ring-2 ring-red-500/20'
+                          : 'bg-zinc-200/80 dark:bg-[#151518] border-zinc-300 dark:border-zinc-800'
+                      }`}
+                    >
+                      {/* Cabeçalho do Dia */}
+                      <div className="pb-2 mb-2 border-b border-zinc-300/80 dark:border-zinc-800">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <span className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase">
+                              {diasNomesSemana[dia.data.getDay()]}
+                            </span>
+                            <h4 className="font-black text-sm text-zinc-900 dark:text-white leading-tight">
+                              {dia.data.getDate()} de {mesesNomes[dia.data.getMonth()]}
+                            </h4>
+                          </div>
+                          {isHoje && (
+                            <span className="px-2 py-0.5 text-[10px] font-black rounded-full bg-red-600 text-white uppercase tracking-wider">
+                              Hoje
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Subtotal */}
+                        <div className="mt-1.5 flex items-center justify-between text-[11px] font-semibold text-zinc-600 dark:text-zinc-400">
+                          <span>{opsNoDia.length} {opsNoDia.length === 1 ? 'oportunidade' : 'oportunidades'}</span>
+                          <strong className="text-zinc-900 dark:text-white font-black">{formatMoeda(subtotalDia)}</strong>
+                        </div>
+                      </div>
+
+                      {/* Lista de Cards daquele Dia */}
+                      <div className="space-y-2 flex-1 overflow-y-auto max-h-[calc(100vh-270px)] pr-0.5">
+                        {opsNoDia.length === 0 ? (
+                          <div className="p-4 text-center text-xs text-zinc-400 dark:text-zinc-500 border border-dashed border-zinc-300 dark:border-zinc-800 rounded-xl bg-zinc-100/50 dark:bg-zinc-900/20">
+                            Nenhum agendamento
+                          </div>
+                        ) : (
+                          opsNoDia.map((op) => {
+                            const etapaInfo = ETAPAS.find((e) => e.key === op.etapa);
+                            return (
+                              <div
+                                key={op.id}
+                                className="bg-white dark:bg-[#1d1d22] p-2.5 rounded-xl border border-zinc-300 dark:border-zinc-800 shadow-xs hover:shadow-md transition space-y-2"
+                              >
+                                <div className="flex items-start justify-between gap-1.5">
+                                  <h5
+                                    onClick={() => handleAbrirEditar(op)}
+                                    className="font-bold text-xs text-zinc-900 dark:text-white leading-snug cursor-pointer hover:text-red-600 transition"
+                                  >
+                                    {op.titulo}
+                                  </h5>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleAbrirEditar(op)}
+                                    className="p-1 text-zinc-400 hover:text-blue-600 rounded transition cursor-pointer shrink-0"
+                                    title="Editar"
+                                  >
+                                    <Edit2 className="w-3 h-3" />
+                                  </button>
+                                </div>
+
+                                <div className="text-[11px] text-zinc-600 dark:text-zinc-400 flex items-center justify-between">
+                                  <span className="font-semibold text-zinc-800 dark:text-zinc-200 truncate">{op.cliente_nome}</span>
+                                  {op.cliente_telefone && (
+                                    <a
+                                      href={getWhatsAppUrl(op.cliente_telefone, op.cliente_nome)}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-emerald-600 hover:text-emerald-700 p-0.5 shrink-0"
+                                      title="Conversar no WhatsApp"
+                                    >
+                                      <WhatsAppIcon className="w-3.5 h-3.5" />
+                                    </a>
+                                  )}
+                                </div>
+
+                                <div className="pt-1.5 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+                                  <span className="font-black text-xs text-zinc-900 dark:text-white">
+                                    {formatMoeda(Number(op.valor) || 0)}
+                                  </span>
+                                  {etapaInfo && (
+                                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${etapaInfo.corBadge}`}>
+                                      {etapaInfo.titulo}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
-      </div>
+      )}
 
       {/* MODAL: CRIAR OU EDITAR OPORTUNIDADE */}
       {modalNovaAberto && (

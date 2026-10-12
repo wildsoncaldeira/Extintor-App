@@ -194,7 +194,7 @@ export function FinanceiroView({ onVerPedido, onVerCliente }: FinanceiroViewProp
     <div className="space-y-6">
       
       {/* 1. BARRA SUPERIOR COMPACTA COM BOTÃO ESCONDIDO DE FILTROS */}
-      <div className="bg-white dark:bg-[#18181c] p-3 sm:p-4 rounded-2xl border border-zinc-200/90 dark:border-zinc-800 shadow-xs space-y-3">
+      <div className="bg-white dark:bg-[#18181c] p-3 sm:p-4 rounded-2xl border border-zinc-300 dark:border-zinc-800 shadow-xs space-y-3">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
           {/* Botão de Filtro de Período (Abre/Fecha seletores) */}
           <div className="flex items-center gap-2 flex-1">
@@ -417,7 +417,7 @@ export function FinanceiroView({ onVerPedido, onVerCliente }: FinanceiroViewProp
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
         
         {/* Card 1: Faturamento Bruto (Volume de Vendas) */}
-        <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 p-4 rounded-2xl border border-zinc-200 shadow-2xs flex flex-col justify-between space-y-2.5">
+        <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 p-4 rounded-2xl border border-zinc-300 shadow-2xs flex flex-col justify-between space-y-2.5">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
               Faturamento
@@ -443,7 +443,7 @@ export function FinanceiroView({ onVerPedido, onVerCliente }: FinanceiroViewProp
         </div>
 
         {/* Card 2: Custo das Vendas (CMV) */}
-        <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 p-4 rounded-2xl border border-zinc-200 shadow-2xs flex flex-col justify-between space-y-2.5">
+        <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 p-4 rounded-2xl border border-zinc-300 shadow-2xs flex flex-col justify-between space-y-2.5">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
               Custo dos Produtos (CMV)
@@ -469,7 +469,7 @@ export function FinanceiroView({ onVerPedido, onVerCliente }: FinanceiroViewProp
         </div>
 
         {/* Card 3: Despesas Operacionais (Lançamentos manuais) */}
-        <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 p-4 rounded-2xl border border-zinc-200 shadow-2xs flex flex-col justify-between space-y-2.5">
+        <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 p-4 rounded-2xl border border-zinc-300 shadow-2xs flex flex-col justify-between space-y-2.5">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
               Despesas Operacionais
@@ -501,7 +501,7 @@ export function FinanceiroView({ onVerPedido, onVerCliente }: FinanceiroViewProp
         </div>
 
         {/* Card 4: Total de Custos & Despesas (CMV + Operacionais) */}
-        <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 p-4 rounded-2xl border border-zinc-200 shadow-2xs flex flex-col justify-between space-y-2.5">
+        <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 p-4 rounded-2xl border border-zinc-300 shadow-2xs flex flex-col justify-between space-y-2.5">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
               Despesas Totais
@@ -529,7 +529,7 @@ export function FinanceiroView({ onVerPedido, onVerCliente }: FinanceiroViewProp
         </div>
 
         {/* Card 5: Lucro Líquido Real */}
-        <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 p-4 rounded-2xl border border-zinc-200 shadow-2xs flex flex-col justify-between space-y-2.5">
+        <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 p-4 rounded-2xl border border-zinc-300 shadow-2xs flex flex-col justify-between space-y-2.5">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
               Lucro Líquido Real
@@ -570,7 +570,7 @@ export function FinanceiroView({ onVerPedido, onVerCliente }: FinanceiroViewProp
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         
         {/* Gráfico 1: Evolução Mensal (2/3 da largura em telas grandes) */}
-        <div className="lg:col-span-2 bg-white dark:bg-[#18181c] dark:border-zinc-700/80 p-5 rounded-2xl border border-zinc-200 shadow-2xs space-y-4">
+        <div className="lg:col-span-2 bg-white dark:bg-[#18181c] dark:border-zinc-700/80 p-5 rounded-2xl border border-zinc-300 shadow-2xs space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4 text-red-600 dark:text-red-400" />
@@ -636,7 +636,7 @@ export function FinanceiroView({ onVerPedido, onVerCliente }: FinanceiroViewProp
         </div>
 
         {/* Gráfico 2: Composição de Despesas por Categoria (1/3 da largura) */}
-        <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 p-5 rounded-2xl border border-zinc-200 shadow-2xs space-y-4">
+        <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 p-5 rounded-2xl border border-zinc-300 shadow-2xs space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <PieChart className="w-4 h-4 text-red-600 dark:text-red-400" />
@@ -695,7 +695,7 @@ export function FinanceiroView({ onVerPedido, onVerCliente }: FinanceiroViewProp
       </div>
 
       {/* 4. SEÇÃO DETALHADA COM ABAS: DESPESAS, PRODUTOS MAIS VENDIDOS, CLIENTES E PEDIDOS */}
-      <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 rounded-2xl border border-zinc-200 shadow-2xs overflow-hidden">
+      <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 rounded-2xl border border-zinc-300 shadow-2xs overflow-hidden">
         
         {/* Abas Superiores & Barra de Busca */}
         <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-zinc-50/70 dark:bg-zinc-950">

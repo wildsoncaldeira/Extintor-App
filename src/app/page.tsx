@@ -252,14 +252,14 @@ export default function Home() {
     <div className={`min-h-screen flex flex-col md:flex-row transition-colors duration-200 ${
       temaEscuro
         ? 'bg-black text-zinc-100'
-        : 'bg-zinc-100 text-zinc-900'
+        : 'bg-[#e4e7ee] text-zinc-900'
     }`}>
       
       {/* SIDEBAR DESKTOP (Fixa no topo da tela, nunca rola para fora) */}
       <aside className={`hidden md:flex flex-col w-72 h-screen sticky top-0 border-r shrink-0 select-none overflow-hidden transition-colors duration-200 z-30 ${
         temaEscuro
           ? 'bg-[#0f0f12] border-zinc-800 text-zinc-100 shadow-2xl'
-          : 'bg-white border-zinc-200 text-zinc-900 shadow-sm'
+          : 'bg-white border-zinc-300 text-zinc-900 shadow-sm'
       }`}>
         {/* Logo / Header */}
         <div className={`p-5 border-b flex items-center gap-3 shrink-0 ${
@@ -491,7 +491,7 @@ export default function Home() {
       <header className={`md:hidden p-3 flex items-center justify-between sticky top-0 z-40 border-b transition-colors duration-200 ${
         temaEscuro
           ? 'bg-[#0f0f12]/95 border-zinc-800 text-white backdrop-blur-md'
-          : 'bg-white border-zinc-200 text-zinc-900'
+          : 'bg-white border-zinc-300 text-zinc-900 shadow-xs'
       }`}>
         <div 
           onClick={() => setAbaAtiva('inicio')}
@@ -797,7 +797,7 @@ export default function Home() {
       <nav className={`md:hidden fixed bottom-0 left-0 right-0 z-40 grid grid-cols-7 py-2 border-t transition-colors duration-200 ${
         temaEscuro
           ? 'bg-[#0f0f12]/95 border-zinc-800 text-zinc-400 backdrop-blur-md'
-          : 'bg-white border-zinc-200 text-zinc-500'
+          : 'bg-white border-zinc-300 text-zinc-600 shadow-md'
       }`}>
         <button
           onClick={() => setAbaAtiva('inicio')}
