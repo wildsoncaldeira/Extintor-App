@@ -49,11 +49,15 @@ export function ProdutosView({
     return acc;
   }, {} as Record<string, ProdutoServico[]>);
 
-  const toggleSecao = (cat: string) => {
-    setSecoesAbertas((prev) => ({
-      ...prev,
-      [cat]: prev[cat] === undefined ? false : !prev[cat],
-    }));
+  const toggleSecao = (cat: string, index: number) => {
+    setSecoesAbertas((prev) => {
+      const atualmenteAberta =
+        prev[cat] !== undefined ? prev[cat] : index === 0;
+      return {
+        ...prev,
+        [cat]: !atualmenteAberta,
+      };
+    });
   };
 
   const handleExcluir = async (p: ProdutoServico) => {
@@ -72,7 +76,7 @@ export function ProdutosView({
   return (
     <div className="space-y-4">
       {/* Barra de Busca e Botões Superiores */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-zinc-900/90 dark:border-zinc-800 dark:shadow-2xl p-4 rounded-xl border border-zinc-200 shadow-2xs">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-[#18181c] dark:border-zinc-700/80 dark:shadow-md p-4 rounded-xl border border-zinc-200 shadow-2xs">
         <div className="relative flex-1">
           <Search className="w-4 h-4 text-zinc-400 dark:text-zinc-500 absolute left-3 top-3" />
           <input
@@ -80,7 +84,7 @@ export function ProdutosView({
             placeholder="Search Produtos & Serviços (descrição, categoria ou peso kg)..."
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg text-sm focus:ring-2 focus:ring-red-500 outline-none dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500"
+            className="w-full pl-9 pr-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg text-sm focus:ring-2 focus:ring-red-500 outline-none dark:bg-[#121214] dark:text-white dark:placeholder-zinc-500"
           />
         </div>
 
@@ -89,7 +93,7 @@ export function ProdutosView({
           <button
             onClick={onOpenGerenciarCategorias}
             title="Adicionar, editar e excluir categorias"
-            className="inline-flex items-center gap-1.5 px-3 py-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-800 dark:text-zinc-300 dark:border dark:border-zinc-700 text-xs font-bold rounded-lg transition shrink-0 cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 dark:bg-[#121214] dark:hover:bg-zinc-800 dark:text-zinc-300 dark:border dark:border-zinc-700 text-xs font-bold rounded-lg transition shrink-0 cursor-pointer"
           >
             <Layers className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
             <span>Categorias ({categorias.length})</span>
@@ -109,23 +113,29 @@ export function ProdutosView({
       {/* Lista Agrupada por Categoria */}
       <div className="space-y-3">
         {listaCategorias.length === 0 ? (
-          <div className="bg-white dark:bg-zinc-900/90 dark:border-zinc-800 dark:shadow-2xl p-8 rounded-xl border border-zinc-200 text-center text-zinc-500 dark:text-zinc-400 text-sm">
+          <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 dark:shadow-md p-8 rounded-xl border border-zinc-200 text-center text-zinc-500 dark:text-zinc-400 text-sm">
             Nenhum produto cadastrado com este critério de busca.
           </div>
         ) : (
-          listaCategorias.map((catNome) => {
+          listaCategorias.map((catNome, index) => {
             const itens = produtosPorCategoria[catNome];
-            const estaAberta = secoesAbertas[catNome] !== false; // Padrão aberto
+            // Se o usuário estiver pesquisando por termo, expande as categorias correspondentes;
+            // caso contrário, apenas a primeira categoria inicia aberta.
+            const estaAberta = busca.trim()
+              ? true
+              : secoesAbertas[catNome] !== undefined
+              ? secoesAbertas[catNome]
+              : index === 0;
 
             return (
               <div
                 key={catNome}
-                className="bg-white dark:bg-zinc-900/90 dark:border-zinc-800 dark:shadow-2xl rounded-xl border border-zinc-200 shadow-2xs overflow-hidden transition"
+                className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 dark:shadow-md rounded-xl border border-zinc-200 shadow-2xs overflow-hidden transition"
               >
                 {/* Cabeçalho da Categoria */}
                 <div
-                  onClick={() => toggleSecao(catNome)}
-                  className="px-4 py-3 bg-zinc-50 hover:bg-zinc-100/80 dark:bg-zinc-950 dark:hover:bg-zinc-800/80 cursor-pointer flex items-center justify-between border-b border-zinc-200/80 dark:border-zinc-800 select-none transition"
+                  onClick={() => toggleSecao(catNome, index)}
+                  className="px-4 py-3 bg-zinc-50 hover:bg-zinc-100/80 dark:bg-[#121214] dark:hover:bg-zinc-800/60 cursor-pointer flex items-center justify-between border-b border-zinc-200/80 dark:border-zinc-800 select-none transition"
                 >
                   <div className="flex items-center gap-2.5">
                     {estaAberta ? (

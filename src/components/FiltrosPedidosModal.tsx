@@ -70,11 +70,11 @@ export function FiltrosPedidosModal({
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-lg bg-white dark:bg-zinc-900 dark:border dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-modal-content"
+        className="relative w-full max-w-lg bg-white dark:bg-[#18181c] dark:border dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-modal-content"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Cabeçalho */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-[#121214]">
           <div className="flex items-center gap-2.5">
             <div className="p-2 bg-red-100 dark:bg-red-950/60 dark:border dark:border-red-800/80 text-red-700 dark:text-red-400 rounded-lg">
               <Filter className="w-4 h-4" />

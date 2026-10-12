@@ -23,7 +23,7 @@ export function DashboardView({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         
         {/* Faturamento Total */}
-        <div className="bg-white dark:bg-zinc-900/90 dark:border-zinc-800 dark:shadow-2xl p-5 rounded-xl border border-zinc-200 shadow-xs flex items-center justify-between">
+        <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 dark:shadow-md p-5 rounded-xl border border-zinc-200 shadow-xs flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold uppercase text-zinc-500 dark:text-zinc-400 tracking-wider">
               Faturamento Histórico
@@ -41,7 +41,7 @@ export function DashboardView({
         </div>
 
         {/* Total de Pedidos */}
-        <div className="bg-white dark:bg-zinc-900/90 dark:border-zinc-800 dark:shadow-2xl p-5 rounded-xl border border-zinc-200 shadow-xs flex items-center justify-between">
+        <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 dark:shadow-md p-5 rounded-xl border border-zinc-200 shadow-xs flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold uppercase text-zinc-500 dark:text-zinc-400 tracking-wider">
               Ordens de Serviço
@@ -59,7 +59,7 @@ export function DashboardView({
         </div>
 
         {/* Total Clientes */}
-        <div className="bg-white dark:bg-zinc-900/90 dark:border-zinc-800 dark:shadow-2xl p-5 rounded-xl border border-zinc-200 shadow-xs flex items-center justify-between">
+        <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 dark:shadow-md p-5 rounded-xl border border-zinc-200 shadow-xs flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold uppercase text-zinc-500 dark:text-zinc-400 tracking-wider">
               Clientes Ativos
@@ -77,7 +77,7 @@ export function DashboardView({
         </div>
 
         {/* Produtos & Serviços */}
-        <div className="bg-white dark:bg-zinc-900/90 dark:border-zinc-800 dark:shadow-2xl p-5 rounded-xl border border-zinc-200 shadow-xs flex items-center justify-between">
+        <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 dark:shadow-md p-5 rounded-xl border border-zinc-200 shadow-xs flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold uppercase text-zinc-500 dark:text-zinc-400 tracking-wider">
               Produtos & Serviços
@@ -97,7 +97,7 @@ export function DashboardView({
       </div>
 
       {/* Divisão por Status de Pedidos */}
-      <div className="bg-white dark:bg-zinc-900/90 dark:border-zinc-800 dark:shadow-2xl p-6 rounded-xl border border-zinc-200 shadow-xs">
+      <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 dark:shadow-md p-6 rounded-xl border border-zinc-200 shadow-xs">
         <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-800 dark:text-zinc-200 mb-4">
           Distribuição de Status dos Pedidos
         </h3>
@@ -150,7 +150,7 @@ export function DashboardView({
       </div>
 
       {/* Ações Rápidas */}
-      <div className="bg-gradient-to-r from-zinc-900 to-zinc-800 dark:from-zinc-950 dark:to-zinc-900 dark:border dark:border-zinc-800 text-white p-6 rounded-xl shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="bg-gradient-to-r from-zinc-900 to-zinc-800 dark:from-[#18181c] dark:to-[#141418] dark:border dark:border-zinc-700/80 text-white p-6 rounded-xl shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
         <div>
           <h4 className="text-base font-bold">Acesso Rápido para Atendimento</h4>
           <p className="text-xs text-zinc-300 dark:text-zinc-400 mt-0.5">

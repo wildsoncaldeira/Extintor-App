@@ -130,7 +130,7 @@ export function InicioView({
             <button
               key={card.id}
               onClick={card.onClick}
-              className="group bg-white dark:bg-zinc-900/90 dark:border-zinc-800 border border-zinc-200/90 rounded-2xl sm:rounded-3xl p-4 sm:p-7 text-center shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all duration-200 cursor-pointer flex flex-col items-center justify-between min-h-[160px] sm:min-h-[210px] relative overflow-hidden"
+              className="group bg-white dark:bg-[#18181c] dark:border-zinc-700/80 border border-zinc-200/90 rounded-2xl sm:rounded-3xl p-4 sm:p-7 text-center shadow-xs dark:shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-200 cursor-pointer flex flex-col items-center justify-between min-h-[160px] sm:min-h-[210px] relative overflow-hidden"
             >
               {/* Badge no topo direito */}
               <span className={`absolute top-2.5 right-2.5 sm:top-3.5 sm:right-3.5 text-[9px] sm:text-[11px] font-bold px-2 py-0.5 rounded-full ${card.badgeCor}`}>
@@ -165,7 +165,7 @@ export function InicioView({
       </div>
 
       {/* RESUMO RÁPIDO DE STATUS DOS PEDIDOS */}
-      <div className="bg-white dark:bg-zinc-900/90 dark:border-zinc-800 border border-zinc-200/90 rounded-2xl p-4 sm:p-5 shadow-xs">
+      <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 border border-zinc-200/90 rounded-2xl p-4 sm:p-5 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3 pb-3 border-b border-zinc-100 dark:border-zinc-800">
           <div>
             <h4 className="text-xs sm:text-sm font-bold text-zinc-900 dark:text-white uppercase tracking-wider flex items-center gap-2">

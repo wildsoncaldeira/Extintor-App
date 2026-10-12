@@ -247,14 +247,14 @@ export default function Home() {
   return (
     <div className={`min-h-screen flex flex-col md:flex-row transition-colors duration-200 ${
       temaEscuro
-        ? 'bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950 text-zinc-100'
+        ? 'bg-black text-zinc-100'
         : 'bg-zinc-100 text-zinc-900'
     }`}>
       
       {/* SIDEBAR DESKTOP (Fixa no topo da tela, nunca rola para fora) */}
       <aside className={`hidden md:flex flex-col w-72 h-screen sticky top-0 border-r shrink-0 select-none overflow-hidden transition-colors duration-200 z-30 ${
         temaEscuro
-          ? 'bg-zinc-900/95 border-zinc-800 backdrop-blur-md text-zinc-100 shadow-2xl'
+          ? 'bg-[#0f0f12] border-zinc-800 text-zinc-100 shadow-2xl'
           : 'bg-white border-zinc-200 text-zinc-900 shadow-sm'
       }`}>
         {/* Logo / Header */}
@@ -454,7 +454,7 @@ export default function Home() {
       {/* HEADER MOBILE */}
       <header className={`md:hidden p-3 flex items-center justify-between sticky top-0 z-40 border-b transition-colors duration-200 ${
         temaEscuro
-          ? 'bg-zinc-900/95 border-zinc-800 text-white backdrop-blur-md'
+          ? 'bg-[#0f0f12]/95 border-zinc-800 text-white backdrop-blur-md'
           : 'bg-white border-zinc-200 text-zinc-900'
       }`}>
         <div 
@@ -705,7 +705,7 @@ export default function Home() {
       {/* BOTTOM NAVIGATION MOBILE */}
       <nav className={`md:hidden fixed bottom-0 left-0 right-0 z-40 grid grid-cols-5 py-2 border-t transition-colors duration-200 ${
         temaEscuro
-          ? 'bg-zinc-950/95 border-zinc-800 text-zinc-400 backdrop-blur-md'
+          ? 'bg-[#0f0f12]/95 border-zinc-800 text-zinc-400 backdrop-blur-md'
           : 'bg-white border-zinc-200 text-zinc-500'
       }`}>
         <button

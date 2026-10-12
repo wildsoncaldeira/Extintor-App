@@ -86,144 +86,130 @@ export function ReciboModal({
       onClick={onClose}
     >
       <div 
-        className="relative w-full max-w-3xl bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 rounded-2xl shadow-2xl border border-transparent dark:border-zinc-800 overflow-hidden flex flex-col max-h-[95vh] animate-modal-content"
+        className="relative w-full max-w-3xl bg-white dark:bg-[#18181c] text-zinc-900 dark:text-zinc-100 rounded-2xl shadow-2xl border border-transparent dark:border-zinc-700 overflow-hidden flex flex-col max-h-[95vh] animate-modal-content"
         onClick={(e) => e.stopPropagation()}
       >
         
-        {/* Barra superior de controle */}
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 print:hidden gap-2">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <span className="font-bold text-base sm:text-lg text-zinc-900 dark:text-white truncate">
-              Pedido #{pedido.numero_pedido}
+        {/* Barra superior de controle simplificada */}
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-[#121214] print:hidden space-y-2.5">
+          {/* Linha 1: #{pedido.numero_pedido} à esquerda, Data e Fechar à direita */}
+          <div className="flex items-center justify-between gap-2">
+            <span className="font-extrabold text-xl sm:text-2xl text-zinc-900 dark:text-white tracking-tight">
+              #{pedido.numero_pedido}
             </span>
-            <button
-              onClick={() => onAlterarStatus && onAlterarStatus(pedido)}
-              title="Clique para alterar status"
-              className={`px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold border transition hover:opacity-80 cursor-pointer shrink-0 ${getStatusBadge()}`}
-            >
-              {pedido.status === 'Orçamento' ? '🔴 Orçamento' : pedido.status === 'Aprovado' ? '🔵 Aprovado' : '🟢 Pago'}
-            </button>
+
+            <div className="flex items-center gap-2 sm:gap-3">
+              <span className="text-xs sm:text-sm font-medium text-zinc-600 dark:text-zinc-300 flex items-center gap-1.5 bg-zinc-200/70 dark:bg-zinc-800 px-2.5 py-1 rounded-lg">
+                <Calendar className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
+                {formatDate(pedido.data_pedido)}
+              </span>
+
+              {/* Fechar */}
+              <button
+                onClick={onClose}
+                title="Fechar"
+                className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-200 dark:hover:text-zinc-200 dark:hover:bg-zinc-800 rounded-lg transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            {/* Botão Editar Pedido (Apenas Ícone) */}
-            {onEditarPedido && (
+          {/* Linha 2: Status à esquerda e Botões de ação (Editar, WhatsApp, PDF) à direita */}
+          <div className="flex items-center justify-between gap-2 pt-2 border-t border-zinc-200/80 dark:border-zinc-850">
+            <div>
               <button
-                onClick={() => onEditarPedido(pedido)}
-                title="Editar pedido"
-                className="p-2 text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-950 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg shadow-2xs transition cursor-pointer flex items-center justify-center"
+                onClick={() => onAlterarStatus && onAlterarStatus(pedido)}
+                title="Clique para alterar status"
+                className={`px-3 py-1 rounded-full text-xs font-bold border transition hover:opacity-80 cursor-pointer shadow-2xs flex items-center gap-1.5 ${getStatusBadge()}`}
               >
-                <Edit className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                {pedido.status === 'Orçamento' ? '🔴 Orçamento' : pedido.status === 'Aprovado' ? '🔵 Aprovado' : '🟢 Pago'}
               </button>
-            )}
+            </div>
 
-            {/* Botão WhatsApp (Apenas Ícone) */}
-            {pedido.telefone_whatsapp && (
-              <a
-                href={getWhatsAppUrl()}
-                target="_blank"
-                rel="noopener noreferrer"
-                title="Conversar no WhatsApp"
-                className="p-2 text-emerald-600 dark:text-emerald-400 bg-white dark:bg-zinc-950 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border border-emerald-500 rounded-lg shadow-2xs transition cursor-pointer flex items-center justify-center"
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              {/* Botão Editar Pedido (Apenas Ícone) */}
+              {onEditarPedido && (
+                <button
+                  onClick={() => onEditarPedido(pedido)}
+                  title="Editar pedido"
+                  className="p-2 text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg shadow-2xs transition cursor-pointer flex items-center justify-center"
+                >
+                  <Edit className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                </button>
+              )}
+
+              {/* Botão WhatsApp (Apenas Ícone) */}
+              {pedido.telefone_whatsapp && (
+                <a
+                  href={getWhatsAppUrl()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Conversar no WhatsApp"
+                  className="p-2 text-emerald-600 dark:text-emerald-400 bg-white dark:bg-zinc-900 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border border-emerald-500 rounded-lg shadow-2xs transition cursor-pointer flex items-center justify-center"
+                >
+                  <WhatsAppIcon className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                </a>
+              )}
+
+              {/* Botão PDF (Apenas Ícone) */}
+              <button
+                onClick={handleBaixarPdf}
+                title={`Baixar ${getPdfFilename(pedido.numero_pedido)}`}
+                className="p-2 text-red-700 dark:text-red-400 bg-red-50 dark:bg-zinc-900 hover:bg-red-100 dark:hover:bg-red-950/40 border border-red-200 dark:border-red-900/60 rounded-lg shadow-2xs transition cursor-pointer flex items-center justify-center"
               >
-                <WhatsAppIcon className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              </a>
-            )}
-
-            {/* Botão PDF (Apenas Ícone) */}
-            <button
-              onClick={handleBaixarPdf}
-              title={`Baixar ${getPdfFilename(pedido.numero_pedido)}`}
-              className="p-2 text-red-700 dark:text-red-400 bg-red-50 dark:bg-zinc-950 hover:bg-red-100 dark:hover:bg-red-950/40 border border-red-200 dark:border-red-900/60 rounded-lg shadow-2xs transition cursor-pointer flex items-center justify-center"
-            >
-              <PdfIcon className="w-4 h-4" />
-            </button>
-
-            {/* Fechar */}
-            <button
-              onClick={onClose}
-              title="Fechar"
-              className="p-2 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-200 dark:hover:text-zinc-200 dark:hover:bg-zinc-800 rounded-lg transition cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
+                <PdfIcon className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Conteúdo do Detalhamento do Pedido */}
         <div className="p-3.5 sm:p-6 sm:p-8 overflow-y-auto space-y-4 sm:space-y-6 text-sm" id="recibo-print-area">
           
-          {/* Card com Informações do Pedido e Cliente (Nova UX Limpa) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            
-            {/* Bloco do Pedido */}
-            <div className="bg-zinc-50 dark:bg-zinc-950 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 space-y-2">
-              <div className="flex items-center justify-between border-b border-zinc-200/80 dark:border-zinc-800 pb-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                  Dados da Ordem
-                </span>
-                <span className="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-1 font-medium">
-                  <Calendar className="w-3.5 h-3.5" /> {formatDate(pedido.data_pedido)}
-                </span>
-              </div>
-              
-              <div className="pt-1 flex items-baseline justify-between">
-                <div>
-                  <span className="text-xs text-zinc-500 dark:text-zinc-400">Número do Pedido:</span>
-                  <p className="text-xl font-black text-red-700 dark:text-red-400">#{pedido.numero_pedido}</p>
-                </div>
-                <div>
-                  <span className="text-xs text-zinc-500 dark:text-zinc-400">Status:</span>
-                  <p className="text-sm font-bold text-zinc-800 dark:text-zinc-200">{pedido.status}</p>
-                </div>
-              </div>
+          {/* Card com Informações do Cliente */}
+          <div className="bg-zinc-50 dark:bg-[#121214] p-4 rounded-xl border border-zinc-200 dark:border-zinc-700/80 space-y-2">
+            <div className="flex items-center justify-between border-b border-zinc-200/80 dark:border-zinc-800 pb-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
+                <Building2 className="w-3.5 h-3.5" /> Cliente
+              </span>
+              {onVerCliente && pedido.cliente_id && (
+                <button
+                  onClick={() => onVerCliente(pedido.cliente_id)}
+                  className="whitespace-nowrap inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold text-red-700 dark:text-red-400 bg-white dark:bg-zinc-800 hover:bg-red-50 dark:hover:bg-zinc-700 border border-red-200 dark:border-red-900/60 rounded-lg shadow-2xs transition shrink-0 cursor-pointer"
+                  title="Ver cadastro completo do cliente"
+                >
+                  <Eye className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
+                  <span>Ver Cliente</span>
+                </button>
+              )}
             </div>
 
-            {/* Bloco do Cliente */}
-            <div className="bg-zinc-50 dark:bg-zinc-950 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 space-y-2">
-              <div className="flex items-center justify-between border-b border-zinc-200/80 dark:border-zinc-800 pb-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
-                  <Building2 className="w-3.5 h-3.5" /> Cliente
-                </span>
-                {onVerCliente && pedido.cliente_id && (
-                  <button
-                    onClick={() => onVerCliente(pedido.cliente_id)}
-                    className="whitespace-nowrap inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold text-red-700 dark:text-red-400 bg-white dark:bg-zinc-900 hover:bg-red-50 dark:hover:bg-zinc-800 border border-red-200 dark:border-red-900/60 rounded-lg shadow-2xs transition shrink-0 cursor-pointer"
-                    title="Ver cadastro completo do cliente"
-                  >
-                    <Eye className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
-                    <span>Ver Cliente</span>
-                  </button>
-                )}
-              </div>
-
-              <div>
-                <h4 className="text-sm font-bold text-zinc-900 dark:text-white">
-                  {pedido.nome_empresa}
-                </h4>
-                {pedido.cnpj && (
-                  <p className="text-xs font-mono text-zinc-500 dark:text-zinc-400 mt-0.5">
-                    CNPJ: {pedido.cnpj}
-                  </p>
-                )}
-                {pedido.nome_contato && (
-                  <p className="text-xs text-zinc-600 dark:text-zinc-300 flex items-center gap-1 mt-0.5">
-                    <User className="w-3 h-3 text-zinc-400" /> Contato: {pedido.nome_contato}
-                  </p>
-                )}
-                {pedido.telefone_whatsapp && (
-                  <p className="text-xs text-zinc-600 dark:text-zinc-300 flex items-center gap-1 mt-0.5">
-                    <Phone className="w-3 h-3 text-zinc-400" /> WhatsApp: {pedido.telefone_whatsapp}
-                  </p>
-                )}
-                {pedido.endereco && (
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-1 mt-0.5">
-                    <MapPin className="w-3 h-3 text-zinc-400 shrink-0" /> {pedido.endereco} • {pedido.cidade}/{pedido.uf}
-                  </p>
-                )}
-              </div>
+            <div>
+              <h4 className="text-sm font-bold text-zinc-900 dark:text-white">
+                {pedido.nome_empresa}
+              </h4>
+              {pedido.cnpj && (
+                <p className="text-xs font-mono text-zinc-500 dark:text-zinc-400 mt-0.5">
+                  CNPJ: {pedido.cnpj}
+                </p>
+              )}
+              {pedido.nome_contato && (
+                <p className="text-xs text-zinc-600 dark:text-zinc-300 flex items-center gap-1 mt-0.5">
+                  <User className="w-3 h-3 text-zinc-400" /> Contato: {pedido.nome_contato}
+                </p>
+              )}
+              {pedido.telefone_whatsapp && (
+                <p className="text-xs text-zinc-600 dark:text-zinc-300 flex items-center gap-1 mt-0.5">
+                  <Phone className="w-3 h-3 text-zinc-400" /> WhatsApp: {pedido.telefone_whatsapp}
+                </p>
+              )}
+              {pedido.endereco && (
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-1 mt-0.5">
+                  <MapPin className="w-3 h-3 text-zinc-400 shrink-0" /> {pedido.endereco} • {pedido.cidade}/{pedido.uf}
+                </p>
+              )}
             </div>
-
           </div>
 
           {/* Seção e Tabela de Itens */}

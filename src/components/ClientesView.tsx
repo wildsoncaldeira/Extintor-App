@@ -168,7 +168,7 @@ export function ClientesView({
   return (
     <div className="space-y-4">
       {/* Barra de Busca e Botão Filtros */}
-      <div className="bg-white dark:bg-zinc-900/90 dark:border-zinc-800 dark:shadow-2xl p-4 rounded-xl border border-zinc-200 shadow-2xs space-y-3">
+      <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 dark:shadow-md p-4 rounded-xl border border-zinc-200 shadow-2xs space-y-3">
         <div className="flex items-center justify-between gap-3">
           <div className="relative flex-1">
             <Search className="w-4 h-4 text-zinc-400 dark:text-zinc-500 absolute left-3 top-3" />
@@ -177,7 +177,7 @@ export function ClientesView({
               placeholder="Search Clientes (empresa, contato, cidade, cnpj)..."
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg text-sm focus:ring-2 focus:ring-red-500 outline-none dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500"
+              className="w-full pl-9 pr-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg text-sm focus:ring-2 focus:ring-red-500 outline-none dark:bg-[#121214] dark:text-white dark:placeholder-zinc-500"
             />
           </div>
 
@@ -241,7 +241,7 @@ export function ClientesView({
       </div>
 
       {/* Lista de Clientes */}
-      <div className="bg-white dark:bg-zinc-900/90 dark:border-zinc-800 dark:shadow-2xl rounded-xl border border-zinc-200 shadow-2xs divide-y divide-zinc-100 dark:divide-zinc-800 overflow-hidden">
+      <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 dark:shadow-md rounded-xl border border-zinc-200 shadow-2xs divide-y divide-zinc-100 dark:divide-zinc-800 overflow-hidden">
         {clientesFiltrados.length === 0 ? (
           <div className="p-8 text-center text-zinc-500 dark:text-zinc-400 text-sm">
             Nenhum cliente encontrado.

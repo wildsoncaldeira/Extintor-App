@@ -87,12 +87,12 @@ export function ClienteDetalhesModal({
       onClick={onClose}
     >
       <div 
-        className="relative w-full max-w-3xl bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 rounded-2xl shadow-2xl border border-transparent dark:border-zinc-800 overflow-hidden flex flex-col max-h-[95vh] animate-modal-content"
+        className="relative w-full max-w-3xl bg-white dark:bg-[#18181c] text-zinc-900 dark:text-zinc-100 rounded-2xl shadow-2xl border border-transparent dark:border-zinc-700 overflow-hidden flex flex-col max-h-[95vh] animate-modal-content"
         onClick={(e) => e.stopPropagation()}
       >
         
         {/* Barra superior de controle */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-[#121214]">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-950/60 dark:border dark:border-red-800/80 text-red-700 dark:text-red-400 flex items-center justify-center font-bold">
               <Building2 className="w-5 h-5" />
