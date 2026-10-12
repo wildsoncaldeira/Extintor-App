@@ -61,17 +61,14 @@ export default function Home() {
       if (salvo) {
         const u = JSON.parse(salvo);
         setUsuarioLogado(u);
-        // Sincroniza dados frescos do banco para refletir foto ou alterações feitas em outros dispositivos (mobile/desktop)
+        // Sincroniza dados frescos do banco se foto, nome ou email mudaram
         if (u.id) {
           getUsuarioAtual(u.id).then((fresh) => {
-            if (fresh) {
+            if (fresh && (fresh.foto_url !== u.foto_url || fresh.nome !== u.nome || fresh.email !== u.email)) {
               setUsuarioLogado(fresh);
-              if (localStorage.getItem('usuario_extintores')) {
+              try {
                 localStorage.setItem('usuario_extintores', JSON.stringify(fresh));
-              }
-              if (sessionStorage.getItem('usuario_extintores')) {
-                sessionStorage.setItem('usuario_extintores', JSON.stringify(fresh));
-              }
+              } catch (e) {}
             }
           }).catch(console.error);
         }
@@ -205,17 +202,6 @@ export default function Home() {
       setProdutos(produtosData);
       setCategorias(categoriasData);
       setStats(statsData);
-
-      if (usuarioLogado?.id) {
-        getUsuarioAtual(usuarioLogado.id).then((fresh) => {
-          if (fresh) {
-            setUsuarioLogado(fresh);
-            if (localStorage.getItem('usuario_extintores')) {
-              localStorage.setItem('usuario_extintores', JSON.stringify(fresh));
-            }
-          }
-        }).catch(console.error);
-      }
     } catch (err) {
       console.error('Erro ao carregar dados:', err);
     } finally {
@@ -223,11 +209,12 @@ export default function Home() {
     }
   };
 
+  const usuarioLogadoId = usuarioLogado?.id;
   useEffect(() => {
-    if (usuarioLogado) {
+    if (usuarioLogadoId) {
       carregarDados();
     }
-  }, [usuarioLogado]);
+  }, [usuarioLogadoId]);
 
   // Tecla ESC fecha o pop-up que estiver no topo da pilha
   useEffect(() => {
@@ -302,7 +289,7 @@ export default function Home() {
 
   if (checandoAuth) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center text-white gap-4">
+      <div className="min-h-screen desktop-min-h-screen bg-zinc-950 flex flex-col items-center justify-center text-white gap-4">
         <div className="w-14 h-14 rounded-2xl bg-red-600 flex items-center justify-center shadow-lg shadow-red-900/50 animate-pulse">
           <Flame className="w-8 h-8 text-white" />
         </div>
@@ -316,14 +303,14 @@ export default function Home() {
   }
 
   return (
-    <div className={`min-h-screen flex flex-col md:flex-row transition-colors duration-200 ${
+    <div className={`min-h-screen desktop-min-h-screen flex flex-col md:flex-row transition-colors duration-200 ${
       temaEscuro
         ? 'bg-black text-zinc-100'
         : 'bg-[#e4e7ee] text-zinc-900'
     }`}>
       
       {/* SIDEBAR DESKTOP (Fixa no topo da tela, nunca rola para fora) */}
-      <aside className={`hidden md:flex flex-col h-screen sticky top-0 border-r shrink-0 select-none overflow-visible transition-all duration-300 z-30 relative ${
+      <aside className={`hidden md:flex flex-col h-screen desktop-h-screen sticky top-0 border-r shrink-0 select-none overflow-visible transition-all duration-300 z-30 relative ${
         sidebarColapsada ? 'w-20' : 'w-72'
       } ${
         temaEscuro
@@ -945,35 +932,16 @@ export default function Home() {
         </button>
       )}
 
-      {/* BOTTOM NAVIGATION MOBILE */}
-      <nav className={`md:hidden fixed bottom-0 left-0 right-0 z-40 grid grid-cols-5 py-2.5 min-h-[64px] border-t transition-colors duration-200 ${
+      {/* BOTTOM NAVIGATION MOBILE (ESTILO PLACAFY COM PEDIDOS CENTRALIZADO E DESTACADO) */}
+      <nav className={`md:hidden fixed bottom-0 left-0 right-0 z-40 grid grid-cols-5 py-2 min-h-[64px] border-t transition-colors duration-200 items-end ${
         temaEscuro
           ? 'bg-[#0f0f12]/95 border-zinc-800 text-zinc-400 backdrop-blur-md'
           : 'bg-white border-zinc-300 text-zinc-600 shadow-lg'
       }`}>
-        <button
-          onClick={() => setAbaAtiva('pedidos')}
-          className={`flex flex-col items-center justify-center gap-1 transition cursor-pointer ${
-            abaAtiva === 'pedidos' ? 'text-red-600 dark:text-red-400 font-bold' : 'hover:text-zinc-900 dark:hover:text-white'
-          }`}
-        >
-          <FileEdit className="w-5 h-5" />
-          <span className="text-[10px] font-semibold">Pedidos</span>
-        </button>
-
-        <button
-          onClick={() => setAbaAtiva('clientes')}
-          className={`flex flex-col items-center justify-center gap-1 transition cursor-pointer ${
-            abaAtiva === 'clientes' ? 'text-red-600 dark:text-red-400 font-bold' : 'hover:text-zinc-900 dark:hover:text-white'
-          }`}
-        >
-          <Users className="w-5 h-5" />
-          <span className="text-[10px] font-semibold">Clientes</span>
-        </button>
-
+        {/* 1. CRM */}
         <button
           onClick={() => setAbaAtiva('crm')}
-          className={`flex flex-col items-center justify-center gap-1 transition cursor-pointer ${
+          className={`flex flex-col items-center justify-center gap-1 py-1 transition cursor-pointer ${
             abaAtiva === 'crm' ? 'text-red-600 dark:text-red-400 font-bold' : 'hover:text-zinc-900 dark:hover:text-white'
           }`}
         >
@@ -981,9 +949,43 @@ export default function Home() {
           <span className="text-[10px] font-semibold">CRM</span>
         </button>
 
+        {/* 2. Clientes */}
+        <button
+          onClick={() => setAbaAtiva('clientes')}
+          className={`flex flex-col items-center justify-center gap-1 py-1 transition cursor-pointer ${
+            abaAtiva === 'clientes' ? 'text-red-600 dark:text-red-400 font-bold' : 'hover:text-zinc-900 dark:hover:text-white'
+          }`}
+        >
+          <Users className="w-5 h-5" />
+          <span className="text-[10px] font-semibold">Clientes</span>
+        </button>
+
+        {/* 3. Pedidos (DESTAQUE CENTRAL ELEVADO ESTILO PLACAFY) */}
+        <button
+          onClick={() => setAbaAtiva('pedidos')}
+          className="flex flex-col items-center justify-center -mt-6 transition cursor-pointer group"
+          title="Ordens de Serviço e Pedidos"
+        >
+          <div className={`w-13 h-13 rounded-full flex items-center justify-center shadow-lg transition-transform group-active:scale-95 border-4 ${
+            temaEscuro
+              ? 'border-[#0f0f12] bg-gradient-to-tr from-red-600 to-rose-600 text-white shadow-red-950/60'
+              : 'border-white bg-gradient-to-tr from-red-600 to-rose-600 text-white shadow-red-600/40'
+          } ${
+            abaAtiva === 'pedidos' ? 'ring-2 ring-red-500 scale-105 shadow-xl' : ''
+          }`}>
+            <FileEdit className="w-6 h-6 text-white" />
+          </div>
+          <span className={`text-[10px] font-bold mt-0.5 ${
+            abaAtiva === 'pedidos' ? 'text-red-600 dark:text-red-400 font-black' : 'text-zinc-700 dark:text-zinc-300'
+          }`}>
+            Pedidos
+          </span>
+        </button>
+
+        {/* 4. Financeiro */}
         <button
           onClick={() => setAbaAtiva('financeiro')}
-          className={`flex flex-col items-center justify-center gap-1 transition cursor-pointer ${
+          className={`flex flex-col items-center justify-center gap-1 py-1 transition cursor-pointer ${
             abaAtiva === 'financeiro' ? 'text-red-600 dark:text-red-400 font-bold' : 'hover:text-zinc-900 dark:hover:text-white'
           }`}
         >
@@ -991,9 +993,10 @@ export default function Home() {
           <span className="text-[10px] font-semibold">Financeiro</span>
         </button>
 
+        {/* 5. Menu */}
         <button
           onClick={() => setMenuMobileAberto(true)}
-          className={`flex flex-col items-center justify-center gap-1 transition cursor-pointer ${
+          className={`flex flex-col items-center justify-center gap-1 py-1 transition cursor-pointer ${
             menuMobileAberto || abaAtiva === 'produtos' || abaAtiva === 'dashboard'
               ? 'text-red-600 dark:text-red-400 font-bold'
               : 'hover:text-zinc-900 dark:hover:text-white'

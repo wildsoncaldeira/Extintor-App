@@ -20,10 +20,20 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Proporção desktop padrão em 90% conforme solicitado */
+/* Proporção desktop padrão em 90% com altura total da tela preenchida */
 @media (min-width: 768px) {
+  html, body {
+    min-height: 100%;
+  }
   body {
     zoom: 0.9;
+    min-height: 111.12vh;
+  }
+  .desktop-h-screen {
+    height: 111.12vh !important;
+  }
+  .desktop-min-h-screen {
+    min-height: 111.12vh !important;
   }
 }
 

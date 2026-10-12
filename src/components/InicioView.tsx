@@ -127,26 +127,26 @@ export function InicioView({
   ];
 
   return (
-    <div className="space-y-6 sm:space-y-8 max-w-5xl mx-auto py-2 sm:py-6">
+    <div className="space-y-3 sm:space-y-4 max-w-6xl mx-auto py-1 sm:py-2">
       
       {/* CABEÇALHO DE BOAS-VINDAS ESTILO PLACAFY */}
-      <div className="text-center space-y-2 sm:space-y-3 px-2">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 text-red-600 dark:bg-red-950/60 dark:text-red-400 border border-red-200 dark:border-red-900/60 text-xs font-semibold mb-1 shadow-2xs">
+      <div className="text-center space-y-1 sm:space-y-1.5 px-2">
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-red-50 text-red-600 dark:bg-red-950/60 dark:text-red-400 border border-red-200 dark:border-red-900/60 text-xs font-semibold shadow-2xs">
           <Flame className="w-3.5 h-3.5 animate-pulse text-red-600 dark:text-red-400" />
           <span>Olá, {primeiroNome}!</span>
         </div>
 
-        <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-zinc-900 dark:text-white">
+        <h1 className="text-xl sm:text-2xl font-black tracking-tight text-zinc-900 dark:text-white leading-tight">
           Bem-vindo(a) ao <span className="text-red-600 dark:text-red-500">EXTINTOR</span>APP
         </h1>
 
-        <p className="text-sm sm:text-base text-zinc-500 dark:text-zinc-400 max-w-md mx-auto font-medium">
+        <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 max-w-md mx-auto font-medium">
           Selecione o que você deseja fazer hoje:
         </p>
       </div>
 
-      {/* GRADE DE AÇÕES RÁPIDAS (2 LINHAS DE 4 CARDS NO DESKTOP) */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-5 px-1">
+      {/* GRADE DE AÇÕES RÁPIDAS (2 LINHAS DE 4 CARDS COMPACTOS NO DESKTOP) */}
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5 px-1">
         {cardsAcao.map((card) => {
           const Icone = card.icone;
           const isCriarPedido = card.id === 'criar-pedido';
@@ -156,34 +156,28 @@ export function InicioView({
               <button
                 key={card.id}
                 onClick={card.onClick}
-                className="group bg-gradient-to-br from-red-600 to-rose-600 text-white border-2 border-red-500 rounded-2xl sm:rounded-3xl p-4 sm:p-6 text-center shadow-lg shadow-red-600/30 hover:shadow-xl hover:shadow-red-600/40 hover:-translate-y-1 transition-all duration-200 cursor-pointer flex flex-col items-center justify-between min-h-[160px] sm:min-h-[200px] relative overflow-hidden"
+                className="group bg-gradient-to-br from-red-600 to-rose-600 text-white border-2 border-red-500 rounded-xl sm:rounded-2xl p-3 sm:p-4 text-center shadow-md shadow-red-600/25 hover:shadow-lg hover:shadow-red-600/35 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer flex flex-col items-center justify-between min-h-[125px] sm:min-h-[142px] relative overflow-hidden"
               >
                 {/* Badge no topo direito */}
-                <span className="absolute top-2.5 right-2.5 sm:top-3.5 sm:right-3.5 text-[9px] sm:text-[11px] font-black px-2 py-0.5 rounded-full bg-white/20 text-white border border-white/30 backdrop-blur-xs">
+                <span className="absolute top-2 right-2 text-[9px] font-black px-1.5 py-0.5 rounded-full bg-white/20 text-white border border-white/30 backdrop-blur-xs">
                   {card.badge}
                 </span>
 
                 {/* Ícone Circular Branco com ícone Vermelho */}
-                <div className="w-full flex justify-center pt-2 sm:pt-3">
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center transition-transform group-hover:scale-110 shadow-md bg-white text-red-600">
-                    <Icone className="w-6 h-6 sm:w-8 h-8 text-red-600" />
+                <div className="w-full flex justify-center pt-1">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-transform group-hover:scale-105 shadow-sm bg-white text-red-600">
+                    <Icone className="w-5 h-5 sm:w-6 h-6 text-red-600" />
                   </div>
                 </div>
 
                 {/* Título e Subtítulo em Branco */}
-                <div className="w-full mt-3 sm:mt-4 space-y-0.5 sm:space-y-1">
-                  <h3 className="text-sm sm:text-lg font-black text-white leading-tight">
+                <div className="w-full mt-2 space-y-0.5">
+                  <h3 className="text-xs sm:text-sm font-black text-white leading-tight">
                     {card.titulo}
                   </h3>
-                  <p className="text-[11px] sm:text-xs text-red-100 font-medium line-clamp-1 sm:line-clamp-none">
+                  <p className="text-[10px] sm:text-xs text-red-100 font-medium line-clamp-1">
                     {card.subtitulo}
                   </p>
-                </div>
-
-                {/* Indicador de Ação no Rodapé */}
-                <div className="mt-2 text-xs font-bold text-white opacity-90 group-hover:opacity-100 transition flex items-center gap-1 hidden sm:flex">
-                  <span>Novo Pedido</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
                 </div>
               </button>
             );
@@ -193,34 +187,28 @@ export function InicioView({
             <button
               key={card.id}
               onClick={card.onClick}
-              className="group bg-white dark:bg-[#18181c] dark:border-zinc-700/80 border border-zinc-200/90 rounded-2xl sm:rounded-3xl p-4 sm:p-6 text-center shadow-xs dark:shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-200 cursor-pointer flex flex-col items-center justify-between min-h-[160px] sm:min-h-[200px] relative overflow-hidden"
+              className="group bg-white dark:bg-[#18181c] dark:border-zinc-700/80 border border-zinc-200/90 rounded-xl sm:rounded-2xl p-3 sm:p-4 text-center shadow-xs dark:shadow-md hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer flex flex-col items-center justify-between min-h-[125px] sm:min-h-[142px] relative overflow-hidden"
             >
               {/* Badge no topo direito */}
-              <span className={`absolute top-2.5 right-2.5 sm:top-3.5 sm:right-3.5 text-[9px] sm:text-[11px] font-bold px-2 py-0.5 rounded-full ${card.badgeCor}`}>
+              <span className={`absolute top-2 right-2 text-[9px] font-bold px-1.5 py-0.5 rounded-full ${card.badgeCor}`}>
                 {card.badge}
               </span>
 
               {/* Ícone Circular Centralizado */}
-              <div className="w-full flex justify-center pt-2 sm:pt-3">
-                <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center transition-transform group-hover:scale-110 shadow-sm border border-black/5 dark:border-white/5 ${card.corFundoIcone}`}>
-                  <Icone className="w-6 h-6 sm:w-8 h-8" />
+              <div className="w-full flex justify-center pt-1">
+                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-transform group-hover:scale-105 shadow-xs border border-black/5 dark:border-white/5 ${card.corFundoIcone}`}>
+                  <Icone className="w-5 h-5 sm:w-6 h-6" />
                 </div>
               </div>
 
               {/* Título e Subtítulo */}
-              <div className="w-full mt-3 sm:mt-4 space-y-0.5 sm:space-y-1">
-                <h3 className="text-sm sm:text-lg font-black text-zinc-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 transition leading-tight">
+              <div className="w-full mt-2 space-y-0.5">
+                <h3 className="text-xs sm:text-sm font-black text-zinc-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 transition leading-tight">
                   {card.titulo}
                 </h3>
-                <p className="text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400 font-medium line-clamp-1 sm:line-clamp-none">
+                <p className="text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-400 font-medium line-clamp-1">
                   {card.subtitulo}
                 </p>
-              </div>
-
-              {/* Indicador de Ação no Rodapé (Desktop) */}
-              <div className="mt-2 text-xs font-bold text-red-600 dark:text-red-400 opacity-0 group-hover:opacity-100 transition flex items-center gap-1 hidden sm:flex">
-                <span>Acessar</span>
-                <ArrowRight className="w-3.5 h-3.5" />
               </div>
             </button>
           );
