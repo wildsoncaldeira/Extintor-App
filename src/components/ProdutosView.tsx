@@ -184,10 +184,35 @@ export function ProdutosView({
                           )}
                         </div>
 
-                        <div className="flex items-center gap-4 shrink-0">
-                          <span className="text-sm font-bold text-zinc-900 dark:text-white">
-                            R$ {Number(produto.valor_unitario_padrao).toFixed(2).replace('.', ',')}
-                          </span>
+                        <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+                          {/* Bloco de Valores (Venda, Custo, Margem) */}
+                          <div className="text-right">
+                            <span className="text-sm font-bold text-zinc-900 dark:text-white block">
+                              R$ {Number(produto.valor_unitario_padrao).toFixed(2).replace('.', ',')}
+                            </span>
+                            <div className="flex items-center justify-end gap-1.5 mt-0.5">
+                              {Number(produto.custo_unitario_padrao || 0) > 0 ? (
+                                <>
+                                  <span className="text-[11px] text-zinc-400 dark:text-zinc-500">
+                                    Custo: R$ {Number(produto.custo_unitario_padrao).toFixed(2).replace('.', ',')}
+                                  </span>
+                                  <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${
+                                    (produto.valor_unitario_padrao - (produto.custo_unitario_padrao || 0)) >= 0
+                                      ? 'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-300/40'
+                                      : 'bg-red-100 dark:bg-red-950/70 text-red-700 dark:text-red-300 border border-red-300/40'
+                                  }`} title={`Margem: R$ ${(produto.valor_unitario_padrao - (produto.custo_unitario_padrao || 0)).toFixed(2).replace('.', ',')}`}>
+                                    {produto.valor_unitario_padrao > 0 
+                                      ? `${(((produto.valor_unitario_padrao - (produto.custo_unitario_padrao || 0)) / produto.valor_unitario_padrao) * 100).toFixed(0)}% margem`
+                                      : '0%'}
+                                  </span>
+                                </>
+                              ) : (
+                                <span className="text-[11px] text-zinc-400 dark:text-zinc-500 italic">
+                                  Sem custo informado
+                                </span>
+                              )}
+                            </div>
+                          </div>
 
                           <div className="flex items-center gap-1">
                             <button

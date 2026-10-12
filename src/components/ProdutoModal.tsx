@@ -27,6 +27,7 @@ export function ProdutoModal({
   const [descricao, setDescricao] = useState(produtoParaEditar?.descricao || '');
   const [tipoKg, setTipoKg] = useState(produtoParaEditar?.tipo_kg || '');
   const [valor, setValor] = useState(produtoParaEditar?.valor_unitario_padrao || 0);
+  const [custo, setCusto] = useState(produtoParaEditar?.custo_unitario_padrao || 0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,6 +50,7 @@ export function ProdutoModal({
           descricao: descFinal,
           tipo_kg: tipoKg,
           valor_unitario_padrao: Number(valor),
+          custo_unitario_padrao: Number(custo),
           categoria_id: categoriaId || undefined,
         });
         if (!res.success) throw new Error(res.error);
@@ -57,6 +59,7 @@ export function ProdutoModal({
           descricao: descFinal,
           tipo_kg: tipoKg,
           valor_unitario_padrao: Number(valor),
+          custo_unitario_padrao: Number(custo),
           categoria_id: categoriaId || undefined,
         });
         if (!res.success) throw new Error(res.error);
@@ -163,20 +166,73 @@ export function ProdutoModal({
             />
           </div>
 
-          {/* Valor Unitário Padrão */}
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1">
-              Valor Unitário Padrão (R$)
-            </label>
-            <input
-              type="number"
-              step="0.5"
-              min="0"
-              value={valor}
-              onChange={(e) => setValor(parseFloat(e.target.value) || 0)}
-              className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm font-semibold dark:bg-zinc-950 dark:text-white"
-            />
+          {/* Preço de Venda e Custo */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1">
+                Preço de Venda (R$) <span className="text-red-600 dark:text-red-400">*</span>
+              </label>
+              <input
+                type="number"
+                step="0.5"
+                min="0"
+                value={valor}
+                onChange={(e) => setValor(parseFloat(e.target.value) || 0)}
+                className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm font-semibold dark:bg-zinc-950 dark:text-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1">
+                Custo do Produto (R$)
+              </label>
+              <input
+                type="number"
+                step="0.5"
+                min="0"
+                value={custo}
+                onChange={(e) => setCusto(parseFloat(e.target.value) || 0)}
+                placeholder="0.00"
+                className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm font-semibold dark:bg-zinc-950 dark:text-white"
+              />
+            </div>
           </div>
+
+          {/* Cálculo automático de Margem */}
+          {(() => {
+            const margemReais = Number(valor) - Number(custo);
+            const margemPct = Number(valor) > 0 ? (margemReais / Number(valor)) * 100 : 0;
+            const isPositiva = margemReais >= 0;
+
+            return (
+              <div className={`p-3 rounded-xl border flex items-center justify-between text-xs transition ${
+                isPositiva
+                  ? 'bg-emerald-50/80 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/60 text-emerald-900 dark:text-emerald-200'
+                  : 'bg-red-50/80 dark:bg-red-950/40 border-red-200 dark:border-red-800/60 text-red-900 dark:text-red-200'
+              }`}>
+                <div>
+                  <span className="font-semibold block text-[10px] uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                    Margem Bruta Unitária
+                  </span>
+                  <span className="font-black text-sm">
+                    R$ {margemReais.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className="font-semibold block text-[10px] uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                    Margem (%)
+                  </span>
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full inline-block ${
+                    isPositiva
+                      ? 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300'
+                      : 'bg-red-100 dark:bg-red-900/60 text-red-800 dark:text-red-300'
+                  }`}>
+                    {margemPct.toFixed(1)}%
+                  </span>
+                </div>
+              </div>
+            );
+          })()}
 
           <div className="flex justify-end gap-2 pt-4 border-t border-zinc-200 dark:border-zinc-800">
             <button

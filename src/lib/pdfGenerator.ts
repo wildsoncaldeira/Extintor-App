@@ -213,14 +213,42 @@ export function generatePedidoPdf(pedido: Pedido): jsPDF {
   const totalTableWidth = 78;
   const totalTableLeft = (pageWidth - margin) - totalTableWidth; // Inicia em 200 - 78 = 122mm
 
+  const temDesconto = Number(pedido.desconto_valor || 0) > 0;
+  const subtotalVal = Number(pedido.subtotal || pedido.valor_total);
+  const descontoVal = pedido.desconto_tipo === 'porcentagem'
+    ? (subtotalVal * Number(pedido.desconto_valor) / 100)
+    : Number(pedido.desconto_valor);
+
+  const totalTableBody = temDesconto
+    ? [
+        [
+          { content: 'Subtotal:' },
+          { content: formatMoeda(subtotalVal), styles: { textColor: [40, 40, 40] as [number, number, number] } },
+        ],
+        [
+          { content: `Desconto ${pedido.desconto_tipo === 'porcentagem' ? `(${pedido.desconto_valor}%)` : ''}:` },
+          { content: `- ${formatMoeda(descontoVal)}`, styles: { textColor: [0, 120, 50] as [number, number, number] } },
+        ],
+        [
+          { content: 'Total a Pagar:' },
+          { content: formatMoeda(pedido.valor_total) },
+        ],
+      ]
+    : [
+        [
+          { content: 'Valor Total do Pedido:' },
+          { content: formatMoeda(pedido.valor_total) },
+        ],
+      ];
+
   autoTable(doc, {
     startY: yPos,
     margin: { left: totalTableLeft, right: margin },
     tableWidth: totalTableWidth,
     theme: 'plain',
     styles: {
-      cellPadding: 2.5,
-      fontSize: 9.5,
+      cellPadding: 2,
+      fontSize: 9,
       textColor: [20, 20, 20],
       lineColor: [120, 120, 120],
       lineWidth: 0.3,
@@ -228,15 +256,10 @@ export function generatePedidoPdf(pedido: Pedido): jsPDF {
     tableLineColor: [120, 120, 120],
     tableLineWidth: 0.3,
     columnStyles: {
-      0: { cellWidth: 46, halign: 'center', fontStyle: 'bold' },
+      0: { cellWidth: 46, halign: 'left', fontStyle: 'bold' },
       1: { cellWidth: 32, halign: 'right', fontStyle: 'bold', textColor: [180, 0, 0] },
     },
-    body: [
-      [
-        { content: 'Valor Total do Pedido:' },
-        { content: formatMoeda(pedido.valor_total) },
-      ],
-    ],
+    body: totalTableBody,
   });
 
   // @ts-expect-error lastAutoTable is injected by jspdf-autotable

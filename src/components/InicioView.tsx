@@ -14,7 +14,8 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
-  Loader2
+  Loader2,
+  DollarSign
 } from 'lucide-react';
 import { DashboardStats } from '@/lib/types';
 
@@ -28,6 +29,7 @@ interface InicioViewProps {
   onVerClientes: () => void;
   onVerProdutos: () => void;
   onVerDashboard: () => void;
+  onVerFinanceiro?: () => void;
 }
 
 export function InicioView({
@@ -40,6 +42,7 @@ export function InicioView({
   onVerClientes,
   onVerProdutos,
   onVerDashboard,
+  onVerFinanceiro,
 }: InicioViewProps) {
   const primeiroNome = usuarioNome ? usuarioNome.split(' ')[0] : 'Usuário';
 
@@ -93,6 +96,16 @@ export function InicioView({
       badge: `${stats.totalProdutos} itens`,
       badgeCor: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/80',
       onClick: onVerProdutos,
+    },
+    {
+      id: 'financeiro',
+      titulo: 'Financeiro',
+      subtitulo: 'Margens, custos e vendas',
+      icone: DollarSign,
+      corFundoIcone: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 dark:border-emerald-900/60',
+      badge: 'Vendas & Lucro',
+      badgeCor: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80',
+      onClick: onVerFinanceiro || onVerDashboard,
     },
     {
       id: 'dashboard',

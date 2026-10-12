@@ -277,13 +277,37 @@ export function ReciboModal({
             </div>
 
             {/* Total do Pedido */}
-            <div className="bg-zinc-50 dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800 px-3.5 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
-                Valor Total do Pedido:
-              </span>
-              <span className="text-xl sm:text-2xl font-black text-red-700 dark:text-red-400">
-                R$ {Number(pedido.valor_total).toFixed(2).replace('.', ',')}
-              </span>
+            <div className="bg-zinc-50 dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800 px-3.5 sm:px-6 py-3 sm:py-4 space-y-1.5">
+              {Number(pedido.desconto_valor || 0) > 0 && (
+                <>
+                  <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
+                    <span className="font-semibold uppercase tracking-wider">Subtotal:</span>
+                    <span className="font-bold">
+                      R$ {Number(pedido.subtotal || pedido.valor_total).toFixed(2).replace('.', ',')}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-emerald-600 dark:text-emerald-400">
+                    <span className="font-semibold uppercase tracking-wider">
+                      Desconto {pedido.desconto_tipo === 'porcentagem' ? `(${pedido.desconto_valor}%)` : ''}:
+                    </span>
+                    <span className="font-bold">
+                      - R$ {(
+                        pedido.desconto_tipo === 'porcentagem'
+                          ? ((Number(pedido.subtotal || pedido.valor_total) * Number(pedido.desconto_valor)) / 100)
+                          : Number(pedido.desconto_valor)
+                      ).toFixed(2).replace('.', ',')}
+                    </span>
+                  </div>
+                </>
+              )}
+              <div className="flex items-center justify-between pt-1">
+                <span className="text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
+                  Valor Total do Pedido:
+                </span>
+                <span className="text-xl sm:text-2xl font-black text-red-700 dark:text-red-400">
+                  R$ {Number(pedido.valor_total).toFixed(2).replace('.', ',')}
+                </span>
+              </div>
             </div>
           </div>
 

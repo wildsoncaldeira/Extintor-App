@@ -45,14 +45,26 @@ export function PedidoModal({
   const [status, setStatus] = useState<StatusPedido>(pedidoParaEditar?.status || 'Orçamento');
   const [observacoes, setObservacoes] = useState<string>(pedidoParaEditar?.observacoes || '');
 
+  // Desconto
+  const [descontoTipo, setDescontoTipo] = useState<'reais' | 'porcentagem'>(
+    (pedidoParaEditar?.desconto_tipo as any) || 'reais'
+  );
+  const [descontoValor, setDescontoValor] = useState<number>(
+    Number(pedidoParaEditar?.desconto_valor) || 0
+  );
+
   // Itens do Pedido
   const [itens, setItens] = useState<ItemForm[]>([]);
 
   useEffect(() => {
     if (!pedidoParaEditar) {
       getProximoNumeroPedido().then(setProximoNumero);
+      setDescontoTipo('reais');
+      setDescontoValor(0);
     } else {
       setProximoNumero(pedidoParaEditar.numero_pedido);
+      setDescontoTipo((pedidoParaEditar.desconto_tipo as any) || 'reais');
+      setDescontoValor(Number(pedidoParaEditar.desconto_valor) || 0);
       const cli = clientes.find((c) => c.id === pedidoParaEditar.cliente_id);
       if (cli) {
         setClienteBusca(cli.nome_empresa);
@@ -115,7 +127,11 @@ export function PedidoModal({
     setItens(itens.filter((_, i) => i !== index));
   };
 
-  const valorTotalCalculado = itens.reduce((acc, it) => acc + (it.quantidade * it.valor_unitario), 0);
+  const subtotalCalculado = itens.reduce((acc, it) => acc + (it.quantidade * it.valor_unitario), 0);
+  const descontoEmReais = descontoTipo === 'porcentagem'
+    ? (subtotalCalculado * (Number(descontoValor) / 100))
+    : Number(descontoValor);
+  const valorTotalCalculado = Math.max(0, subtotalCalculado - descontoEmReais);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -138,6 +154,8 @@ export function PedidoModal({
           data_pedido: dataPedido,
           status,
           observacoes,
+          desconto_tipo: descontoTipo,
+          desconto_valor: Number(descontoValor),
           itens,
         });
         if (!res.success) throw new Error(res.error);
@@ -147,6 +165,8 @@ export function PedidoModal({
           data_pedido: dataPedido,
           status,
           observacoes,
+          desconto_tipo: descontoTipo,
+          desconto_valor: Number(descontoValor),
           itens,
         });
         if (!res.success) throw new Error(res.error);
@@ -401,12 +421,103 @@ export function PedidoModal({
               </div>
             )}
 
-            {/* Total Geral da Caixa */}
-            <div className="mt-4 pt-3 border-t border-zinc-200 dark:border-zinc-800 flex justify-between items-center">
-              <span className="text-xs font-bold uppercase text-zinc-600 dark:text-zinc-400">Total do Pedido:</span>
-              <span className="text-xl font-black text-red-700 dark:text-red-400">
-                R$ {valorTotalCalculado.toFixed(2).replace('.', ',')}
-              </span>
+            {/* Subtotal, Campo de Desconto e Valor Final */}
+            <div className="mt-4 pt-3 border-t border-zinc-200 dark:border-zinc-800 space-y-3">
+              {/* Linha do Subtotal */}
+              <div className="flex justify-between items-center text-xs text-zinc-500 dark:text-zinc-400">
+                <span className="font-semibold uppercase tracking-wider">Subtotal dos Itens:</span>
+                <span className="font-bold text-zinc-800 dark:text-zinc-200">
+                  R$ {subtotalCalculado.toFixed(2).replace('.', ',')}
+                </span>
+              </div>
+
+              {/* Bloco de Desconto */}
+              <div className="p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
+                    Desconto Especial
+                  </label>
+
+                  {/* Seletor R$ ou % */}
+                  <div className="inline-flex rounded-lg border border-zinc-200 dark:border-zinc-700 p-0.5 bg-zinc-100 dark:bg-zinc-950">
+                    <button
+                      type="button"
+                      onClick={() => setDescontoTipo('reais')}
+                      className={`px-2.5 py-1 text-xs font-bold rounded-md transition cursor-pointer ${
+                        descontoTipo === 'reais'
+                          ? 'bg-red-600 text-white shadow-xs'
+                          : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+                      }`}
+                    >
+                      R$ Reais
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDescontoTipo('porcentagem')}
+                      className={`px-2.5 py-1 text-xs font-bold rounded-md transition cursor-pointer ${
+                        descontoTipo === 'porcentagem'
+                          ? 'bg-red-600 text-white shadow-xs'
+                          : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+                      }`}
+                    >
+                      % Percentual
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <span className="absolute left-3 top-2 text-xs font-bold text-zinc-400 dark:text-zinc-500">
+                      {descontoTipo === 'reais' ? 'R$' : '%'}
+                    </span>
+                    <input
+                      type="number"
+                      min="0"
+                      max={descontoTipo === 'porcentagem' ? 100 : subtotalCalculado}
+                      step={descontoTipo === 'porcentagem' ? '0.5' : '1'}
+                      value={descontoValor === 0 ? '' : descontoValor}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value) || 0;
+                        if (descontoTipo === 'porcentagem') {
+                          setDescontoValor(Math.min(100, Math.max(0, val)));
+                        } else {
+                          setDescontoValor(Math.max(0, val));
+                        }
+                      }}
+                      placeholder="0,00"
+                      className="w-full pl-9 pr-3 py-1.5 text-xs font-bold border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 outline-none dark:bg-zinc-950 dark:text-white"
+                    />
+                  </div>
+
+                  {descontoEmReais > 0 && (
+                    <div className="text-right shrink-0">
+                      <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 px-2 py-1 rounded-md inline-block">
+                        - R$ {descontoEmReais.toFixed(2).replace('.', ',')}
+                        {descontoTipo === 'porcentagem' && ` (${descontoValor}%)`}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Total Final do Pedido */}
+              <div className="pt-2 flex justify-between items-center">
+                <div>
+                  <span className="text-xs font-bold uppercase text-zinc-700 dark:text-zinc-300 block">
+                    Valor Final do Pedido:
+                  </span>
+                  {descontoEmReais > 0 && (
+                    <span className="text-[11px] text-zinc-400 dark:text-zinc-500 line-through">
+                      de R$ {subtotalCalculado.toFixed(2).replace('.', ',')}
+                    </span>
+                  )}
+                </div>
+                <div className="text-right">
+                  <span className="text-2xl font-black text-red-700 dark:text-red-400">
+                    R$ {valorTotalCalculado.toFixed(2).replace('.', ',')}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
 

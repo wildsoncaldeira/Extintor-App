@@ -7,6 +7,7 @@ import { PedidosView } from '@/components/PedidosView';
 import { ClientesView } from '@/components/ClientesView';
 import { ProdutosView } from '@/components/ProdutosView';
 import { DashboardView } from '@/components/DashboardView';
+import { FinanceiroView } from '@/components/FinanceiroView';
 import { LoginView } from '@/components/LoginView';
 import { PedidoModal } from '@/components/PedidoModal';
 import { ClienteModal } from '@/components/ClienteModal';
@@ -23,7 +24,8 @@ import {
   FileEdit, 
   Users, 
   Package, 
-  LayoutDashboard, 
+  LayoutDashboard,
+  DollarSign, 
   Plus, 
   RefreshCw,
   LogOut,
@@ -31,7 +33,7 @@ import {
   Moon,
 } from 'lucide-react';
 
-type AbaAtiva = 'inicio' | 'pedidos' | 'clientes' | 'produtos' | 'dashboard';
+type AbaAtiva = 'inicio' | 'pedidos' | 'clientes' | 'produtos' | 'financeiro' | 'dashboard';
 
 export default function Home() {
   const [usuarioLogado, setUsuarioLogado] = useState<Usuario | null>(null);
@@ -356,6 +358,22 @@ export default function Home() {
           </button>
 
           <button
+            onClick={() => setAbaAtiva('financeiro')}
+            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer ${
+              abaAtiva === 'financeiro'
+                ? temaEscuro
+                  ? 'bg-red-950/60 text-red-300 border border-red-800/80 shadow-md shadow-red-950/40'
+                  : 'bg-red-50 text-red-700 shadow-2xs border border-red-200'
+                : temaEscuro
+                ? 'text-zinc-400 hover:bg-zinc-800/80 hover:text-white border border-transparent'
+                : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 border border-transparent'
+            }`}
+          >
+            <DollarSign className={`w-4 h-4 shrink-0 ${abaAtiva === 'financeiro' ? 'text-red-500' : 'text-zinc-400'}`} />
+            <span className="whitespace-nowrap font-bold">Financeiro</span>
+          </button>
+
+          <button
             onClick={() => setAbaAtiva('dashboard')}
             className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold transition cursor-pointer ${
               abaAtiva === 'dashboard'
@@ -538,6 +556,7 @@ export default function Home() {
                 {abaAtiva === 'pedidos' && 'Ordens de Serviço / Pedidos'}
                 {abaAtiva === 'clientes' && 'Gestão de Clientes'}
                 {abaAtiva === 'produtos' && 'Catálogo de Produtos & Serviços'}
+                {abaAtiva === 'financeiro' && 'Gestão Financeira & Margens'}
                 {abaAtiva === 'dashboard' && 'Painel de Desempenho & Faturamento'}
               </h2>
               <p className={`text-xs mt-0.5 ${temaEscuro ? 'text-zinc-400' : 'text-zinc-500'} dark:text-zinc-400`}>
@@ -617,6 +636,7 @@ export default function Home() {
             onVerPedidos={() => setAbaAtiva('pedidos')}
             onVerClientes={() => setAbaAtiva('clientes')}
             onVerProdutos={() => setAbaAtiva('produtos')}
+            onVerFinanceiro={() => setAbaAtiva('financeiro')}
             onVerDashboard={() => setAbaAtiva('dashboard')}
           />
         )}
@@ -689,6 +709,27 @@ export default function Home() {
           />
         )}
 
+        {abaAtiva === 'financeiro' && (
+          <FinanceiroView
+            onVerPedido={async (pedId) => {
+              const detalhado = await getPedidoDetalhes(pedId);
+              if (detalhado) {
+                setUltimoModalAberto('recibo');
+                setPedidoRecibo(detalhado);
+                setReciboModalAberto(true);
+              }
+            }}
+            onVerCliente={(cliId) => {
+              const cli = clientes.find((c) => c.id === cliId || c.legacy_id === cliId);
+              if (cli) {
+                setUltimoModalAberto('cliente');
+                setClienteParaDetalhes(cli);
+                setClienteDetalhesAberto(true);
+              }
+            }}
+          />
+        )}
+
         {abaAtiva === 'dashboard' && (
           <DashboardView
             stats={stats}
@@ -708,7 +749,7 @@ export default function Home() {
       </main>
 
       {/* BOTTOM NAVIGATION MOBILE */}
-      <nav className={`md:hidden fixed bottom-0 left-0 right-0 z-40 grid grid-cols-5 py-2 border-t transition-colors duration-200 ${
+      <nav className={`md:hidden fixed bottom-0 left-0 right-0 z-40 grid grid-cols-6 py-2 border-t transition-colors duration-200 ${
         temaEscuro
           ? 'bg-[#0f0f12]/95 border-zinc-800 text-zinc-400 backdrop-blur-md'
           : 'bg-white border-zinc-200 text-zinc-500'
@@ -751,6 +792,16 @@ export default function Home() {
         >
           <Package className="w-5 h-5" />
           <span className="text-[10px]">Produtos</span>
+        </button>
+
+        <button
+          onClick={() => setAbaAtiva('financeiro')}
+          className={`flex flex-col items-center justify-center gap-1 transition cursor-pointer ${
+            abaAtiva === 'financeiro' ? 'text-red-600 dark:text-red-400 font-bold' : 'hover:text-zinc-900 dark:hover:text-white'
+          }`}
+        >
+          <DollarSign className="w-5 h-5" />
+          <span className="text-[10px]">Financeiro</span>
         </button>
 
         <button

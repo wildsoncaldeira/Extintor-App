@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
-import { Cliente, Pedido } from '@/lib/types';
+import React, { useState, useEffect, useRef } from 'react';
+import { Cliente, Pedido, ClienteAnexo } from '@/lib/types';
+import { getClienteAnexos, uploadClienteAnexo, deleteClienteAnexo } from '@/lib/actions';
 import { WhatsAppIcon } from './WhatsAppIcon';
 import { 
   Building2, 
@@ -14,7 +15,16 @@ import {
   FileText, 
   Receipt,
   ExternalLink,
-  ChevronRight
+  ChevronRight,
+  Paperclip,
+  Upload,
+  Download,
+  Trash2,
+  File,
+  FileSpreadsheet,
+  Image as ImageIcon,
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
 
 interface ClienteDetalhesModalProps {
@@ -34,6 +44,23 @@ export function ClienteDetalhesModal({
   onEditarCliente,
   onVerPedido,
 }: ClienteDetalhesModalProps) {
+  const [anexos, setAnexos] = useState<ClienteAnexo[]>([]);
+  const [carregandoAnexos, setCarregandoAnexos] = useState(false);
+  const [enviandoAnexo, setEnviandoAnexo] = useState(false);
+  const [erroAnexo, setErroAnexo] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (cliente?.id) {
+      setCarregandoAnexos(true);
+      setErroAnexo(null);
+      getClienteAnexos(cliente.id)
+        .then((data) => setAnexos(data))
+        .catch((err) => console.error('Erro ao buscar anexos:', err))
+        .finally(() => setCarregandoAnexos(false));
+    }
+  }, [cliente?.id]);
+
   if (!cliente) return null;
 
   // Filtrar pedidos desse cliente
@@ -42,6 +69,108 @@ export function ClienteDetalhesModal({
   );
 
   const totalGasto = pedidosDoCliente.reduce((acc, p) => acc + Number(p.valor_total || 0), 0);
+
+  const formatBytes = (bytes?: number | null) => {
+    if (!bytes || bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+  };
+
+  const handleUploadArquivo = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0 || !cliente?.id) return;
+
+    setEnviandoAnexo(true);
+    setErroAnexo(null);
+
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        // Limite de 5MB por arquivo
+        if (file.size > 5 * 1024 * 1024) {
+          throw new Error(`O arquivo "${file.name}" excede o tamanho máximo permitido de 5MB.`);
+        }
+
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+
+        const res = await uploadClienteAnexo({
+          cliente_id: cliente.id,
+          nome_arquivo: file.name,
+          tipo_arquivo: file.type || 'application/octet-stream',
+          tamanho_bytes: file.size,
+          conteudo_base64: base64,
+        });
+
+        if (!res.success) {
+          throw new Error(res.error || `Erro ao anexar "${file.name}"`);
+        }
+
+        if (res.anexo) {
+          setAnexos((prev) => [res.anexo!, ...prev]);
+        }
+      }
+    } catch (err: any) {
+      console.error('Erro no upload de anexo:', err);
+      setErroAnexo(err?.message || 'Erro ao realizar upload do arquivo.');
+    } finally {
+      setEnviandoAnexo(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleBaixarAnexo = (anexo: ClienteAnexo) => {
+    if (!anexo.conteudo_base64) {
+      alert('Arquivo não disponível para visualização.');
+      return;
+    }
+
+    const a = document.createElement('a');
+    a.href = anexo.conteudo_base64;
+    a.download = anexo.nome_arquivo;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  const handleExcluirAnexo = async (anexo: ClienteAnexo) => {
+    if (!confirm(`Deseja realmente excluir o anexo "${anexo.nome_arquivo}"?`)) return;
+
+    try {
+      const res = await deleteClienteAnexo(anexo.id, cliente.id);
+      if (!res.success) {
+        alert(res.error || 'Erro ao excluir anexo.');
+        return;
+      }
+      setAnexos((prev) => prev.filter((a) => a.id !== anexo.id));
+    } catch (err) {
+      console.error('Erro ao excluir anexo:', err);
+      alert('Erro ao excluir anexo.');
+    }
+  };
+
+  const getFileIcon = (nome: string, tipo?: string | null) => {
+    const ext = nome.split('.').pop()?.toLowerCase();
+    if (ext === 'pdf' || tipo?.includes('pdf')) {
+      return <FileText className="w-5 h-5 text-red-600 dark:text-red-400" />;
+    }
+    if (['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg'].includes(ext || '') || tipo?.includes('image')) {
+      return <ImageIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />;
+    }
+    if (['xls', 'xlsx', 'csv'].includes(ext || '') || tipo?.includes('sheet')) {
+      return <FileSpreadsheet className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />;
+    }
+    return <File className="w-5 h-5 text-zinc-500 dark:text-zinc-400" />;
+  };
 
   const getWhatsAppUrl = () => {
     if (!cliente.telefone_whatsapp) return '#';
@@ -278,6 +407,127 @@ export function ClienteDetalhesModal({
                         {formatMoeda(ped.valor_total)}
                       </span>
                       <ChevronRight className="w-4 h-4 text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Seção de Anexos & Documentos do Cliente */}
+          <div className="space-y-3 pt-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Paperclip className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+                <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
+                  Anexos & Documentos ({anexos.length})
+                </h4>
+              </div>
+
+              {/* Input escondido e Botão de Upload */}
+              <div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  onChange={handleUploadArquivo}
+                  className="hidden"
+                  id="cliente-file-upload-input"
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={enviandoAnexo}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 rounded-lg shadow-sm transition disabled:opacity-50 cursor-pointer"
+                >
+                  {enviandoAnexo ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Enviando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>+ Anexar Arquivo</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Aviso de erro se houver */}
+            {erroAnexo && (
+              <div className="p-3 bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-800/80 rounded-xl text-red-700 dark:text-red-300 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{erroAnexo}</span>
+              </div>
+            )}
+
+            {/* Lista ou Estado Vazio de Anexos */}
+            {carregandoAnexos ? (
+              <div className="p-6 text-center text-xs text-zinc-400 dark:text-zinc-500 bg-zinc-50 dark:bg-zinc-950 rounded-xl border border-zinc-200 dark:border-zinc-800 flex items-center justify-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin text-red-600" />
+                <span>Carregando anexos do cliente...</span>
+              </div>
+            ) : anexos.length === 0 ? (
+              <div 
+                onClick={() => fileInputRef.current?.click()}
+                className="p-6 text-center bg-zinc-50 dark:bg-zinc-950 hover:bg-zinc-100/60 dark:hover:bg-zinc-900/40 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-800 cursor-pointer transition group"
+              >
+                <Upload className="w-6 h-6 text-zinc-400 group-hover:text-red-500 mx-auto mb-1.5 transition" />
+                <p className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">
+                  Nenhum anexo registrado para este cliente até o momento.
+                </p>
+                <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-0.5">
+                  Clique aqui ou no botão acima para anexar laudos técnicos, fotos de extintores, notas ou documentos (máx. 5 MB por arquivo).
+                </p>
+              </div>
+            ) : (
+              <div className="bg-white dark:bg-zinc-950 rounded-xl border border-zinc-200 dark:border-zinc-800 divide-y divide-zinc-100 dark:divide-zinc-800 overflow-hidden shadow-2xs">
+                {anexos.map((anexo) => (
+                  <div
+                    key={anexo.id}
+                    className="p-3 sm:p-3.5 hover:bg-zinc-50/80 dark:hover:bg-zinc-900/60 transition flex items-center justify-between gap-3 group"
+                  >
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      <div className="p-2 rounded-lg bg-zinc-100 dark:bg-zinc-900 shrink-0 border border-zinc-200/80 dark:border-zinc-800">
+                        {getFileIcon(anexo.nome_arquivo, anexo.tipo_arquivo)}
+                      </div>
+                      <div className="overflow-hidden">
+                        <p 
+                          className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 truncate cursor-pointer hover:text-red-600 dark:hover:text-red-400 transition"
+                          title={anexo.nome_arquivo}
+                          onClick={() => handleBaixarAnexo(anexo)}
+                        >
+                          {anexo.nome_arquivo}
+                        </p>
+                        <div className="flex items-center gap-2 text-[11px] text-zinc-400 dark:text-zinc-500 mt-0.5">
+                          <span className="font-mono">{formatBytes(anexo.tamanho_bytes)}</span>
+                          <span>•</span>
+                          <span>{anexo.created_at ? formatDate(anexo.created_at.split('T')[0]) : ''}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleBaixarAnexo(anexo)}
+                        title="Baixar ou visualizar anexo"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-zinc-700 dark:text-zinc-300 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg transition cursor-pointer"
+                      >
+                        <Download className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400" />
+                        <span className="hidden sm:inline">Baixar</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleExcluirAnexo(anexo)}
+                        title="Excluir anexo"
+                        className="p-1.5 text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-zinc-800 rounded-lg transition cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   </div>
                 ))}

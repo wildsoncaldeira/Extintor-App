@@ -30,6 +30,7 @@ export interface ProdutoServico {
   descricao: string;
   tipo_kg?: string | null;
   valor_unitario_padrao: number;
+  custo_unitario_padrao?: number;
   ativo?: boolean;
   created_at?: string;
 }
@@ -43,6 +44,8 @@ export interface ItemPedido {
   quantidade: number;
   valor_unitario: number;
   valor_total_item: number;
+  custo_unitario?: number;
+  custo_total_item?: number;
 }
 
 export interface Pedido {
@@ -53,6 +56,11 @@ export interface Pedido {
   cliente_id: string;
   status: StatusPedido;
   valor_total: number;
+  subtotal?: number;
+  desconto_tipo?: 'reais' | 'porcentagem' | null;
+  desconto_valor?: number;
+  custo_total?: number;
+  margem_total?: number;
   observacoes?: string | null;
   created_at?: string;
   updated_at?: string;
@@ -65,6 +73,82 @@ export interface Pedido {
   uf?: string | null;
   cnpj?: string | null;
   itens?: ItemPedido[];
+}
+
+export interface ClienteAnexo {
+  id: string;
+  cliente_id: string;
+  nome_arquivo: string;
+  tipo_arquivo?: string | null;
+  tamanho_bytes?: number | null;
+  conteudo_base64?: string | null;
+  url?: string | null;
+  created_at: string;
+}
+
+export interface TopProdutoFinanceiro {
+  produto_id: string | null;
+  nome: string;
+  categoria?: string | null;
+  tipo_kg?: string | null;
+  quantidadeVendida: number;
+  faturamento: number;
+  custo: number;
+  lucro: number;
+  margemPercentual: number;
+}
+
+export interface TopClienteFinanceiro {
+  cliente_id: string;
+  nome_empresa: string;
+  nome_contato?: string | null;
+  cidade?: string | null;
+  totalPedidos: number;
+  faturamento: number;
+  custo: number;
+  lucro: number;
+  margemPercentual: number;
+}
+
+export interface MesFinanceiro {
+  rotulo: string;
+  mesAno: string;
+  faturamento: number;
+  custo: number;
+  lucro: number;
+  margemPercentual: number;
+  quantidadePedidos: number;
+}
+
+export interface PedidoFinanceiroItem {
+  id: string;
+  numero_pedido: number;
+  data_pedido: string;
+  cliente_id: string;
+  nome_empresa: string;
+  status: StatusPedido;
+  valor_total: number;
+  custo_total: number;
+  lucro: number;
+  margemPercentual: number;
+  quantidade_itens: number;
+}
+
+export interface RelatorioFinanceiro {
+  periodoDescricao: string;
+  faturamentoTotal: number;
+  custoTotal: number;
+  lucroTotal: number;
+  margemPercentual: number;
+  totalPedidos: number;
+  ticketMedio: number;
+  pedidosPagos: number;
+  pedidosAprovados: number;
+  pedidosOrcamentos: number;
+  topProdutos: TopProdutoFinanceiro[];
+  topClientes: TopClienteFinanceiro[];
+  vendasPorMes: MesFinanceiro[];
+  pedidosLista: PedidoFinanceiroItem[];
 }
 
 export interface DashboardStats {
