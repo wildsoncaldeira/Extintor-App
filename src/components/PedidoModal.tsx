@@ -70,14 +70,24 @@ function ProdutoItemPicker({
       <button
         type="button"
         onClick={() => setAberto(!aberto)}
-        className="w-full text-left px-2.5 py-2 text-xs border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-950 dark:text-white flex items-center justify-between gap-1.5 hover:border-red-400 focus:ring-1 focus:ring-red-500 transition cursor-pointer shadow-2xs"
+        className="w-full min-w-0 text-left px-3 py-2 text-xs border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-950 dark:text-white flex items-center justify-between gap-2 hover:border-red-400 focus:ring-1 focus:ring-red-500 transition cursor-pointer shadow-2xs"
       >
-        <span className="truncate font-semibold text-zinc-900 dark:text-zinc-100">
-          {produtoSelecionado
-            ? `${produtoSelecionado.descricao} ${produtoSelecionado.tipo_kg ? `(${produtoSelecionado.tipo_kg})` : ''} • R$ ${Number(produtoSelecionado.valor_unitario_padrao).toFixed(2).replace('.', ',')}`
-            : 'Selecione um produto ou serviço...'}
+        <span className="font-semibold text-zinc-900 dark:text-zinc-100 break-words whitespace-normal leading-tight flex-1">
+          {produtoSelecionado ? (
+            <>
+              <span>{produtoSelecionado.descricao}</span>
+              {produtoSelecionado.tipo_kg && (
+                <span className="text-zinc-500 dark:text-zinc-400 font-normal"> ({produtoSelecionado.tipo_kg})</span>
+              )}
+              <span className="text-red-600 dark:text-red-400 font-bold ml-1">
+                • R$ {Number(produtoSelecionado.valor_unitario_padrao).toFixed(2).replace('.', ',')}
+              </span>
+            </>
+          ) : (
+            <span className="text-zinc-400">Selecione um produto ou serviço...</span>
+          )}
         </span>
-        <div className="flex items-center gap-1 text-zinc-400 shrink-0">
+        <div className="flex items-center gap-1 text-zinc-400 shrink-0 self-center">
           <Search className="w-3.5 h-3.5" />
           <ChevronDown className="w-3.5 h-3.5" />
         </div>
@@ -364,11 +374,11 @@ export function PedidoModal({
   return (
     <>
       <div 
-        className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-2 sm:p-4 overflow-y-auto animate-modal-backdrop"
+        className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 p-2 sm:p-4 overflow-y-auto animate-modal-backdrop"
         onClick={onClose}
       >
         <div 
-          className="relative w-full max-w-2xl bg-white dark:bg-zinc-900 dark:border dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] animate-modal-content"
+          className="relative w-full max-w-3xl bg-white dark:bg-zinc-900 dark:border dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] animate-modal-content"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Cabeçalho do Modal */}
@@ -557,10 +567,10 @@ export function PedidoModal({
                   {itens.map((item, idx) => (
                     <div
                       key={idx}
-                      className="bg-white dark:bg-zinc-900 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 shadow-xs flex flex-col sm:flex-row gap-2.5 items-start sm:items-center"
+                      className="bg-white dark:bg-zinc-900 p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-xs flex flex-col md:flex-row gap-2.5 items-stretch md:items-center"
                     >
-                      {/* Produto com Seletor Buscável (Requisito 1) */}
-                      <div className="flex-1 w-full sm:w-auto">
+                      {/* Produto com Seletor Buscável (Quebra texto longo sem empurrar colunas) */}
+                      <div className="flex-1 min-w-0 w-full">
                         <ProdutoItemPicker
                           produtos={produtos}
                           produtoIdSelecionado={item.produto_id}
@@ -570,44 +580,49 @@ export function PedidoModal({
                         />
                       </div>
 
-                      {/* Quantidade */}
-                      <div className="w-24 flex items-center gap-1 shrink-0">
-                        <label className="text-[10px] text-zinc-400 dark:text-zinc-500 font-semibold uppercase">Qtd:</label>
-                        <input
-                          type="number"
-                          min="1"
-                          step="1"
-                          value={item.quantidade}
-                          onChange={(e) => atualizarItem(idx, 'quantidade', Math.max(1, parseFloat(e.target.value) || 1))}
-                          className="w-full px-2 py-1.5 text-xs text-center border border-zinc-300 dark:border-zinc-700 rounded-md focus:ring-1 focus:ring-red-500 outline-none dark:bg-zinc-950 dark:text-white font-bold"
-                        />
-                      </div>
+                      {/* Controles de Quantidade, Preço Unitário, Subtotal e Excluir */}
+                      <div className="flex items-center justify-between md:justify-end gap-2.5 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-zinc-100 dark:border-zinc-800">
+                        {/* Quantidade */}
+                        <div className="flex items-center gap-1 shrink-0">
+                          <label className="text-[10px] text-zinc-400 dark:text-zinc-500 font-semibold uppercase">Qtd:</label>
+                          <input
+                            type="number"
+                            min="1"
+                            step="1"
+                            value={item.quantidade}
+                            onChange={(e) => atualizarItem(idx, 'quantidade', Math.max(1, parseFloat(e.target.value) || 1))}
+                            className="w-14 sm:w-16 px-2 py-1.5 text-xs text-center border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-1 focus:ring-red-500 outline-none dark:bg-zinc-950 dark:text-white font-bold"
+                          />
+                        </div>
 
-                      {/* Valor Unitário (Requisito 2: Máscara da direita para a esquerda) */}
-                      <div className="w-32 flex items-center gap-1 shrink-0">
-                        <label className="text-[10px] text-zinc-400 dark:text-zinc-500 font-semibold uppercase">Unit:</label>
-                        <CurrencyInput
-                          value={item.valor_unitario}
-                          onChange={(val) => atualizarItem(idx, 'valor_unitario', val)}
-                          prefix=""
-                          className="py-1 px-2 text-xs text-right font-semibold"
-                        />
-                      </div>
+                        {/* Valor Unitário */}
+                        <div className="flex items-center gap-1 shrink-0">
+                          <label className="text-[10px] text-zinc-400 dark:text-zinc-500 font-semibold uppercase">Unit:</label>
+                          <div className="w-24 sm:w-28">
+                            <CurrencyInput
+                              value={item.valor_unitario}
+                              onChange={(val) => atualizarItem(idx, 'valor_unitario', val)}
+                              prefix=""
+                              className="py-1 px-2 text-xs text-right font-semibold"
+                            />
+                          </div>
+                        </div>
 
-                      {/* Subtotal do Item */}
-                      <div className="w-24 text-right font-black text-zinc-800 dark:text-white text-xs shrink-0">
-                        R$ {(item.quantidade * item.valor_unitario).toFixed(2).replace('.', ',')}
-                      </div>
+                        {/* Subtotal do Item */}
+                        <div className="min-w-[75px] sm:min-w-[85px] text-right font-black text-zinc-800 dark:text-white text-xs shrink-0 font-mono">
+                          R$ {(item.quantidade * item.valor_unitario).toFixed(2).replace('.', ',')}
+                        </div>
 
-                      {/* Excluir inline */}
-                      <button
-                        type="button"
-                        onClick={() => removerItem(idx)}
-                        className="p-1.5 text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-zinc-800 rounded-md transition cursor-pointer shrink-0"
-                        title="Remover item"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                        {/* Excluir inline */}
+                        <button
+                          type="button"
+                          onClick={() => removerItem(idx)}
+                          className="p-1.5 text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-zinc-800 rounded-lg transition cursor-pointer shrink-0"
+                          title="Remover item"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>

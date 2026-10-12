@@ -958,12 +958,13 @@ export default function Home() {
         <ReciboModal
           pedido={pedidoRecibo}
           autoPrint={autoPrintPdf}
-          zIndexClass={ultimoModalAberto === 'recibo' ? 'z-[70]' : 'z-50'}
+          zIndexClass={ultimoModalAberto === 'recibo' ? 'z-[60]' : 'z-50'}
           onClose={() => {
             setReciboModalAberto(false);
             setAutoPrintPdf(false);
           }}
           onEditarPedido={(p) => {
+            setReciboModalAberto(false);
             setPedidoParaEditar(p);
             setPedidoModalAberto(true);
           }}
@@ -986,12 +987,13 @@ export default function Home() {
         <ClienteDetalhesModal
           cliente={clienteParaDetalhes}
           pedidos={pedidos}
-          zIndexClass={ultimoModalAberto === 'cliente' ? 'z-[70]' : 'z-50'}
+          zIndexClass={ultimoModalAberto === 'cliente' ? 'z-[60]' : 'z-50'}
           onClose={() => {
             setClienteDetalhesAberto(false);
             setClienteParaDetalhes(null);
           }}
           onEditarCliente={(c) => {
+            setClienteDetalhesAberto(false);
             setClienteParaEditar(c);
             setClienteModalAberto(true);
           }}
