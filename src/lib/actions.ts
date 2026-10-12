@@ -836,8 +836,11 @@ export async function loginUsuario(
       return { success: false, error: 'Informe o e-mail e a senha de acesso.' };
     }
 
+    // Garante coluna foto_url na tabela usuarios
+    await sql.query(`ALTER TABLE public.usuarios ADD COLUMN IF NOT EXISTS foto_url text;`);
+
     const rows = (await sql.query(
-      `SELECT id, nome, email, senha_hash, cargo, ativo, ultimo_login::text as ultimo_login, created_at::text as created_at
+      `SELECT id, nome, email, senha_hash, cargo, ativo, foto_url, ultimo_login::text as ultimo_login, created_at::text as created_at
        FROM public.usuarios
        WHERE LOWER(email) = LOWER($1)`,
       [cleanEmail]
@@ -870,6 +873,7 @@ export async function loginUsuario(
       email: u.email,
       cargo: u.cargo || 'Administrador',
       ativo: u.ativo,
+      foto_url: u.foto_url || null,
       ultimo_login: new Date().toISOString(),
       created_at: u.created_at,
     };
@@ -933,6 +937,90 @@ export async function trocarSenhaUsuario(
   } catch (error) {
     console.error('Erro ao trocar senha:', error);
     return { success: false, error: 'Erro ao atualizar a senha no banco de dados.' };
+  }
+}
+
+export async function updateUsuarioPerfil(
+  id: string,
+  data: {
+    nome: string;
+    email: string;
+    foto_url?: string | null;
+    senhaAtual?: string;
+    novaSenha?: string;
+  }
+): Promise<{ success: boolean; usuario?: Usuario; error?: string }> {
+  try {
+    await sql.query(`ALTER TABLE public.usuarios ADD COLUMN IF NOT EXISTS foto_url text;`);
+
+    const cleanNome = data.nome.trim();
+    const cleanEmail = data.email.trim().toLowerCase();
+
+    if (!cleanNome || !cleanEmail) {
+      return { success: false, error: 'Nome e e-mail são obrigatórios.' };
+    }
+
+    const rows = (await sql.query(
+      `SELECT id, nome, email, senha_hash, cargo, ativo, foto_url, ultimo_login::text as ultimo_login, created_at::text as created_at
+       FROM public.usuarios WHERE id = $1`,
+      [id]
+    )) as any[];
+
+    if (!rows || rows.length === 0) {
+      return { success: false, error: 'Usuário não encontrado.' };
+    }
+
+    const u = rows[0];
+
+    // Se forneceu nova senha, validar senha atual
+    if (data.novaSenha && data.novaSenha.trim().length > 0) {
+      if (!data.senhaAtual || !data.senhaAtual.trim()) {
+        return { success: false, error: 'Informe a senha atual para alterar a senha.' };
+      }
+      const hashAtual = hashSenha(data.senhaAtual.trim());
+      if (u.senha_hash !== hashAtual) {
+        return { success: false, error: 'A senha atual está incorreta.' };
+      }
+      if (data.novaSenha.trim().length < 6) {
+        return { success: false, error: 'A nova senha deve ter pelo menos 6 caracteres.' };
+      }
+      const novoHash = hashSenha(data.novaSenha.trim());
+      await sql.query(`UPDATE public.usuarios SET senha_hash = $1 WHERE id = $2`, [novoHash, id]);
+    }
+
+    // Verificar se já existe outro usuário com esse e-mail
+    const emailExistente = (await sql.query(
+      `SELECT id FROM public.usuarios WHERE LOWER(email) = LOWER($1) AND id != $2`,
+      [cleanEmail, id]
+    )) as any[];
+
+    if (emailExistente && emailExistente.length > 0) {
+      return { success: false, error: 'Já existe outro usuário cadastrado com este e-mail.' };
+    }
+
+    const novaFoto = data.foto_url !== undefined ? data.foto_url : u.foto_url;
+
+    await sql.query(
+      `UPDATE public.usuarios SET nome = $1, email = $2, foto_url = $3, updated_at = NOW() WHERE id = $4`,
+      [cleanNome, cleanEmail, novaFoto, id]
+    );
+
+    const usuarioAtualizado: Usuario = {
+      id: u.id,
+      nome: cleanNome,
+      email: cleanEmail,
+      cargo: u.cargo || 'Administrador',
+      ativo: u.ativo,
+      foto_url: novaFoto || null,
+      ultimo_login: u.ultimo_login,
+      created_at: u.created_at,
+    };
+
+    revalidatePath('/');
+    return { success: true, usuario: usuarioAtualizado };
+  } catch (err: any) {
+    console.error('Erro ao atualizar perfil do usuário:', err);
+    return { success: false, error: err?.message || 'Erro ao atualizar dados do perfil.' };
   }
 }
 

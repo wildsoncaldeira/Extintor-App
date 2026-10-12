@@ -231,6 +231,7 @@ export interface Usuario {
   email: string;
   cargo?: string;
   ativo: boolean;
+  foto_url?: string | null;
   ultimo_login?: string | null;
   created_at?: string;
 }

@@ -33,7 +33,11 @@ import {
   Sun,
   Moon,
   Sparkles,
+  Menu,
+  X,
+  User,
 } from 'lucide-react';
+import MinhaContaModal from '@/components/MinhaContaModal';
 
 type AbaAtiva = 'inicio' | 'pedidos' | 'clientes' | 'produtos' | 'crm' | 'financeiro' | 'dashboard';
 
@@ -44,6 +48,8 @@ export default function Home() {
 
   const [abaAtiva, setAbaAtiva] = useState<AbaAtiva>('inicio');
   const [loading, setLoading] = useState(true);
+  const [menuMobileAberto, setMenuMobileAberto] = useState(false);
+  const [minhaContaModalAberto, setMinhaContaModalAberto] = useState(false);
 
   // Checa se há usuário autenticado no navegador e tema salvo
   useEffect(() => {
@@ -90,6 +96,20 @@ export default function Home() {
       localStorage.removeItem('usuario_extintores');
       sessionStorage.removeItem('usuario_extintores');
       setUsuarioLogado(null);
+    }
+  };
+
+  const handleUsuarioAtualizado = (novoUsuario: Usuario) => {
+    setUsuarioLogado(novoUsuario);
+    try {
+      if (localStorage.getItem('usuario_extintores')) {
+        localStorage.setItem('usuario_extintores', JSON.stringify(novoUsuario));
+      }
+      if (sessionStorage.getItem('usuario_extintores')) {
+        sessionStorage.setItem('usuario_extintores', JSON.stringify(novoUsuario));
+      }
+    } catch (e) {
+      console.error('Erro ao atualizar usuário no armazenamento local:', e);
     }
   };
 
@@ -437,23 +457,51 @@ export default function Home() {
             </span>
           </button>
 
-          {/* 2. CARD DO USUÁRIO LOGADO */}
-          <div className={`p-2.5 rounded-xl border flex items-center gap-2.5 overflow-hidden select-none ${
-            temaEscuro
-              ? 'bg-zinc-950/70 border-zinc-800 text-zinc-100'
-              : 'bg-white border-zinc-200 text-zinc-900'
-          }`}>
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-red-600 to-red-500 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-sm border border-red-400/30">
-              {usuarioLogado.nome.slice(0, 2).toUpperCase()}
-            </div>
-            <div className="overflow-hidden flex-1">
-              <p className="text-xs font-bold truncate leading-tight" title={usuarioLogado.nome}>
-                {usuarioLogado.nome}
-              </p>
-              <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate" title={usuarioLogado.email}>
-                {usuarioLogado.email}
-              </p>
-            </div>
+          {/* 2. CARD DO USUÁRIO LOGADO E MINHA CONTA */}
+          <div className="space-y-1.5">
+            <button
+              onClick={() => setMinhaContaModalAberto(true)}
+              className={`w-full p-2.5 rounded-xl border flex items-center gap-2.5 overflow-hidden text-left transition hover:border-red-400 group cursor-pointer ${
+                temaEscuro
+                  ? 'bg-zinc-950/70 border-zinc-800 text-zinc-100 hover:bg-zinc-900/80'
+                  : 'bg-white border-zinc-200 text-zinc-900 hover:bg-zinc-50'
+              }`}
+              title="Abrir Minha Conta"
+            >
+              {usuarioLogado.foto_url ? (
+                <img
+                  src={usuarioLogado.foto_url}
+                  alt={usuarioLogado.nome}
+                  className="w-8 h-8 rounded-full object-cover shrink-0 ring-1 ring-red-500/40"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-red-600 to-red-500 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-sm border border-red-400/30">
+                  {usuarioLogado.nome.slice(0, 2).toUpperCase()}
+                </div>
+              )}
+              <div className="overflow-hidden flex-1 min-w-0">
+                <p className="text-xs font-bold truncate leading-tight group-hover:text-red-500 transition-colors" title={usuarioLogado.nome}>
+                  {usuarioLogado.nome}
+                </p>
+                <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate" title={usuarioLogado.email}>
+                  {usuarioLogado.email}
+                </p>
+              </div>
+              <User className="w-4 h-4 text-zinc-400 group-hover:text-red-500 shrink-0 transition-colors" />
+            </button>
+
+            <button
+              onClick={() => setMinhaContaModalAberto(true)}
+              className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer border ${
+                temaEscuro
+                  ? 'bg-zinc-900 text-zinc-200 border-zinc-750 hover:bg-zinc-800 hover:text-white'
+                  : 'bg-zinc-100 text-zinc-700 border-zinc-200 hover:bg-zinc-200'
+              }`}
+              title="Minha Conta (Editar foto, nome, email e senha)"
+            >
+              <User className="w-3.5 h-3.5 text-red-500" />
+              <span>Minha Conta</span>
+            </button>
           </div>
 
           {/* 3. BOTÃO DE LOGOUT DEDICADO NO FIM DO MENU LATERAL */}
@@ -512,54 +560,20 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 shrink-0">
-          {/* Seletor Dark/Light Mobile */}
+        <div className="flex items-center gap-2 shrink-0">
           <button
-            onClick={alternarTema}
-            title={temaEscuro ? 'Mudar para Modo Claro' : 'Mudar para Modo Escuro'}
-            className={`p-2 rounded-lg transition border cursor-pointer ${
-              temaEscuro
-                ? 'bg-zinc-950 text-amber-400 border-zinc-700'
-                : 'bg-zinc-100 text-zinc-700 border-zinc-200'
+            onClick={() => setAbaAtiva('inicio')}
+            title="Ir para o Início"
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+              abaAtiva === 'inicio'
+                ? 'bg-red-600 text-white shadow-sm'
+                : temaEscuro
+                ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700 border border-zinc-700'
+                : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 border border-zinc-200'
             }`}
           >
-            {temaEscuro ? (
-              <Moon className="w-4 h-4 text-amber-400 fill-amber-400/20" />
-            ) : (
-              <Sun className="w-4 h-4 text-amber-500" />
-            )}
-          </button>
-
-          {/* Botão de Logout Mobile */}
-          <button
-            onClick={handleLogout}
-            title="Sair do sistema (Logout)"
-            className={`p-2 rounded-lg transition border cursor-pointer ${
-              temaEscuro
-                ? 'bg-red-950/50 text-red-400 border-red-800/60 hover:bg-red-900/60'
-                : 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100'
-            }`}
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
-
-          {/* Botão Novo Pedido Mobile */}
-          <button
-            onClick={() => {
-              if (abaAtiva === 'clientes') {
-                setClienteParaEditar(null);
-                setClienteModalAberto(true);
-              } else if (abaAtiva === 'produtos') {
-                setProdutoParaEditar(null);
-                setProdutoModalAberto(true);
-              } else {
-                setPedidoParaEditar(null);
-                setPedidoModalAberto(true);
-              }
-            }}
-            className="p-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white rounded-lg shadow-md transition cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
+            <HomeIcon className="w-4 h-4" />
+            <span>Início</span>
           </button>
         </div>
       </header>
@@ -795,30 +809,41 @@ export default function Home() {
 
       </main>
 
+      {/* BOTÃO FLUTUANTE (FAB) MOBILE - Apenas em Pedidos e Clientes */}
+      {(abaAtiva === 'pedidos' || abaAtiva === 'clientes') && (
+        <button
+          onClick={() => {
+            if (abaAtiva === 'clientes') {
+              setClienteParaEditar(null);
+              setClienteModalAberto(true);
+            } else {
+              setPedidoParaEditar(null);
+              setClienteInicialParaPedido(null);
+              setPedidoModalAberto(true);
+            }
+          }}
+          className="md:hidden fixed bottom-22 right-4 z-40 w-14 h-14 rounded-full bg-gradient-to-tr from-red-600 to-rose-600 text-white shadow-xl shadow-red-900/40 flex items-center justify-center hover:scale-105 active:scale-95 transition-all cursor-pointer border-2 border-white/20"
+          title={abaAtiva === 'clientes' ? 'Novo Cliente' : 'Novo Pedido'}
+          aria-label={abaAtiva === 'clientes' ? 'Novo Cliente' : 'Novo Pedido'}
+        >
+          <Plus className="w-7 h-7" />
+        </button>
+      )}
+
       {/* BOTTOM NAVIGATION MOBILE */}
-      <nav className={`md:hidden fixed bottom-0 left-0 right-0 z-40 grid grid-cols-7 py-2 border-t transition-colors duration-200 ${
+      <nav className={`md:hidden fixed bottom-0 left-0 right-0 z-40 grid grid-cols-5 py-2.5 min-h-[64px] border-t transition-colors duration-200 ${
         temaEscuro
           ? 'bg-[#0f0f12]/95 border-zinc-800 text-zinc-400 backdrop-blur-md'
-          : 'bg-white border-zinc-300 text-zinc-600 shadow-md'
+          : 'bg-white border-zinc-300 text-zinc-600 shadow-lg'
       }`}>
-        <button
-          onClick={() => setAbaAtiva('inicio')}
-          className={`flex flex-col items-center justify-center gap-1 transition cursor-pointer ${
-            abaAtiva === 'inicio' ? 'text-red-600 dark:text-red-400 font-bold' : 'hover:text-zinc-900 dark:hover:text-white'
-          }`}
-        >
-          <HomeIcon className="w-4 h-4" />
-          <span className="text-[9px]">Início</span>
-        </button>
-
         <button
           onClick={() => setAbaAtiva('pedidos')}
           className={`flex flex-col items-center justify-center gap-1 transition cursor-pointer ${
             abaAtiva === 'pedidos' ? 'text-red-600 dark:text-red-400 font-bold' : 'hover:text-zinc-900 dark:hover:text-white'
           }`}
         >
-          <FileEdit className="w-4 h-4" />
-          <span className="text-[9px]">Pedidos</span>
+          <FileEdit className="w-5 h-5" />
+          <span className="text-[10px] font-semibold">Pedidos</span>
         </button>
 
         <button
@@ -827,18 +852,8 @@ export default function Home() {
             abaAtiva === 'clientes' ? 'text-red-600 dark:text-red-400 font-bold' : 'hover:text-zinc-900 dark:hover:text-white'
           }`}
         >
-          <Users className="w-4 h-4" />
-          <span className="text-[9px]">Clientes</span>
-        </button>
-
-        <button
-          onClick={() => setAbaAtiva('produtos')}
-          className={`flex flex-col items-center justify-center gap-1 transition cursor-pointer ${
-            abaAtiva === 'produtos' ? 'text-red-600 dark:text-red-400 font-bold' : 'hover:text-zinc-900 dark:hover:text-white'
-          }`}
-        >
-          <Package className="w-4 h-4" />
-          <span className="text-[9px]">Produtos</span>
+          <Users className="w-5 h-5" />
+          <span className="text-[10px] font-semibold">Clientes</span>
         </button>
 
         <button
@@ -847,8 +862,8 @@ export default function Home() {
             abaAtiva === 'crm' ? 'text-red-600 dark:text-red-400 font-bold' : 'hover:text-zinc-900 dark:hover:text-white'
           }`}
         >
-          <Sparkles className="w-4 h-4" />
-          <span className="text-[9px]">CRM</span>
+          <Sparkles className="w-5 h-5" />
+          <span className="text-[10px] font-semibold">CRM</span>
         </button>
 
         <button
@@ -857,20 +872,241 @@ export default function Home() {
             abaAtiva === 'financeiro' ? 'text-red-600 dark:text-red-400 font-bold' : 'hover:text-zinc-900 dark:hover:text-white'
           }`}
         >
-          <DollarSign className="w-4 h-4" />
-          <span className="text-[9px]">Financeiro</span>
+          <DollarSign className="w-5 h-5" />
+          <span className="text-[10px] font-semibold">Financeiro</span>
         </button>
 
         <button
-          onClick={() => setAbaAtiva('dashboard')}
+          onClick={() => setMenuMobileAberto(true)}
           className={`flex flex-col items-center justify-center gap-1 transition cursor-pointer ${
-            abaAtiva === 'dashboard' ? 'text-red-600 dark:text-red-400 font-bold' : 'hover:text-zinc-900 dark:hover:text-white'
+            menuMobileAberto || abaAtiva === 'produtos' || abaAtiva === 'dashboard'
+              ? 'text-red-600 dark:text-red-400 font-bold'
+              : 'hover:text-zinc-900 dark:hover:text-white'
           }`}
         >
-          <LayoutDashboard className="w-4 h-4" />
-          <span className="text-[9px]">Dashboard</span>
+          <Menu className="w-5 h-5" />
+          <span className="text-[10px] font-semibold">Menu</span>
         </button>
       </nav>
+
+      {/* MENU LATERAL MOBILE (DRAWER DIREITO) */}
+      {menuMobileAberto && (
+        <div className="fixed inset-0 z-50 md:hidden flex justify-end">
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300"
+            onClick={() => setMenuMobileAberto(false)}
+          />
+          
+          {/* Drawer Content */}
+          <div className={`relative w-[85%] max-w-sm h-full flex flex-col z-10 shadow-2xl transition-transform duration-300 ease-out border-l animate-in slide-in-from-right duration-200 ${
+            temaEscuro
+              ? 'bg-[#0f0f12] text-zinc-100 border-zinc-800'
+              : 'bg-white text-zinc-900 border-zinc-200'
+          }`}>
+            {/* Drawer Header with user info and close */}
+            <div className={`p-4 border-b flex items-center justify-between ${
+              temaEscuro ? 'border-zinc-800 bg-zinc-950/50' : 'border-zinc-200 bg-zinc-50'
+            }`}>
+              <div className="flex items-center gap-3 overflow-hidden">
+                {usuarioLogado.foto_url ? (
+                  <img
+                    src={usuarioLogado.foto_url}
+                    alt={usuarioLogado.nome}
+                    className="w-10 h-10 rounded-full object-cover ring-2 ring-red-500/30 shrink-0"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-red-600 to-rose-500 text-white font-bold text-sm flex items-center justify-center shrink-0 shadow-md">
+                    {usuarioLogado.nome.slice(0, 2).toUpperCase()}
+                  </div>
+                )}
+                <div className="overflow-hidden">
+                  <h3 className="text-sm font-bold truncate leading-tight">{usuarioLogado.nome}</h3>
+                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">{usuarioLogado.email}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setMenuMobileAberto(false)}
+                className="p-2 rounded-xl text-zinc-400 hover:text-zinc-600 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Minha Conta CTA button */}
+            <div className="p-3 border-b border-zinc-100 dark:border-zinc-850">
+              <button
+                onClick={() => {
+                  setMenuMobileAberto(false);
+                  setMinhaContaModalAberto(true);
+                }}
+                className="w-full flex items-center justify-between p-3 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-900/60 hover:bg-red-100 dark:hover:bg-red-900/40 transition text-left cursor-pointer"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="p-1.5 rounded-lg bg-red-600 text-white">
+                    <User className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold">Minha Conta</p>
+                    <p className="text-[10px] text-red-600/80 dark:text-red-400/80">Editar foto, nome e senha</p>
+                  </div>
+                </div>
+                <span className="text-xs font-semibold">Editar &rarr;</span>
+              </button>
+            </div>
+
+            {/* Drawer Navigation Links */}
+            <div className="p-3 space-y-1 overflow-y-auto flex-1">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 px-3 py-1">Navegação & Módulos</p>
+              
+              {/* Início */}
+              <button
+                onClick={() => { setAbaAtiva('inicio'); setMenuMobileAberto(false); }}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  abaAtiva === 'inicio'
+                    ? 'bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800'
+                    : 'hover:bg-zinc-100 dark:hover:bg-zinc-800/60'
+                }`}
+              >
+                <HomeIcon className="w-4 h-4 text-zinc-400" />
+                <span>Início</span>
+              </button>
+
+              {/* Produtos & Serviços */}
+              <button
+                onClick={() => { setAbaAtiva('produtos'); setMenuMobileAberto(false); }}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  abaAtiva === 'produtos'
+                    ? 'bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800'
+                    : 'hover:bg-zinc-100 dark:hover:bg-zinc-800/60'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <Package className="w-4 h-4 text-zinc-400" />
+                  <span>Produtos & Serviços</span>
+                </div>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-200 dark:bg-zinc-800">
+                  {produtos.length}
+                </span>
+              </button>
+
+              {/* Dashboard */}
+              <button
+                onClick={() => { setAbaAtiva('dashboard'); setMenuMobileAberto(false); }}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  abaAtiva === 'dashboard'
+                    ? 'bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800'
+                    : 'hover:bg-zinc-100 dark:hover:bg-zinc-800/60'
+                }`}
+              >
+                <LayoutDashboard className="w-4 h-4 text-zinc-400" />
+                <span>Dashboard & Desempenho</span>
+              </button>
+
+              {/* Pedidos */}
+              <button
+                onClick={() => { setAbaAtiva('pedidos'); setMenuMobileAberto(false); }}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  abaAtiva === 'pedidos'
+                    ? 'bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800'
+                    : 'hover:bg-zinc-100 dark:hover:bg-zinc-800/60'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <FileEdit className="w-4 h-4 text-zinc-400" />
+                  <span>Pedidos</span>
+                </div>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-200 dark:bg-zinc-800">
+                  {pedidos.length}
+                </span>
+              </button>
+
+              {/* Clientes */}
+              <button
+                onClick={() => { setAbaAtiva('clientes'); setMenuMobileAberto(false); }}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  abaAtiva === 'clientes'
+                    ? 'bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800'
+                    : 'hover:bg-zinc-100 dark:hover:bg-zinc-800/60'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <Users className="w-4 h-4 text-zinc-400" />
+                  <span>Clientes</span>
+                </div>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-200 dark:bg-zinc-800">
+                  {clientes.length}
+                </span>
+              </button>
+
+              {/* CRM */}
+              <button
+                onClick={() => { setAbaAtiva('crm'); setMenuMobileAberto(false); }}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  abaAtiva === 'crm'
+                    ? 'bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800'
+                    : 'hover:bg-zinc-100 dark:hover:bg-zinc-800/60'
+                }`}
+              >
+                <Sparkles className="w-4 h-4 text-zinc-400" />
+                <span>CRM & Vendas Futuras</span>
+              </button>
+
+              {/* Financeiro */}
+              <button
+                onClick={() => { setAbaAtiva('financeiro'); setMenuMobileAberto(false); }}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  abaAtiva === 'financeiro'
+                    ? 'bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800'
+                    : 'hover:bg-zinc-100 dark:hover:bg-zinc-800/60'
+                }`}
+              >
+                <DollarSign className="w-4 h-4 text-zinc-400" />
+                <span>Financeiro & Despesas</span>
+              </button>
+            </div>
+
+            {/* Drawer Footer */}
+            <div className={`p-4 border-t space-y-2.5 ${
+              temaEscuro ? 'border-zinc-800 bg-zinc-950/40' : 'border-zinc-200 bg-zinc-50'
+            }`}>
+              {/* Toggle Dark Mode */}
+              <button
+                onClick={alternarTema}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition border cursor-pointer ${
+                  temaEscuro
+                    ? 'bg-zinc-900 text-amber-400 border-zinc-700'
+                    : 'bg-white text-zinc-700 border-zinc-200'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  {temaEscuro ? (
+                    <Moon className="w-4 h-4 text-amber-400 fill-amber-400/20" />
+                  ) : (
+                    <Sun className="w-4 h-4 text-amber-500 fill-amber-500/20" />
+                  )}
+                  <span>{temaEscuro ? 'Modo Escuro' : 'Modo Claro'}</span>
+                </div>
+                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-zinc-200 dark:bg-zinc-800">
+                  {temaEscuro ? 'DARK' : 'LIGHT'}
+                </span>
+              </button>
+
+              {/* Logout (último, lá embaixo) */}
+              <button
+                onClick={() => {
+                  setMenuMobileAberto(false);
+                  handleLogout();
+                }}
+                className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold text-red-600 hover:text-white bg-red-50 hover:bg-red-600 dark:bg-red-950/40 dark:hover:bg-red-900/60 border border-red-200 dark:border-red-800/60 transition cursor-pointer shadow-xs"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Sair da Conta (Logout)</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MODAIS GLOBAIS */}
       {pedidoModalAberto && (
@@ -1008,6 +1244,15 @@ export default function Home() {
             setPedidoRecibo(detalhado || ped);
             setReciboModalAberto(true);
           }}
+        />
+      )}
+
+      {minhaContaModalAberto && usuarioLogado && (
+        <MinhaContaModal
+          isOpen={minhaContaModalAberto}
+          onClose={() => setMinhaContaModalAberto(false)}
+          usuario={usuarioLogado}
+          onUsuarioAtualizado={handleUsuarioAtualizado}
         />
       )}
 
