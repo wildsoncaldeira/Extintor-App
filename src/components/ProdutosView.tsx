@@ -51,15 +51,11 @@ export function ProdutosView({
     return acc;
   }, {} as Record<string, ProdutoServico[]>);
 
-  const toggleSecao = (cat: string, index: number) => {
-    setSecoesAbertas((prev) => {
-      const atualmenteAberta =
-        prev[cat] !== undefined ? prev[cat] : index === 0;
-      return {
-        ...prev,
-        [cat]: !atualmenteAberta,
-      };
-    });
+  const toggleSecao = (cat: string) => {
+    setSecoesAbertas((prev) => ({
+      ...prev,
+      [cat]: !prev[cat],
+    }));
   };
 
   const handleExcluir = async (p: ProdutoServico) => {
@@ -132,12 +128,10 @@ export function ProdutosView({
           listaCategorias.map((catNome, index) => {
             const itens = produtosPorCategoria[catNome];
             // Se o usuário estiver pesquisando por termo, expande as categorias correspondentes;
-            // caso contrário, apenas a primeira categoria inicia aberta.
+            // caso contrário, todas as categorias iniciam fechadas.
             const estaAberta = busca.trim()
               ? true
-              : secoesAbertas[catNome] !== undefined
-              ? secoesAbertas[catNome]
-              : index === 0;
+              : !!secoesAbertas[catNome];
 
             return (
               <div
@@ -146,7 +140,7 @@ export function ProdutosView({
               >
                 {/* Cabeçalho da Categoria */}
                 <div
-                  onClick={() => toggleSecao(catNome, index)}
+                  onClick={() => toggleSecao(catNome)}
                   className="px-4 py-3 bg-zinc-50 hover:bg-zinc-100/80 dark:bg-[#121214] dark:hover:bg-zinc-800/60 cursor-pointer flex items-center justify-between border-b border-zinc-200/80 dark:border-zinc-800 select-none transition"
                 >
                   <div className="flex items-center gap-2.5">

@@ -37,6 +37,22 @@ export function ClienteModal({ clienteParaEditar, onClose, onSaved }: ClienteMod
     return `${digits.slice(0, 5)}-${digits.slice(5)}`;
   };
 
+  // Formatação dinâmica de CPF (11 dígitos: 000.000.000-00) ou CNPJ (14 dígitos: 00.000.000/0000-00)
+  const formatarCpfCnpj = (v: string) => {
+    const digits = v.replace(/\D/g, '').slice(0, 14);
+    if (digits.length <= 11) {
+      if (digits.length <= 3) return digits;
+      if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+      if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+      return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+    } else {
+      if (digits.length <= 12) {
+        return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8)}`;
+      }
+      return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12)}`;
+    }
+  };
+
   // Integração automática com ViaCEP (Requisito 7)
   const consultarCep = async (cepParaBuscar: string) => {
     const clean = cepParaBuscar.replace(/\D/g, '');
@@ -345,17 +361,30 @@ export function ClienteModal({ clienteParaEditar, onClose, onSaved }: ClienteMod
             </div>
           </div>
 
-          {/* CNPJ ou CPF */}
+          {/* CNPJ ou CPF com máscara dinâmica */}
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1">
-              CNPJ ou CPF
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
+                CPF ou CNPJ
+              </label>
+              {cnpj.replace(/\D/g, '').length === 11 && (
+                <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 px-2 py-0.5 rounded-full">
+                  CPF identificado
+                </span>
+              )}
+              {cnpj.replace(/\D/g, '').length === 14 && (
+                <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-full">
+                  CNPJ identificado
+                </span>
+              )}
+            </div>
             <input
               type="text"
-              placeholder="00.000.000/0001-00"
+              maxLength={18}
+              placeholder="Digite o CPF (11 dígitos) ou CNPJ (14 dígitos)"
               value={cnpj}
-              onChange={(e) => setCnpj(e.target.value)}
-              className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500"
+              onChange={(e) => setCnpj(formatarCpfCnpj(e.target.value))}
+              className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm font-mono dark:bg-zinc-950 dark:text-white dark:placeholder-zinc-500"
             />
           </div>
 

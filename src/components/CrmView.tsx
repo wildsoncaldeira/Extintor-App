@@ -290,80 +290,96 @@ export function CrmView({ onAbrirPedido, onCriarNovoPedido, onVerCliente }: CrmV
   return (
     <div className="space-y-6">
       
-      {/* 1. TOPO: TÍTULO, ESTATÍSTICAS E CONTROLES */}
-      <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 dark:shadow-md p-4 sm:p-5 rounded-2xl border border-zinc-200 shadow-2xs space-y-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-zinc-200/80 dark:border-zinc-800 pb-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center font-bold">
-                <Users className="w-5 h-5" />
-              </div>
-              <h2 className="text-lg font-black text-zinc-900 dark:text-white tracking-tight">
-                CRM de Vendas & Oportunidades Futuras
-              </h2>
-            </div>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-              Acompanhe potenciais clientes, orçamentos, fechamentos e renovações anuais de extintores
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0 flex-wrap">
-            <button
-              onClick={handleAbrirCriar}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg shadow-sm transition cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>+ Nova Oportunidade</span>
-            </button>
-
-            <button
-              onClick={carregarDados}
-              disabled={loading}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg transition bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 cursor-pointer"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-              <span>Atualizar</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Barra de Busca e Mini-Cards */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="relative w-full sm:w-80">
+      {/* 1. TOPO COMPACTO: BUSCA, AÇÕES E 3 CARDS DE MÉTRICAS */}
+      <div className="bg-white dark:bg-[#18181c] p-3 sm:p-4 rounded-2xl border border-zinc-200/90 dark:border-zinc-800 shadow-xs space-y-3">
+        {/* Linha 1: Campo de Busca à esquerda e Botões à direita */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+          <div className="relative flex-1">
             <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-2.5" />
             <input
               type="text"
               placeholder="Buscar por cliente, título ou telefone..."
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 text-xs border border-zinc-300 dark:border-zinc-700 rounded-lg outline-none focus:ring-2 focus:ring-red-500 bg-white dark:bg-zinc-900 dark:text-white dark:placeholder-zinc-500"
+              className="w-full pl-9 pr-8 py-2 text-xs border border-zinc-300 dark:border-zinc-700 rounded-xl outline-none focus:ring-2 focus:ring-red-500 bg-zinc-50 dark:bg-zinc-900 dark:text-white dark:placeholder-zinc-500 font-medium transition"
             />
+            {busca && (
+              <button
+                type="button"
+                onClick={() => setBusca('')}
+                className="absolute right-2.5 top-2.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
 
-          <div className="flex items-center gap-4 text-xs">
-            <div className="flex items-center gap-2">
-              <span className="text-zinc-500 dark:text-zinc-400">Total Oportunidades:</span>
-              <strong className="font-bold text-zinc-900 dark:text-white">
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={handleAbrirCriar}
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 rounded-xl shadow-sm shadow-red-900/20 transition cursor-pointer flex-1 sm:flex-none"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Nova Oportunidade</span>
+            </button>
+
+            <button
+              onClick={carregarDados}
+              disabled={loading}
+              title="Atualizar dados do CRM"
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl transition bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 cursor-pointer"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">Atualizar</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Linha 2: 3 Cards de Indicadores (Total Oportunidades, Valor Total, Vendas Futuras) */}
+        <div className="grid grid-cols-3 gap-2 sm:gap-3 pt-0.5">
+          {/* Card 1: Total de Oportunidades */}
+          <div className="bg-zinc-100/90 dark:bg-[#121215] border border-zinc-200 dark:border-zinc-800/80 p-2.5 sm:p-3 rounded-xl flex flex-col justify-center">
+            <span className="text-[10px] sm:text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider truncate">
+              Total Oportunidades
+            </span>
+            <div className="flex items-baseline gap-1.5 mt-0.5">
+              <strong className="text-base sm:text-xl font-black text-zinc-900 dark:text-white">
                 {oportunidadesFiltradas.length}
               </strong>
+              <span className="text-[10px] text-zinc-400 hidden sm:inline">no pipeline</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-zinc-500 dark:text-zinc-400">Volume Total em Pipeline:</span>
-              <strong className="font-black text-emerald-600 dark:text-emerald-400">
+          </div>
+
+          {/* Card 2: Valor Total em Pipeline */}
+          <div className="bg-zinc-100/90 dark:bg-[#121215] border border-zinc-200 dark:border-zinc-800/80 p-2.5 sm:p-3 rounded-xl flex flex-col justify-center">
+            <span className="text-[10px] sm:text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider truncate">
+              Valor Total
+            </span>
+            <div className="mt-0.5">
+              <strong className="text-xs sm:text-base md:text-lg font-black text-emerald-600 dark:text-emerald-400 truncate block">
                 {formatMoeda(totalPipeline)}
               </strong>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-zinc-500 dark:text-zinc-400">Vendas Futuras:</span>
-              <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300">
-                {totalVendasFuturas} agendadas
+          </div>
+
+          {/* Card 3: Vendas Futuras */}
+          <div className="bg-zinc-100/90 dark:bg-[#121215] border border-zinc-200 dark:border-zinc-800/80 p-2.5 sm:p-3 rounded-xl flex flex-col justify-center">
+            <span className="text-[10px] sm:text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider truncate">
+              Vendas Futuras
+            </span>
+            <div className="flex items-baseline gap-1.5 mt-0.5">
+              <strong className="text-base sm:text-xl font-black text-red-600 dark:text-red-400">
+                {totalVendasFuturas}
+              </strong>
+              <span className="text-[10px] font-semibold text-red-700/80 dark:text-red-300/80 truncate">
+                {totalVendasFuturas === 1 ? 'agendada' : 'agendadas'}
               </span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 2. KANBAN COM AS 5 ETAPAS */}
+      {/* 2. KANBAN COM AS 5 ETAPAS (MAIOR ESPAÇO VISUAL NA TELA) */}
       <div className="overflow-x-auto pb-4">
         <div className="flex gap-4 min-w-[1200px]">
           {ETAPAS.map((etapaDef) => {
@@ -374,40 +390,40 @@ export function CrmView({ onAbrirPedido, onCriarNovoPedido, onVerCliente }: CrmV
             return (
               <div
                 key={etapaDef.key}
-                className="flex-1 min-w-[240px] max-w-[320px] bg-zinc-100/70 dark:bg-[#151518] rounded-2xl p-3 border border-zinc-200/80 dark:border-zinc-800 flex flex-col"
+                className="flex-1 min-w-[250px] max-w-[320px] bg-zinc-200/70 dark:bg-[#151518] rounded-2xl p-3 border border-zinc-300/90 dark:border-zinc-800 flex flex-col"
               >
                 {/* Cabeçalho da Coluna */}
-                <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-zinc-200 dark:border-zinc-800">
+                <div className="flex items-center justify-between pb-2 mb-2 border-b border-zinc-300/80 dark:border-zinc-800">
                   <div className="flex items-center gap-2">
                     <span className={`w-2.5 h-2.5 rounded-full ${etapaDef.corBg}`} />
-                    <h3 className="font-bold text-xs text-zinc-800 dark:text-zinc-200">
+                    <h3 className="font-bold text-xs text-zinc-900 dark:text-zinc-100">
                       {etapaDef.titulo}
                     </h3>
                   </div>
-                  <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-300 shadow-2xs">
+                  <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 shadow-2xs">
                     {opsEtapa.length}
                   </span>
                 </div>
 
                 {/* Subtotal da Coluna */}
-                <div className="text-[11px] text-zinc-500 dark:text-zinc-400 mb-2 flex items-center justify-between px-1">
+                <div className="text-[11px] bg-zinc-100 dark:bg-zinc-900/60 p-1.5 rounded-lg border border-zinc-300/70 dark:border-zinc-800/80 text-zinc-600 dark:text-zinc-400 mb-2.5 flex items-center justify-between">
                   <span>Subtotal:</span>
-                  <strong className="text-zinc-800 dark:text-zinc-200 font-bold">
+                  <strong className="text-zinc-900 dark:text-zinc-100 font-bold">
                     {formatMoeda(totalEtapa)}
                   </strong>
                 </div>
 
                 {/* Cards das Oportunidades */}
-                <div className="space-y-2.5 flex-1 overflow-y-auto max-h-[calc(100vh-280px)] pr-0.5">
+                <div className="space-y-2.5 flex-1 overflow-y-auto max-h-[calc(100vh-250px)] pr-0.5">
                   {opsEtapa.length === 0 ? (
-                    <div className="p-4 text-center text-xs text-zinc-400 dark:text-zinc-600 border border-dashed border-zinc-300 dark:border-zinc-800 rounded-xl">
+                    <div className="p-4 text-center text-xs text-zinc-500 dark:text-zinc-500 border border-dashed border-zinc-300 dark:border-zinc-800 rounded-xl bg-zinc-100/60 dark:bg-zinc-900/30">
                       Nenhuma oportunidade nesta etapa.
                     </div>
                   ) : (
                     opsEtapa.map((op) => (
                       <div
                         key={op.id}
-                        className="bg-white dark:bg-[#1d1d22] p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-2xs hover:shadow-md transition space-y-2.5 group relative"
+                        className="bg-white dark:bg-[#1d1d22] p-3 rounded-xl border border-zinc-200/90 dark:border-zinc-800 shadow-xs hover:shadow-md transition space-y-2.5 group relative"
                       >
                         {/* Título & Ações Rápidas */}
                         <div className="flex items-start justify-between gap-2">

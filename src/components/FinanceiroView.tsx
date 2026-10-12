@@ -61,6 +61,7 @@ export function FinanceiroView({ onVerPedido, onVerCliente }: FinanceiroViewProp
   const [despesaParaEditar, setDespesaParaEditar] = useState<Despesa | null>(null);
   const [modalCategoriasAberto, setModalCategoriasAberto] = useState(false);
   const [excluindoDespesaId, setExcluindoDespesaId] = useState<string | null>(null);
+  const [painelFiltroAberto, setPainelFiltroAberto] = useState(false);
 
   const carregarCategorias = async () => {
     try {
@@ -192,136 +193,164 @@ export function FinanceiroView({ onVerPedido, onVerCliente }: FinanceiroViewProp
   return (
     <div className="space-y-6">
       
-      {/* 1. BARRA SUPERIOR DE FILTROS POR PERÍODO E STATUS */}
-      <div className="bg-white dark:bg-[#18181c] dark:border-zinc-700/80 dark:shadow-md p-4 sm:p-5 rounded-2xl border border-zinc-200 shadow-2xs space-y-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-zinc-200/80 dark:border-zinc-800 pb-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 flex items-center justify-center font-bold">
-                <DollarSign className="w-5 h-5" />
+      {/* 1. BARRA SUPERIOR COMPACTA COM BOTÃO ESCONDIDO DE FILTROS */}
+      <div className="bg-white dark:bg-[#18181c] p-3 sm:p-4 rounded-2xl border border-zinc-200/90 dark:border-zinc-800 shadow-xs space-y-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+          {/* Botão de Filtro de Período (Abre/Fecha seletores) */}
+          <div className="flex items-center gap-2 flex-1">
+            <button
+              type="button"
+              onClick={() => setPainelFiltroAberto(!painelFiltroAberto)}
+              className={`inline-flex items-center justify-between gap-2 px-3.5 py-2 text-xs font-bold rounded-xl border transition cursor-pointer flex-1 sm:flex-none ${
+                painelFiltroAberto
+                  ? 'bg-red-50 text-red-700 border-red-300 dark:bg-red-950/60 dark:text-red-300 dark:border-red-800 shadow-xs'
+                  : 'bg-zinc-100/90 text-zinc-800 border-zinc-300/80 hover:bg-zinc-200/80 dark:bg-zinc-900 dark:text-zinc-200 dark:border-zinc-700'
+              }`}
+            >
+              <div className="flex items-center gap-2 truncate">
+                <Calendar className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
+                <span className="truncate">{relatorio?.periodoDescricao || 'Filtrar Período'}</span>
+                {statusFiltro !== 'Todos' && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-bold shrink-0">
+                    {statusFiltro}
+                  </span>
+                )}
               </div>
-              <h2 className="text-lg font-black text-zinc-900 dark:text-white tracking-tight">
-                Painel Financeiro, Custos & Despesas
-              </h2>
-            </div>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-              Filtro ativo: <strong className="text-red-700 dark:text-red-400">{relatorio?.periodoDescricao || 'Carregando...'}</strong>
-            </p>
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${painelFiltroAberto ? 'rotate-180 text-red-600' : 'text-zinc-400'}`} />
+            </button>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0 flex-wrap">
-            {/* Botão Nova Despesa */}
+          {/* Botões de Ação */}
+          <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => {
                 setDespesaParaEditar(null);
                 setModalDespesaAberto(true);
               }}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg shadow-sm transition cursor-pointer"
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 rounded-xl shadow-sm shadow-red-900/20 transition cursor-pointer flex-1 sm:flex-none"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>+ Nova Despesa</span>
+              <span>Nova Despesa</span>
             </button>
 
-            {/* Botão Gerenciar Categorias */}
             <button
               onClick={() => setModalCategoriasAberto(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg shadow-2xs transition cursor-pointer"
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-bold text-zinc-700 dark:text-zinc-300 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl transition cursor-pointer"
             >
               <Settings className="w-3.5 h-3.5 text-zinc-500" />
-              <span>Categorias</span>
+              <span className="hidden sm:inline">Categorias</span>
             </button>
 
-            {/* Atualizar */}
             <button
               onClick={carregarRelatorio}
               disabled={loading}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg transition bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 cursor-pointer"
+              title="Atualizar dados financeiros"
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl transition bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 cursor-pointer"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-              <span>Atualizar</span>
             </button>
           </div>
         </div>
 
-        {/* Controles de Filtro: Tipo de Período, Mês, Ano e Status */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
-          
-          {/* Tipo de Período */}
-          <div>
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">
-              Visualizar Por:
-            </label>
-            <div className="grid grid-cols-4 gap-1 p-0.5 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg">
-              <button
-                type="button"
-                onClick={() => setPeriodoTipo('mes')}
-                className={`py-1.5 px-1 font-bold rounded-md transition text-center cursor-pointer ${
-                  periodoTipo === 'mes'
-                    ? 'bg-red-600 text-white shadow-xs'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
-                }`}
-              >
-                Mês
-              </button>
-              <button
-                type="button"
-                onClick={() => setPeriodoTipo('ano')}
-                className={`py-1.5 px-1 font-bold rounded-md transition text-center cursor-pointer ${
-                  periodoTipo === 'ano'
-                    ? 'bg-red-600 text-white shadow-xs'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
-                }`}
-              >
-                Ano
-              </button>
-              <button
-                type="button"
-                onClick={() => setPeriodoTipo('todos')}
-                className={`py-1.5 px-1 font-bold rounded-md transition text-center cursor-pointer ${
-                  periodoTipo === 'todos'
-                    ? 'bg-red-600 text-white shadow-xs'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
-                }`}
-              >
-                Todos
-              </button>
-              <button
-                type="button"
-                onClick={() => setPeriodoTipo('custom')}
-                className={`py-1.5 px-1 font-bold rounded-md transition text-center cursor-pointer ${
-                  periodoTipo === 'custom'
-                    ? 'bg-red-600 text-white shadow-xs'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
-                }`}
-              >
-                Datas
-              </button>
-            </div>
-          </div>
-
-          {/* Seletores dependentes do Tipo de Período */}
-          {periodoTipo === 'mes' && (
-            <>
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">
-                  Mês de Referência:
-                </label>
-                <select
-                  value={mesSelecionado}
-                  onChange={(e) => setMesSelecionado(Number(e.target.value))}
-                  className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg font-semibold bg-white dark:bg-zinc-950 dark:text-white outline-none focus:ring-2 focus:ring-red-500"
+        {/* Painel Expansível de Filtros */}
+        {painelFiltroAberto && (
+          <div className="pt-3 border-t border-zinc-200 dark:border-zinc-800 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs animate-in fade-in slide-in-from-top-2 duration-150">
+            {/* Tipo de Período */}
+            <div>
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">
+                Visualizar Por:
+              </label>
+              <div className="grid grid-cols-4 gap-1 p-0.5 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg">
+                <button
+                  type="button"
+                  onClick={() => setPeriodoTipo('mes')}
+                  className={`py-1.5 px-1 font-bold rounded-md transition text-center cursor-pointer ${
+                    periodoTipo === 'mes'
+                      ? 'bg-red-600 text-white shadow-xs'
+                      : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+                  }`}
                 >
-                  {meses.map((m) => (
-                    <option key={m.num} value={m.num} className="dark:bg-zinc-900">
-                      {m.nome}
-                    </option>
-                  ))}
-                </select>
+                  Mês
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPeriodoTipo('ano')}
+                  className={`py-1.5 px-1 font-bold rounded-md transition text-center cursor-pointer ${
+                    periodoTipo === 'ano'
+                      ? 'bg-red-600 text-white shadow-xs'
+                      : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+                  }`}
+                >
+                  Ano
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPeriodoTipo('todos')}
+                  className={`py-1.5 px-1 font-bold rounded-md transition text-center cursor-pointer ${
+                    periodoTipo === 'todos'
+                      ? 'bg-red-600 text-white shadow-xs'
+                      : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+                  }`}
+                >
+                  Todos
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPeriodoTipo('custom')}
+                  className={`py-1.5 px-1 font-bold rounded-md transition text-center cursor-pointer ${
+                    periodoTipo === 'custom'
+                      ? 'bg-red-600 text-white shadow-xs'
+                      : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+                  }`}
+                >
+                  Datas
+                </button>
               </div>
+            </div>
 
+            {/* Seletores dependentes do Tipo de Período */}
+            {periodoTipo === 'mes' && (
+              <>
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">
+                    Mês de Referência:
+                  </label>
+                  <select
+                    value={mesSelecionado}
+                    onChange={(e) => setMesSelecionado(Number(e.target.value))}
+                    className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg font-semibold bg-white dark:bg-zinc-950 dark:text-white outline-none focus:ring-2 focus:ring-red-500"
+                  >
+                    {meses.map((m) => (
+                      <option key={m.num} value={m.num} className="dark:bg-zinc-900">
+                        {m.nome}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">
+                    Ano:
+                  </label>
+                  <select
+                    value={anoSelecionado}
+                    onChange={(e) => setAnoSelecionado(Number(e.target.value))}
+                    className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg font-semibold bg-white dark:bg-zinc-950 dark:text-white outline-none focus:ring-2 focus:ring-red-500"
+                  >
+                    {anosDisponiveis.map((a) => (
+                      <option key={a} value={a} className="dark:bg-zinc-900">
+                        {a}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </>
+            )}
+
+            {periodoTipo === 'ano' && (
               <div>
                 <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">
-                  Ano:
+                  Ano de Referência:
                 </label>
                 <select
                   value={anoSelecionado}
@@ -330,78 +359,58 @@ export function FinanceiroView({ onVerPedido, onVerCliente }: FinanceiroViewProp
                 >
                   {anosDisponiveis.map((a) => (
                     <option key={a} value={a} className="dark:bg-zinc-900">
-                      {a}
+                      Ano {a}
                     </option>
                   ))}
                 </select>
               </div>
-            </>
-          )}
+            )}
 
-          {periodoTipo === 'ano' && (
+            {periodoTipo === 'custom' && (
+              <>
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">
+                    Data Inicial:
+                  </label>
+                  <input
+                    type="date"
+                    value={dataInicio}
+                    onChange={(e) => setDataInicio(e.target.value)}
+                    className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg font-semibold bg-white dark:bg-zinc-950 dark:text-white outline-none focus:ring-2 focus:ring-red-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">
+                    Data Final:
+                  </label>
+                  <input
+                    type="date"
+                    value={dataFim}
+                    onChange={(e) => setDataFim(e.target.value)}
+                    className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg font-semibold bg-white dark:bg-zinc-950 dark:text-white outline-none focus:ring-2 focus:ring-red-500"
+                  />
+                </div>
+              </>
+            )}
+
+            {/* Filtro por Status do Pedido */}
             <div>
               <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">
-                Ano de Referência:
+                Status das Vendas:
               </label>
               <select
-                value={anoSelecionado}
-                onChange={(e) => setAnoSelecionado(Number(e.target.value))}
+                value={statusFiltro}
+                onChange={(e) => setStatusFiltro(e.target.value)}
                 className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg font-semibold bg-white dark:bg-zinc-950 dark:text-white outline-none focus:ring-2 focus:ring-red-500"
               >
-                {anosDisponiveis.map((a) => (
-                  <option key={a} value={a} className="dark:bg-zinc-900">
-                    Ano {a}
-                  </option>
-                ))}
+                <option value="Todos" className="dark:bg-zinc-900">Todos (Aprovados e Pagos)</option>
+                <option value="Pago" className="dark:bg-zinc-900">🟢 Apenas Pagos</option>
+                <option value="Aprovado" className="dark:bg-zinc-900">🔵 Apenas Aprovados</option>
               </select>
             </div>
-          )}
-
-          {periodoTipo === 'custom' && (
-            <>
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">
-                  Data Inicial:
-                </label>
-                <input
-                  type="date"
-                  value={dataInicio}
-                  onChange={(e) => setDataInicio(e.target.value)}
-                  className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg font-semibold bg-white dark:bg-zinc-950 dark:text-white outline-none focus:ring-2 focus:ring-red-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">
-                  Data Final:
-                </label>
-                <input
-                  type="date"
-                  value={dataFim}
-                  onChange={(e) => setDataFim(e.target.value)}
-                  className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg font-semibold bg-white dark:bg-zinc-950 dark:text-white outline-none focus:ring-2 focus:ring-red-500"
-                />
-              </div>
-            </>
-          )}
-
-          {/* Filtro por Status do Pedido */}
-          <div>
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">
-              Status das Vendas:
-            </label>
-            <select
-              value={statusFiltro}
-              onChange={(e) => setStatusFiltro(e.target.value)}
-              className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg font-semibold bg-white dark:bg-zinc-950 dark:text-white outline-none focus:ring-2 focus:ring-red-500"
-            >
-              <option value="Todos" className="dark:bg-zinc-900">Todos (Aprovados e Pagos)</option>
-              <option value="Pago" className="dark:bg-zinc-900">🟢 Apenas Pagos</option>
-              <option value="Aprovado" className="dark:bg-zinc-900">🔵 Apenas Aprovados</option>
-            </select>
           </div>
-
-        </div>
+        )}
       </div>
 
       {/* 2. CARDS DE PRINCIPAIS INDICADORES FINANCEIROS (KPIS) COM DESPESAS */}
