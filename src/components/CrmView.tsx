@@ -176,7 +176,7 @@ export function CrmView({ onAbrirPedido, onCriarNovoPedido, onVerCliente }: CrmV
     setFormClienteEmail(op.cliente_email || '');
     setFormValor(Number(op.valor) || 0);
     setFormEtapa(op.etapa);
-    setFormDataPrevisao(op.data_previsao?.split('T')[0] || '');
+    setFormDataPrevisao(op.data_venda_futura?.split('T')[0] || op.data_previsao?.split('T')[0] || '');
     setFormObservacoes(op.observacoes || '');
     setErroForm(null);
     setModalNovaAberto(true);
@@ -218,6 +218,7 @@ export function CrmView({ onAbrirPedido, onCriarNovoPedido, onVerCliente }: CrmV
           valor: formValor,
           etapa: formEtapa,
           data_previsao: formDataPrevisao || undefined,
+          data_venda_futura: formEtapa === 'venda_futura' ? formDataPrevisao || undefined : undefined,
           observacoes: formObservacoes.trim() || undefined,
         });
         if (!res.success) throw new Error(res.error || 'Erro ao atualizar oportunidade');
@@ -231,6 +232,7 @@ export function CrmView({ onAbrirPedido, onCriarNovoPedido, onVerCliente }: CrmV
           valor: formValor,
           etapa: formEtapa,
           data_previsao: formDataPrevisao || undefined,
+          data_venda_futura: formEtapa === 'venda_futura' ? formDataPrevisao || undefined : undefined,
           observacoes: formObservacoes.trim() || undefined,
         });
         if (!res.success) throw new Error(res.error || 'Erro ao criar oportunidade');
@@ -483,7 +485,7 @@ export function CrmView({ onAbrirPedido, onCriarNovoPedido, onVerCliente }: CrmV
                           <div className="p-2 rounded-lg bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900/60 text-[11px] text-red-700 dark:text-red-300 flex items-center gap-1.5">
                             <CalendarDays className="w-3.5 h-3.5 shrink-0" />
                             <span>
-                              Renovação: <strong className="font-bold">{formatDate(op.data_venda_futura || op.data_previsao)}</strong>
+                              Renovação: <strong className="font-bold">{formatDate(op.data_venda_futura || op.data_previsao) || 'A definir'}</strong>
                             </span>
                           </div>
                         ) : op.data_previsao ? (
@@ -665,7 +667,15 @@ export function CrmView({ onAbrirPedido, onCriarNovoPedido, onVerCliente }: CrmV
                   </label>
                   <select
                     value={formEtapa}
-                    onChange={(e) => setFormEtapa(e.target.value as CrmEtapa)}
+                    onChange={(e) => {
+                      const nova = e.target.value as CrmEtapa;
+                      setFormEtapa(nova);
+                      if (nova === 'venda_futura' && !formDataPrevisao) {
+                        const d = new Date();
+                        d.setFullYear(d.getFullYear() + 1);
+                        setFormDataPrevisao(d.toISOString().split('T')[0]);
+                      }
+                    }}
                     className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-950 dark:text-white outline-none focus:ring-2 focus:ring-red-500 font-semibold"
                   >
                     <option value="potencial">Potencial Cliente</option>
@@ -681,13 +691,13 @@ export function CrmView({ onAbrirPedido, onCriarNovoPedido, onVerCliente }: CrmV
               <div>
                 <label className="block font-bold text-zinc-700 dark:text-zinc-300 mb-1 flex items-center gap-1">
                   <Calendar className="w-3.5 h-3.5 text-zinc-400" />
-                  <span>Data de Previsão ou Renovação Futura</span>
+                  <span>{formEtapa === 'venda_futura' ? 'Data da Venda Futura (Renovação em 1 ano) *' : 'Data de Previsão'}</span>
                 </label>
                 <input
                   type="date"
                   value={formDataPrevisao}
                   onChange={(e) => setFormDataPrevisao(e.target.value)}
-                  className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-950 dark:text-white outline-none focus:ring-2 focus:ring-red-500"
+                  className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-950 dark:text-white outline-none focus:ring-2 focus:ring-red-500 font-semibold"
                 />
               </div>
 

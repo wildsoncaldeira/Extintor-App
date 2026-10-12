@@ -374,7 +374,7 @@ export function PedidoModal({
   return (
     <>
       <div 
-        className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 p-2 sm:p-4 overflow-y-auto animate-modal-backdrop"
+        className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-2 sm:p-4 overflow-y-auto animate-modal-backdrop"
         onClick={onClose}
       >
         <div 
@@ -638,47 +638,47 @@ export function PedidoModal({
                   </span>
                 </div>
 
-                {/* Bloco de Desconto */}
-                <div className="p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl space-y-2">
-                  <div className="flex items-center justify-between">
+                {/* Bloco de Desconto (largura pela metade e alinhado à direita) */}
+                <div className="w-full sm:w-1/2 ml-auto p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl space-y-2">
+                  <div className="flex items-center justify-between gap-2">
                     <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
                       Desconto Especial
                     </label>
 
                     {/* Seletor R$ ou % */}
-                    <div className="inline-flex rounded-lg border border-zinc-200 dark:border-zinc-700 p-0.5 bg-zinc-100 dark:bg-zinc-950">
+                    <div className="inline-flex rounded-lg border border-zinc-200 dark:border-zinc-700 p-0.5 bg-zinc-100 dark:bg-zinc-950 shrink-0">
                       <button
                         type="button"
                         onClick={() => setDescontoTipo('reais')}
-                        className={`px-2.5 py-1 text-xs font-bold rounded-md transition cursor-pointer ${
+                        className={`px-2 py-0.5 text-[11px] font-bold rounded transition cursor-pointer ${
                           descontoTipo === 'reais'
                             ? 'bg-red-600 text-white shadow-xs'
                             : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
                         }`}
                       >
-                        R$ Reais
+                        R$
                       </button>
                       <button
                         type="button"
                         onClick={() => setDescontoTipo('porcentagem')}
-                        className={`px-2.5 py-1 text-xs font-bold rounded-md transition cursor-pointer ${
+                        className={`px-2 py-0.5 text-[11px] font-bold rounded transition cursor-pointer ${
                           descontoTipo === 'porcentagem'
                             ? 'bg-red-600 text-white shadow-xs'
                             : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
                         }`}
                       >
-                        % Porcentagem
+                        %
                       </button>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
-                    <div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1">
                       {descontoTipo === 'reais' ? (
                         <CurrencyInput
                           value={descontoValor}
                           onChange={setDescontoValor}
-                          className="font-bold text-red-600 dark:text-red-400"
+                          className="font-bold text-red-600 dark:text-red-400 text-xs py-1.5"
                         />
                       ) : (
                         <div className="relative flex items-center w-full">
@@ -689,23 +689,23 @@ export function PedidoModal({
                             step="0.5"
                             value={descontoValor}
                             onChange={(e) => setDescontoValor(Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)))}
-                            className="w-full pl-3 pr-8 py-2 text-sm border border-zinc-300 dark:border-zinc-700 rounded-lg outline-none focus:ring-2 focus:ring-red-500 bg-white dark:bg-zinc-950 dark:text-white font-bold text-red-600 dark:text-red-400"
+                            className="w-full pl-2.5 pr-7 py-1.5 text-xs border border-zinc-300 dark:border-zinc-700 rounded-lg outline-none focus:ring-2 focus:ring-red-500 bg-white dark:bg-zinc-950 dark:text-white font-bold text-red-600 dark:text-red-400"
                           />
-                          <span className="absolute right-3 text-xs font-bold text-zinc-400">%</span>
+                          <span className="absolute right-2.5 text-xs font-bold text-zinc-400">%</span>
                         </div>
                       )}
                     </div>
 
-                    <div className="text-right text-xs text-zinc-500 dark:text-zinc-400">
+                    <div className="text-right text-[11px] text-zinc-500 dark:text-zinc-400 shrink-0">
                       {descontoEmReais > 0 ? (
                         <span>
-                          Economia de:{' '}
-                          <strong className="text-red-600 dark:text-red-400 font-bold">
+                          Economia:{' '}
+                          <strong className="text-red-600 dark:text-red-400 font-bold block">
                             - R$ {descontoEmReais.toFixed(2).replace('.', ',')}
                           </strong>
                         </span>
                       ) : (
-                        <span>Nenhum desconto aplicado</span>
+                        <span>Sem desconto</span>
                       )}
                     </div>
                   </div>

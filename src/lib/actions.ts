@@ -265,14 +265,16 @@ export async function agendarVendaFutura(pedidoId: string, dataVendaFutura: stri
       await sql.query(`
         INSERT INTO public.crm_oportunidades (
           titulo, cliente_id, cliente_nome, cliente_telefone, valor, etapa, pedido_id, data_previsao, data_venda_futura
-        ) VALUES ($1, $2, $3, $4, 'venda_futura', $5, $6, $6)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       `, [
         `Renovação Extintores - ${ped.nome_empresa}`,
         ped.cliente_id,
         ped.nome_empresa,
         ped.telefone_whatsapp,
         Number(ped.valor_total) || 0,
+        'venda_futura',
         pedidoId,
+        dataVendaFutura,
         dataVendaFutura
       ]);
     }
@@ -1602,13 +1604,15 @@ export async function createCrmOportunidade(data: {
   valor: number;
   etapa: CrmEtapa;
   data_previsao?: string;
+  data_venda_futura?: string;
   observacoes?: string;
 }): Promise<{ success: boolean; id?: string; error?: string }> {
   try {
+    const dataVendaFutura = data.data_venda_futura || (data.etapa === 'venda_futura' ? data.data_previsao : null);
     const res = await sql.query(`
       INSERT INTO public.crm_oportunidades (
-        titulo, cliente_id, cliente_nome, cliente_telefone, cliente_email, valor, etapa, data_previsao, observacoes
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        titulo, cliente_id, cliente_nome, cliente_telefone, cliente_email, valor, etapa, data_previsao, data_venda_futura, observacoes
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING id
     `, [
       data.titulo.trim(),
@@ -1619,6 +1623,7 @@ export async function createCrmOportunidade(data: {
       Number(data.valor) || 0,
       data.etapa || 'potencial',
       data.data_previsao || null,
+      dataVendaFutura || null,
       data.observacoes || null
     ]);
     revalidatePath('/');
@@ -1648,14 +1653,16 @@ export async function updateCrmOportunidade(
     valor: number;
     etapa: CrmEtapa;
     data_previsao?: string;
+    data_venda_futura?: string;
     observacoes?: string;
   }
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    const dataVendaFutura = data.data_venda_futura || (data.etapa === 'venda_futura' ? data.data_previsao : null);
     await sql.query(`
       UPDATE public.crm_oportunidades
-      SET titulo = $1, cliente_nome = $2, cliente_telefone = $3, cliente_email = $4, valor = $5, etapa = $6, data_previsao = $7, observacoes = $8, updated_at = now()
-      WHERE id = $9
+      SET titulo = $1, cliente_nome = $2, cliente_telefone = $3, cliente_email = $4, valor = $5, etapa = $6, data_previsao = $7, data_venda_futura = $8, observacoes = $9, updated_at = now()
+      WHERE id = $10
     `, [
       data.titulo.trim(),
       data.cliente_nome.trim(),
@@ -1664,6 +1671,7 @@ export async function updateCrmOportunidade(
       Number(data.valor) || 0,
       data.etapa,
       data.data_previsao || null,
+      dataVendaFutura || null,
       data.observacoes || null,
       id
     ]);

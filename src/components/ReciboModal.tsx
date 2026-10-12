@@ -86,7 +86,7 @@ export function ReciboModal({
       onClick={onClose}
     >
       <div 
-        className="relative w-full max-w-3xl bg-white dark:bg-[#18181c] text-zinc-900 dark:text-zinc-100 rounded-2xl shadow-2xl border border-transparent dark:border-zinc-700 overflow-hidden flex flex-col max-h-[95vh] animate-modal-content"
+        className="relative w-full max-w-4xl lg:max-w-5xl bg-white dark:bg-[#18181c] text-zinc-900 dark:text-zinc-100 rounded-2xl shadow-2xl border border-transparent dark:border-zinc-700 overflow-hidden flex flex-col max-h-[95vh] animate-modal-content"
         onClick={(e) => e.stopPropagation()}
       >
         

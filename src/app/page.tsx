@@ -964,7 +964,6 @@ export default function Home() {
             setAutoPrintPdf(false);
           }}
           onEditarPedido={(p) => {
-            setReciboModalAberto(false);
             setPedidoParaEditar(p);
             setPedidoModalAberto(true);
           }}
