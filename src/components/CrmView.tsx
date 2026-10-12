@@ -596,7 +596,7 @@ export function CrmView({ onAbrirPedido, onCriarNovoPedido, onVerCliente }: CrmV
       {/* 2. VISUALIZAÇÃO KANBAN (FUNIL) */}
       {visualizacao === 'kanban' && (
         <div className="overflow-x-auto pb-4">
-          <div className="flex gap-4 min-w-[1200px]">
+          <div className="flex gap-3 sm:gap-4 w-full min-w-[1050px]">
             {ETAPAS.map((etapaDef) => {
               const Icon = etapaDef.icone;
               const opsEtapa = oportunidadesFiltradas.filter((o) => o.etapa === etapaDef.key);
@@ -605,7 +605,7 @@ export function CrmView({ onAbrirPedido, onCriarNovoPedido, onVerCliente }: CrmV
               return (
                 <div
                   key={etapaDef.key}
-                  className="flex-1 min-w-[250px] max-w-[320px] bg-zinc-200/80 dark:bg-[#151518] rounded-2xl p-3 border border-zinc-300 dark:border-zinc-800 flex flex-col"
+                  className="flex-1 min-w-[210px] bg-zinc-200/80 dark:bg-[#151518] rounded-2xl p-3 border border-zinc-300 dark:border-zinc-800 flex flex-col transition-all duration-200"
                 >
                   {/* Cabeçalho da Coluna */}
                   <div className="flex items-center justify-between pb-2 mb-2 border-b border-zinc-300/80 dark:border-zinc-800">

@@ -33,6 +33,7 @@ import {
   Sun,
   Moon,
   Sparkles,
+  TrendingUp,
   Menu,
   X,
   User,
@@ -476,7 +477,7 @@ export default function Home() {
                 : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 border border-transparent'
             }`}
           >
-            <Sparkles className={`w-4 h-4 shrink-0 ${abaAtiva === 'crm' ? 'text-red-500' : 'text-zinc-400'}`} />
+            <TrendingUp className={`w-4 h-4 shrink-0 ${abaAtiva === 'crm' ? 'text-red-500' : 'text-zinc-400'}`} />
             {!sidebarColapsada && <span className="whitespace-nowrap font-bold">CRM & Vendas Futuras</span>}
           </button>
 
@@ -673,8 +674,12 @@ export default function Home() {
         </div>
       </header>
 
-      {/* CONTEÚDO PRINCIPAL */}
-      <main className="flex-1 p-3 sm:p-6 lg:p-8 max-w-6xl w-full mx-auto pb-24 md:pb-8">
+      {/* CONTEÚDO PRINCIPAL (Expansão dinâmica total quando o menu lateral é colapsado) */}
+      <main className={`flex-1 w-full pb-24 md:pb-8 transition-all duration-300 ${
+        sidebarColapsada 
+          ? 'max-w-full px-3 sm:px-6 lg:px-8 py-3 sm:py-6' 
+          : 'max-w-[1440px] px-3 sm:px-6 lg:px-8 py-3 sm:py-6 mx-auto'
+      }`}>
         
         {/* Barra de Título Superior (visível nas abas de listagem) */}
         {abaAtiva !== 'inicio' && (
@@ -941,7 +946,7 @@ export default function Home() {
             abaAtiva === 'crm' ? 'text-red-600 dark:text-red-400 font-bold' : 'hover:text-zinc-900 dark:hover:text-white'
           }`}
         >
-          <Sparkles className="w-5 h-5" />
+          <TrendingUp className="w-5 h-5" />
           <span className="text-[10px] font-semibold">CRM</span>
         </button>
 
@@ -1003,21 +1008,28 @@ export default function Home() {
         </button>
       </nav>
 
-      {/* MENU LATERAL MOBILE (DRAWER DIREITO) */}
-      {menuMobileAberto && (
-        <div className="fixed inset-0 z-50 md:hidden flex justify-end">
-          {/* Backdrop */}
-          <div 
-            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300"
-            onClick={() => setMenuMobileAberto(false)}
-          />
-          
-          {/* Drawer Content */}
-          <div className={`relative w-[85%] max-w-sm h-full flex flex-col z-10 shadow-2xl transition-transform duration-300 ease-out border-l animate-in slide-in-from-right duration-200 ${
-            temaEscuro
-              ? 'bg-[#0f0f12] text-zinc-100 border-zinc-800'
-              : 'bg-white text-zinc-900 border-zinc-200'
-          }`}>
+      {/* MENU LATERAL MOBILE (DRAWER DIREITO COM TRANSIÇÃO SUAVE) */}
+      <div 
+        className={`fixed inset-0 z-50 md:hidden flex justify-end transition-all duration-300 ${
+          menuMobileAberto ? 'visible opacity-100 pointer-events-auto' : 'invisible opacity-0 pointer-events-none'
+        }`}
+      >
+        {/* Backdrop animado com fade */}
+        <div 
+          className={`fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300 ease-in-out ${
+            menuMobileAberto ? 'opacity-100' : 'opacity-0'
+          }`}
+          onClick={() => setMenuMobileAberto(false)}
+        />
+        
+        {/* Drawer Content com slide lateral suave da direita */}
+        <div className={`relative w-[85%] max-w-sm h-full flex flex-col z-10 shadow-2xl border-l transition-transform duration-300 ease-out transform ${
+          menuMobileAberto ? 'translate-x-0' : 'translate-x-full'
+        } ${
+          temaEscuro
+            ? 'bg-[#0f0f12] text-zinc-100 border-zinc-800'
+            : 'bg-white text-zinc-900 border-zinc-200'
+        }`}>
             {/* Drawer Header with user info and close */}
             <div className={`p-4 border-b flex items-center justify-between ${
               temaEscuro ? 'border-zinc-800 bg-zinc-950/50' : 'border-zinc-200 bg-zinc-50'
@@ -1109,7 +1121,7 @@ export default function Home() {
                     : 'hover:bg-zinc-100 dark:hover:bg-zinc-800/60'
                 }`}
               >
-                <Sparkles className="w-4 h-4 text-zinc-400" />
+                <TrendingUp className="w-4 h-4 text-zinc-400" />
                 <span>CRM & Vendas Futuras</span>
               </button>
 
@@ -1212,7 +1224,6 @@ export default function Home() {
             </div>
           </div>
         </div>
-      )}
 
       {/* MODAIS GLOBAIS */}
       {pedidoModalAberto && (

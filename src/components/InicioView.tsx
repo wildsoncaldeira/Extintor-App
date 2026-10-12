@@ -10,7 +10,8 @@ import {
   Package, 
   Flame, 
   ArrowRight,
-  DollarSign
+  DollarSign,
+  TrendingUp
 } from 'lucide-react';
 import { DashboardStats } from '@/lib/types';
 
@@ -98,7 +99,7 @@ export function InicioView({
       id: 'crm',
       titulo: 'CRM & Vendas Futuras',
       subtitulo: 'Funil e renovações anuais',
-      icone: Users,
+      icone: TrendingUp,
       corFundoIcone: 'bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400 dark:border-rose-900/60',
       badge: 'Renovações',
       badgeCor: 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border border-rose-200 dark:border-rose-800/80',
