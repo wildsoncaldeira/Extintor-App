@@ -2,11 +2,10 @@ import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { ClienteAnexo } from '@/lib/types';
 
-
 export async function POST(request: Request) {
   try {
     const data = await request.json();
-    const { cliente_id, nome_arquivo, tipo_arquivo, tamanho_bytes, conteudo_base64, url } = data;
+    const { cliente_id, nome_arquivo, tipo_arquivo, tamanho_bytes, conteudo_base64, url, is_chunked } = data;
 
     if (!cliente_id || !nome_arquivo) {
       return NextResponse.json(
@@ -14,6 +13,8 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+
+    const valorBase64 = is_chunked ? '' : (conteudo_base64 || null);
 
     const res = await sql.query(
       `
@@ -26,7 +27,7 @@ export async function POST(request: Request) {
         nome_arquivo,
         tipo_arquivo || 'application/octet-stream',
         tamanho_bytes || 0,
-        conteudo_base64 || null,
+        valorBase64,
         url || null,
       ]
     );
@@ -38,12 +39,12 @@ export async function POST(request: Request) {
       nome_arquivo: row.nome_arquivo,
       tipo_arquivo: row.tipo_arquivo,
       tamanho_bytes: Number(row.tamanho_bytes || tamanho_bytes || 0),
-      conteudo_base64: conteudo_base64 || null,
+      conteudo_base64: valorBase64,
       url: row.url,
       created_at: row.created_at,
     };
 
-    return NextResponse.json({ success: true, anexo });
+    return NextResponse.json({ success: true, anexo_id: row.id, anexo });
   } catch (error: any) {
     console.error('Erro na API ao anexar arquivo:', error);
     return NextResponse.json(

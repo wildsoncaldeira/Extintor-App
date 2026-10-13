@@ -47,6 +47,7 @@ export function ClienteDetalhesModal({
   const [anexos, setAnexos] = useState<ClienteAnexo[]>([]);
   const [carregandoAnexos, setCarregandoAnexos] = useState(false);
   const [enviandoAnexo, setEnviandoAnexo] = useState(false);
+  const [progressoUpload, setProgressoUpload] = useState<number | null>(null);
   const [erroAnexo, setErroAnexo] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -83,15 +84,17 @@ export function ClienteDetalhesModal({
     if (!files || files.length === 0 || !cliente?.id) return;
 
     setEnviandoAnexo(true);
+    setProgressoUpload(null);
     setErroAnexo(null);
+
+    const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25 MB
 
     try {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         
-        // Limite de 10MB por arquivo
-        if (file.size > 10 * 1024 * 1024) {
-          throw new Error(`O arquivo "${file.name}" excede o tamanho máximo permitido de 10MB.`);
+        if (file.size > MAX_FILE_SIZE) {
+          throw new Error(`O arquivo "${file.name}" excede o tamanho máximo permitido de 25 MB.`);
         }
 
         const base64 = await new Promise<string>((resolve, reject) => {
@@ -101,9 +104,8 @@ export function ClienteDetalhesModal({
           reader.readAsDataURL(file);
         });
 
-        let res: { success: boolean; anexo?: ClienteAnexo; error?: string };
-
-        try {
+        // Se o arquivo for pequeno (<= 2MB de Base64, aprox. 1.5MB binário), envia em requisição direta
+        if (base64.length <= 2 * 1024 * 1024) {
           const apiRes = await fetch('/api/clientes/anexos', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -115,35 +117,104 @@ export function ClienteDetalhesModal({
               conteudo_base64: base64,
             }),
           });
-          res = await apiRes.json();
-        } catch {
-          // Fallback caso a rota API não responda
-          res = await uploadClienteAnexo({
-            cliente_id: cliente.id,
-            nome_arquivo: file.name,
-            tipo_arquivo: file.type || 'application/octet-stream',
-            tamanho_bytes: file.size,
-            conteudo_base64: base64,
+
+          if (!apiRes.ok) {
+            if (apiRes.status === 413) {
+              throw new Error(`O arquivo "${file.name}" é muito grande para o servidor.`);
+            }
+            const errJson = await apiRes.json().catch(() => ({}));
+            throw new Error(errJson.error || `Erro ao anexar "${file.name}"`);
+          }
+
+          const resData = await apiRes.json();
+          if (!resData.success || !resData.anexo) {
+            throw new Error(resData.error || `Erro ao anexar "${file.name}"`);
+          }
+
+          setAnexos((prev) => [resData.anexo!, ...prev]);
+        } else {
+          // Arquivos maiores: Envio em partes (Chunks de 1 MB) para não atingir o limite de 4.5 MB da Vercel
+          const initRes = await fetch('/api/clientes/anexos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              cliente_id: cliente.id,
+              nome_arquivo: file.name,
+              tipo_arquivo: file.type || 'application/octet-stream',
+              tamanho_bytes: file.size,
+              is_chunked: true,
+            }),
           });
-        }
 
-        if (!res.success) {
-          throw new Error(res.error || `Erro ao anexar "${file.name}"`);
-        }
+          if (!initRes.ok) {
+            if (initRes.status === 413) {
+              throw new Error(`O arquivo "${file.name}" excedeu o limite do servidor.`);
+            }
+            const errJson = await initRes.json().catch(() => ({}));
+            throw new Error(errJson.error || `Erro ao iniciar envio de "${file.name}"`);
+          }
 
-        if (res.anexo) {
-          setAnexos((prev) => [res.anexo!, ...prev]);
+          const initData = await initRes.json();
+          if (!initData.success || !initData.anexo_id) {
+            throw new Error(initData.error || `Erro ao inicializar "${file.name}"`);
+          }
+
+          const anexoId = initData.anexo_id;
+          const CHUNK_SIZE = 1024 * 1024; // 1 MB de caracteres por requisição
+          const totalChunks = Math.ceil(base64.length / CHUNK_SIZE);
+
+          try {
+            for (let c = 0; c < totalChunks; c++) {
+              const chunkData = base64.slice(c * CHUNK_SIZE, (c + 1) * CHUNK_SIZE);
+              const chunkRes = await fetch('/api/clientes/anexos/chunk', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  anexo_id: anexoId,
+                  chunk_data: chunkData,
+                }),
+              });
+
+              if (!chunkRes.ok) {
+                if (chunkRes.status === 413) {
+                  throw new Error(`Parte ${c + 1} de "${file.name}" excedeu o limite do servidor.`);
+                }
+                const errJson = await chunkRes.json().catch(() => ({}));
+                throw new Error(errJson.error || `Erro ao enviar parte ${c + 1} de ${totalChunks}.`);
+              }
+
+              const pct = Math.round(((c + 1) / totalChunks) * 100);
+              setProgressoUpload(pct);
+            }
+
+            const anexoFinal: ClienteAnexo = {
+              ...initData.anexo,
+              conteudo_base64: base64,
+            };
+            setAnexos((prev) => [anexoFinal, ...prev]);
+          } catch (chunkErr: any) {
+            await deleteClienteAnexo(anexoId, cliente.id).catch(() => {});
+            throw chunkErr;
+          }
         }
       }
     } catch (err: any) {
       console.error('Erro no upload de anexo:', err);
       let msg = err?.message || 'Erro ao realizar upload do arquivo.';
-      if (msg.includes('441') || msg.includes('Minified React error') || msg.includes('bodySizeLimit')) {
-        msg = 'O arquivo excede o limite suportado pelo servidor ou a conexão foi interrompida. Tente um arquivo menor ou em outro formato.';
+      if (
+        msg.includes('413') ||
+        msg.includes('unexpected response') ||
+        msg.includes('441') ||
+        msg.includes('Minified React error') ||
+        msg.includes('bodySizeLimit') ||
+        msg.includes('FUNCTION_PAYLOAD_TOO_LARGE')
+      ) {
+        msg = 'O arquivo é muito grande para o envio ou a conexão falhou. O limite máximo é de 25 MB por arquivo.';
       }
       setErroAnexo(msg);
     } finally {
       setEnviandoAnexo(false);
+      setProgressoUpload(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -498,7 +569,7 @@ export function ClienteDetalhesModal({
                   {enviandoAnexo ? (
                     <>
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span>Enviando...</span>
+                      <span>{progressoUpload !== null ? `Enviando ${progressoUpload}%...` : 'Enviando...'}</span>
                     </>
                   ) : (
                     <>
@@ -544,7 +615,7 @@ export function ClienteDetalhesModal({
                   Nenhum anexo registrado para este cliente até o momento.
                 </p>
                 <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-0.5">
-                  Clique aqui ou no botão acima para anexar laudos técnicos, fotos de extintores, notas ou documentos (máx. 10 MB por arquivo).
+                  Clique aqui ou no botão acima para anexar laudos técnicos, pranchas PSCIP, fotos de extintores, notas ou documentos (máx. 25 MB por arquivo).
                 </p>
               </div>
             ) : (
