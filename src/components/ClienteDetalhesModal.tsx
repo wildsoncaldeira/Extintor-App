@@ -89,9 +89,9 @@ export function ClienteDetalhesModal({
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         
-        // Limite de 5MB por arquivo
-        if (file.size > 5 * 1024 * 1024) {
-          throw new Error(`O arquivo "${file.name}" excede o tamanho máximo permitido de 5MB.`);
+        // Limite de 10MB por arquivo
+        if (file.size > 10 * 1024 * 1024) {
+          throw new Error(`O arquivo "${file.name}" excede o tamanho máximo permitido de 10MB.`);
         }
 
         const base64 = await new Promise<string>((resolve, reject) => {
@@ -101,13 +101,31 @@ export function ClienteDetalhesModal({
           reader.readAsDataURL(file);
         });
 
-        const res = await uploadClienteAnexo({
-          cliente_id: cliente.id,
-          nome_arquivo: file.name,
-          tipo_arquivo: file.type || 'application/octet-stream',
-          tamanho_bytes: file.size,
-          conteudo_base64: base64,
-        });
+        let res: { success: boolean; anexo?: ClienteAnexo; error?: string };
+
+        try {
+          const apiRes = await fetch('/api/clientes/anexos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              cliente_id: cliente.id,
+              nome_arquivo: file.name,
+              tipo_arquivo: file.type || 'application/octet-stream',
+              tamanho_bytes: file.size,
+              conteudo_base64: base64,
+            }),
+          });
+          res = await apiRes.json();
+        } catch {
+          // Fallback caso a rota API não responda
+          res = await uploadClienteAnexo({
+            cliente_id: cliente.id,
+            nome_arquivo: file.name,
+            tipo_arquivo: file.type || 'application/octet-stream',
+            tamanho_bytes: file.size,
+            conteudo_base64: base64,
+          });
+        }
 
         if (!res.success) {
           throw new Error(res.error || `Erro ao anexar "${file.name}"`);
@@ -119,7 +137,11 @@ export function ClienteDetalhesModal({
       }
     } catch (err: any) {
       console.error('Erro no upload de anexo:', err);
-      setErroAnexo(err?.message || 'Erro ao realizar upload do arquivo.');
+      let msg = err?.message || 'Erro ao realizar upload do arquivo.';
+      if (msg.includes('441') || msg.includes('Minified React error') || msg.includes('bodySizeLimit')) {
+        msg = 'O arquivo excede o limite suportado pelo servidor ou a conexão foi interrompida. Tente um arquivo menor ou em outro formato.';
+      }
+      setErroAnexo(msg);
     } finally {
       setEnviandoAnexo(false);
       if (fileInputRef.current) {
@@ -129,6 +151,17 @@ export function ClienteDetalhesModal({
   };
 
   const handleBaixarAnexo = (anexo: ClienteAnexo) => {
+    if (anexo.id) {
+      const a = document.createElement('a');
+      a.href = `/api/clientes/anexos/${anexo.id}`;
+      a.download = anexo.nome_arquivo;
+      a.target = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      return;
+    }
+
     if (!anexo.conteudo_base64) {
       alert('Arquivo não disponível para visualização.');
       return;
@@ -479,9 +512,19 @@ export function ClienteDetalhesModal({
 
             {/* Aviso de erro se houver */}
             {erroAnexo && (
-              <div className="p-3 bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-800/80 rounded-xl text-red-700 dark:text-red-300 text-xs flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>{erroAnexo}</span>
+              <div className="p-3 bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-800/80 rounded-xl text-red-700 dark:text-red-300 text-xs flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{erroAnexo}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setErroAnexo(null)}
+                  className="p-1 hover:bg-red-100 dark:hover:bg-red-900/60 rounded text-red-600 dark:text-red-400 cursor-pointer shrink-0"
+                  title="Fechar aviso"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
               </div>
             )}
 
@@ -501,7 +544,7 @@ export function ClienteDetalhesModal({
                   Nenhum anexo registrado para este cliente até o momento.
                 </p>
                 <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-0.5">
-                  Clique aqui ou no botão acima para anexar laudos técnicos, fotos de extintores, notas ou documentos (máx. 5 MB por arquivo).
+                  Clique aqui ou no botão acima para anexar laudos técnicos, fotos de extintores, notas ou documentos (máx. 10 MB por arquivo).
                 </p>
               </div>
             ) : (

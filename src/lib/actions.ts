@@ -1064,7 +1064,7 @@ export async function getClienteAnexos(clienteId: string): Promise<ClienteAnexo[
         cliente_id,
         nome_arquivo,
         tipo_arquivo,
-        tamanho_bytes::bigint as tamanho_bytes,
+        tamanho_bytes::text as tamanho_bytes,
         conteudo_base64,
         url,
         created_at::text as created_at
@@ -1074,7 +1074,10 @@ export async function getClienteAnexos(clienteId: string): Promise<ClienteAnexo[
       `,
       [clienteId]
     );
-    return rows as unknown as ClienteAnexo[];
+    return rows.map((r: any) => ({
+      ...r,
+      tamanho_bytes: Number(r.tamanho_bytes || 0),
+    })) as ClienteAnexo[];
   } catch (error) {
     console.error('Erro ao buscar anexos do cliente:', error);
     return [];
@@ -1094,7 +1097,7 @@ export async function uploadClienteAnexo(data: {
       `
       INSERT INTO public.cliente_anexos (cliente_id, nome_arquivo, tipo_arquivo, tamanho_bytes, conteudo_base64, url)
       VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING id, cliente_id, nome_arquivo, tipo_arquivo, tamanho_bytes::bigint as tamanho_bytes, conteudo_base64, url, created_at::text as created_at
+      RETURNING id, cliente_id, nome_arquivo, tipo_arquivo, tamanho_bytes::text as tamanho_bytes, url, created_at::text as created_at
       `,
       [
         data.cliente_id,
@@ -1106,8 +1109,19 @@ export async function uploadClienteAnexo(data: {
       ]
     );
 
-    revalidatePath('/');
-    return { success: true, anexo: res[0] as unknown as ClienteAnexo };
+    const row = res[0] as any;
+    const anexo: ClienteAnexo = {
+      id: row.id,
+      cliente_id: row.cliente_id,
+      nome_arquivo: row.nome_arquivo,
+      tipo_arquivo: row.tipo_arquivo,
+      tamanho_bytes: Number(row.tamanho_bytes || data.tamanho_bytes || 0),
+      conteudo_base64: data.conteudo_base64 || null,
+      url: row.url,
+      created_at: row.created_at,
+    };
+
+    return { success: true, anexo };
   } catch (error: any) {
     console.error('Erro ao anexar arquivo:', error);
     return { success: false, error: error?.message || 'Erro ao fazer upload do arquivo' };
@@ -1120,7 +1134,6 @@ export async function deleteClienteAnexo(anexoId: string, clienteId: string): Pr
       `DELETE FROM public.cliente_anexos WHERE id = $1 AND cliente_id = $2`,
       [anexoId, clienteId]
     );
-    revalidatePath('/');
     return { success: true };
   } catch (error: any) {
     console.error('Erro ao deletar anexo:', error);
